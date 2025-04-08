@@ -1,0 +1,47 @@
+require 'sequel'
+require 'sequel/extensions/migration'
+
+namespace :db do
+  desc "Run migrations"
+  task :migrate, [:version] do |t, args|
+    Sequel.extension :migration
+    db = Sequel.connect(
+      adapter: 'postgres',
+      host: ENV['DATABASE_HOST'] || 'db',
+      database: ENV['DATABASE_NAME'] || 'licentra_development',
+      user: ENV['DATABASE_USER'] || 'myusername',
+      password: ENV['DATABASE_PASSWORD'] || 'mypassword'
+    )
+    
+    if args[:version]
+      puts "Migrating to version #{args[:version]}"
+      Sequel::Migrator.run(db, 'migrations', target: args[:version].to_i)
+    else
+      puts "Migrating to latest"
+      Sequel::Migrator.run(db, 'migrations')
+    end
+  end
+  
+  desc "Setup database"
+  task :setup do
+    Sequel.extension :migration
+    db = Sequel.connect(
+      adapter: 'postgres',
+      host: ENV['DATABASE_HOST'] || 'db',
+      database: ENV['DATABASE_NAME'] || 'licentra_development',
+      user: ENV['DATABASE_USER'] || 'myusername',
+      password: ENV['DATABASE_PASSWORD'] || 'mypassword'
+    )
+
+    if !db.table_exists?(:users)
+      puts "Users table does not exist. Running migrations..."
+      Sequel::Migrator.run(db, 'migrations')
+      puts "Migrations complete. Loading seed data..."
+      load 'db/seeds.rb'
+      puts "Seed data loaded sucessfully"
+    else
+      puts "Users table already exists. Skipping setup."
+    end
+  end
+end
+
