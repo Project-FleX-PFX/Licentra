@@ -1,0 +1,26 @@
+# Allgemein
+.DS_Store
+Thumbs.db
+*.log
+.env
+.env.*
+
+# Backend (Sinatra)
+backend/tmp/
+backend/.byebug_history
+backend/vendor/
+backend/.bundle/
+backend/*.sqlite3
+backend/*.sqlite3-journal
+
+# Frontend (Vue.js)
+frontend/node_modules/
+frontend/dist/
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+
+# Docker
+.docker-sync/
+docker-compose.override.yml
+
