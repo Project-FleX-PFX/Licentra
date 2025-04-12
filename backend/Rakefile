@@ -1,47 +1,54 @@
 require 'sequel'
-require 'sequel/extensions/migration'
+require 'logger'
+require_relative 'config/environment.rb'
 
 namespace :db do
-  desc "Run migrations"
-  task :migrate, [:version] do |t, args|
+  task :load_config do
+    raise "Database constant DB not found. Ensure connection is established." unless defined?(DB)
+  end
+
+  desc "Run database migrations"
+  task migrate: :load_config do
     Sequel.extension :migration
-    db = Sequel.connect(
-      adapter: 'postgres',
-      host: ENV['DATABASE_HOST'] || 'db',
-      database: ENV['DATABASE_NAME'] || 'licentra_development',
-      user: ENV['DATABASE_USER'] || 'myusername',
-      password: ENV['DATABASE_PASSWORD'] || 'mypassword'
-    )
-    
-    if args[:version]
-      puts "Migrating to version #{args[:version]}"
-      Sequel::Migrator.run(db, 'migrations', target: args[:version].to_i)
+    puts "Running migrations..."
+    Sequel::Migrator.run(DB, 'db/migrations')
+    puts "Migrations finished."
+  end
+
+  desc "Load seed data"
+  task seed: :load_config do
+    seed_file = File.join(File.dirname(__FILE__), 'db', 'seeds.rb')
+    if File.exist?(seed_file)
+      puts "Loading seed data..."
+      load(seed_file)
+      puts "Seed data loaded."
     else
-      puts "Migrating to latest"
-      Sequel::Migrator.run(db, 'migrations')
+      puts "Seed file not found: #{seed_file}"
     end
   end
-  
-  desc "Setup database"
-  task :setup do
-    Sequel.extension :migration
-    db = Sequel.connect(
-      adapter: 'postgres',
-      host: ENV['DATABASE_HOST'] || 'db',
-      database: ENV['DATABASE_NAME'] || 'licentra_development',
-      user: ENV['DATABASE_USER'] || 'myusername',
-      password: ENV['DATABASE_PASSWORD'] || 'mypassword'
-    )
 
-    if !db.table_exists?(:users)
-      puts "Users table does not exist. Running migrations..."
-      Sequel::Migrator.run(db, 'migrations')
-      puts "Migrations complete. Loading seed data..."
-      load 'db/seeds.rb'
-      puts "Seed data loaded sucessfully"
-    else
-      puts "Users table already exists. Skipping setup."
-    end
+  desc "Create database (usually handled by Docker/Postgres init)"
+  task :create do
+    puts "Database creation typically handled by the PostgreSQL container on first start."
+    puts "Ensure POSTGRES_DB is set correctly in your environment/docker-compose.yml."
+  end
+
+  desc "Drop database (Caution!) - Often better to recreate container volume"
+  task :drop do
+     puts "Dropping the database via Rake is complex and risky."
+     puts "Consider using 'docker-compose down -v' to remove the volume and 'docker-compose up' to recreate."
+  end
+
+  desc "Setup database: migrate and seed"
+  task setup: [:migrate, :seed] do
+    puts "Database setup complete (migrated and seeded)."
+  end
+
+  desc "Reset database: drop (manual/docker), create (manual/docker), setup"
+  task reset: :load_config do
+    puts "For a full reset:"
+    puts "1. Stop services: docker-compose down -v"
+    puts "2. Start services: docker-compose up -d --build"
+    puts "3. Run setup: docker-compose exec app bundle exec rake db:setup"
   end
 end
-
