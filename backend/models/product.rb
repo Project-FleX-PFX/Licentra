@@ -1,4 +1,9 @@
-class Product < Sequel::Model(DB[:products])
-    set_primary_key :product_id
+class Product < Sequel::Model
     one_to_many :licenses, key: :product_id
+  
+    def validate
+      super
+      validates_presence :product_name
+      validates_unique :product_name
+    end
 end

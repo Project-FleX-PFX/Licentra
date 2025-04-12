@@ -13,6 +13,11 @@ DB = Sequel.connect(DATABASE_URL)
 
 DB.loggers << Logger.new($stdout)
 
-Sequel.extension :migration
 DB.extension :pg_array
 DB.extension :pagination
+Sequel.extension :migration
+Sequel::Model.plugin :validation_helpers
+Sequel::Model.plugin :association_proxies
+
+# --- load models ---
+Dir[File.join(__dir__, '..', 'models', '*.rb')].each { |file| require file }
