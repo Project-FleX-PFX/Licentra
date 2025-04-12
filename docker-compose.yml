@@ -21,6 +21,9 @@ services:
       DATABASE_NAME: licentra_development
       DATABASE_USER: myusername
       DATABASE_PASSWORD: mypassword
+    volumes:
+      - ./backend:/app
+      - ./frontend:/app/frontend
 
 volumes:
   postgres_data:
