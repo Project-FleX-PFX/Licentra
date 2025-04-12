@@ -20,3 +20,4 @@ get '/data' do
 
   erb :data
 end
+
