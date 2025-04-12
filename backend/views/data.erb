@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Testdaten Übersicht</title>
+    <style>
+        body { font-family: sans-serif; }
+        table { border-collapse: collapse; margin-bottom: 20px; width: 100%; }
+        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        h2 { border-bottom: 2px solid #eee; padding-bottom: 5px;}
+        .nested-list { margin-left: 20px; font-size: 0.9em; }
+    </style>
+</head>
+<body>
+
+    <h1>Datenbank Testdaten</h1>
+
+    <!-- Produkte -->
+    <h2>Produkte (<%= @products.count %>)</h2>
+    <% if @products.empty? %>
+        <p>Keine Produkte gefunden.</p>
+    <% else %>
+        <table>
+            <thead>
+                <tr><th>Produkt ID</th><th>Name</th><th>Zugehörige Lizenzen (Keys)</th></tr>
+            </thead>
+            <tbody>
+                <% @products.each do |product| %>
+                    <tr>
+                        <td><%= product.product_id %></td>
+                        <td><%= product.product_name %></td>
+                        <td>
+                            <% product.licenses.each do |license| %>
+                                <div><%= license.license_key %></div>
+                            <% end %>
+                             <% if product.licenses.empty? %> - <% end %>
+                        </td>
+                    </tr>
+                <% end %>
+            </tbody>
+        </table>
+    <% end %>
+
+    <!-- Lizenztypen -->
+    <h2>Lizenztypen (<%= @license_types.count %>)</h2>
+     <% if @license_types.empty? %>
+        <p>Keine Lizenztypen gefunden.</p>
+    <% else %>
+        <table>
+            <thead>
+                <tr><th>Typ ID</th><th>Variante</th><th>Max. Zuweisungen</th></tr>
+            </thead>
+            <tbody>
+                <% @license_types.each do |type| %>
+                    <tr>
+                        <td><%= type.license_type_id %></td>
+                        <td><%= type.variant %></td>
+                        <td><%= type.max_assignment %></td>
+                    </tr>
+                <% end %>
+            </tbody>
+        </table>
+    <% end %>
+
+    <!-- Benutzer -->
+    <h2>Benutzer (<%= @users.count %>)</h2>
+     <% if @users.empty? %>
+        <p>Keine Benutzer gefunden.</p>
+    <% else %>
+        <table>
+            <thead>
+                <tr><th>User ID</th><th>Username</th><th>Admin?</th><th>Zugewiesene Lizenzen (Keys)</th></tr>
+            </thead>
+            <tbody>
+                <% @users.each do |user| %>
+                    <tr>
+                        <td><%= user.user_id %></td>
+                        <td><%= user.username %></td>
+                        <td><%= user.is_admin ? 'Ja' : 'Nein' %></td>
+                        <td>
+                            <% user.license_assignments.each do |assignment| %>
+                                <div><%= assignment.license&.license_key || 'Lizenz nicht gefunden' %></div>
+                            <% end %>
+                            <% if user.license_assignments.empty? %> - <% end %>
+                        </td>
+                        <!-- Passwort-Hash NICHT anzeigen! -->
+                    </tr>
+                <% end %>
+            </tbody>
+        </table>
+    <% end %>
+
+    <!-- Lizenzen -->
+    <h2>Lizenzen (<%= @licenses.count %>)</h2>
+      <% if @licenses.empty? %>
+        <p>Keine Lizenzen gefunden.</p>
+    <% else %>
+        <table>
+            <thead>
+                <tr><th>Lizenz ID</th><th>Key</th><th>Produkt</th><th>Typ</th><th>Zugewiesen an (User)</th></tr>
+            </thead>
+            <tbody>
+                <% @licenses.each do |license| %>
+                    <tr>
+                        <td><%= license.license_id %></td>
+                        <td><%= license.license_key %></td>
+                        <td><%= license.product&.product_name || 'N/A' %></td>
+                        <td><%= license.license_type&.variant || 'N/A' %></td>
+                         <td>
+                            <% license.license_assignments.each do |assignment| %>
+                                <div><%= assignment.user&.username || 'Benutzer nicht gefunden' %></div>
+                            <% end %>
+                             <% if license.license_assignments.empty? %> - <% end %>
+                        </td>
+                    </tr>
+                <% end %>
+            </tbody>
+        </table>
+    <% end %>
+
+    <!-- Lizenzzuweisungen -->
+    <h2>Lizenzzuweisungen (<%= @assignments.count %>)</h2>
+     <% if @assignments.empty? %>
+        <p>Keine Zuweisungen gefunden.</p>
+    <% else %>
+        <table>
+            <thead>
+                <tr><th>Zuweisung ID</th><th>Lizenz Key</th><th>Benutzer</th><th>Nutzungen (Datum / Ablauf)</th></tr>
+            </thead>
+            <tbody>
+                <% @assignments.each do |assignment| %>
+                    <tr>
+                        <td><%= assignment.assignment_id %></td>
+                        <td><%= assignment.license&.license_key || 'N/A' %></td>
+                        <td><%= assignment.user&.username || 'N/A' %></td>
+                        <td>
+                             <% assignment.license_uses.each do |use| %>
+                                <div>
+                                    Nutzung: <%= use.usage_date&.strftime('%Y-%m-%d %H:%M') || 'N/A' %>
+                                    <% if use.expire_date %>
+                                      | Ablauf: <%= use.expire_date.strftime('%Y-%m-%d') %>
+                                    <% end %>
+                                </div>
+                            <% end %>
+                             <% if assignment.license_uses.empty? %> - <% end %>
+                        </td>
+                    </tr>
+                <% end %>
+            </tbody>
+        </table>
+    <% end %>
+
+</body>
+</html>
