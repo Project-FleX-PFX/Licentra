@@ -20,4 +20,6 @@ Sequel::Model.plugin :validation_helpers
 Sequel::Model.plugin :association_proxies
 
 # --- load models ---
-Dir[File.join(__dir__, '..', 'models', '*.rb')].each { |file| require file }
+unless ENV['MIGRATION_ONLY'] == 'true'
+  Dir[File.join(__dir__, '..', 'models', '*.rb')].each { |file| require file }
+end
