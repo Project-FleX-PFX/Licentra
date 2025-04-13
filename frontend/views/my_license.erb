@@ -1,8 +1,83 @@
+<!-- Lege diese Datei z. B. unter app/views/licenses/my_license.html.erb ab -->
+<div class="license-page">
+  <h1>My License</h1>
 
-<h2>My License</h2>
-<p>Here is a list of all your active licenses:</p>
+  <!-- 1. Produkt-Beispiel -->
+  <div class="license-item">
+    <!-- Überschrift und Aufklapp-Button -->
+    <div class="license-header">
+      <span>Produkt 1</span>
+      <button class="toggle-button" data-target="#license1-details">
+        Lizenz anzeigen
+      </button>
+    </div>
+    <!-- Eingeklappter Bereich mit Lizenz-Information und Lösch-Button -->
+    <div id="license1-details" class="license-detail hidden">
+      <p>
+        <strong>License Key:</strong> XXXX-XXXX-XXXX-XXXX-XXXX
+      </p>
+      <button
+        class="delete-button"
+        onclick="confirmDelete(event, 'Produkt 1')"
+      >
+        Löschen
+      </button>
+    </div>
+  </div>
 
-<div class="info-block">
-  <p><strong>product 1:</strong> License Key XXXX-XXXX-XXXX-XXXX-XXXX</p>
-  <p><strong>product 2:</strong> License Key XXXX-XXXX-XXXX-XXXX-XXXX</p>
+  <!-- 2. Produkt-Beispiel -->
+  <div class="license-item">
+    <div class="license-header">
+      <span>Produkt 2</span>
+      <button class="toggle-button" data-target="#license2-details">
+        Lizenz anzeigen
+      </button>
+    </div>
+    <div id="license2-details" class="license-detail hidden">
+      <p>
+        <strong>License Key:</strong> AAAA-BBBB-CCCC-DDDD-EEEE
+      </p>
+      <button
+        class="delete-button"
+        onclick="confirmDelete(event, 'Produkt 2')"
+      >
+        Löschen
+      </button>
+    </div>
+  </div>
 </div>
+
+<!-- Optional: Script zum Auf- und Zuklappen sowie Lösch-Abfrage -->
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    // Alle Toggle-Buttons ermitteln
+    var toggleButtons = document.querySelectorAll(".toggle-button");
+
+    toggleButtons.forEach(function(button) {
+      button.addEventListener("click", function(event) {
+        // ID-Ziel aus dem data-target-Attribut auslesen
+        var targetId = event.target.getAttribute("data-target");
+        var targetEl = document.querySelector(targetId);
+
+        // Ein- oder ausblenden
+        if (targetEl) {
+          targetEl.classList.toggle("hidden");
+        }
+      });
+    });
+  });
+
+  function confirmDelete(event, productName) {
+    var userConfirmed = confirm(
+      "Möchtest du dieses Produkt wirklich löschen?\n" + productName
+    );
+    if (userConfirmed) {
+      // Hier könntest du anstelle des Alerts eine tatsächliche Lösch-Action ausführen:
+      // z. B. AJAX-Request oder Weiterleitung an eine Controller-Action
+      alert(productName + " gelöscht!");
+    } else {
+      // Abbrechen
+      event.preventDefault();
+    }
+  }
+</script>

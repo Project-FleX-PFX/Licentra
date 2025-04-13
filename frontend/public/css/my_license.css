@@ -1,13 +1,75 @@
-/* public/css/my_license.css */
-h2 {
-  margin-bottom: 10px;
+/* Beispielhafte CSS-Datei für einen professionellen Look.
+   Platziere sie z. B. unter app/assets/stylesheets/my_license.css und
+   binde sie in deiner Layout-Datei (application.html.erb) ein. */
+
+/* Container für die ganze Lizenzseite */
+.license-page {
+  max-width: 600px;
+  margin: 2rem auto;
+  font-family: Arial, sans-serif;
+  color: #333;
 }
 
-.info-block {
-  margin-top: 20px;
+/* Überschrift */
+.license-page h1 {
+  margin-bottom: 1.5rem;
+  text-align: center;
 }
 
-.info-block p {
-  margin: 10px 0;
-  font-size: 1em;
+/* Jeder Lizenzblock */
+.license-item {
+  background-color: #f9f9f9;
+  margin-bottom: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  overflow: hidden; /* Damit Inhalte sauber ein- und ausgeklappt werden */
+}
+
+/* Header-Bereich pro Lizenz */
+.license-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  cursor: pointer;
+}
+
+/* Detail-Bereich, der standardmäßig ausgeblendet wird */
+.license-detail {
+  padding: 1rem;
+  border-top: 1px solid #ddd;
+}
+
+/* Klasse, um ein- oder auszublenden */
+.hidden {
+  display: none;
+}
+
+/* Aufklapp-Button */
+.toggle-button {
+  background-color: #008cba;
+  color: #fff;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+.toggle-button:hover {
+  background-color: #0079a1;
+}
+
+/* Lösch-Button */
+.delete-button {
+  background-color: #ff4c4c;
+  color: #fff;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 3px;
+  cursor: pointer;
+  margin-top: 0.5rem;
+  transition: background-color 0.2s;
+}
+.delete-button:hover {
+  background-color: #cc0000;
 }
