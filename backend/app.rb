@@ -13,8 +13,8 @@ DB = Sequel.connect(
   password: ENV['DATABASE_PASSWORD'] || 'mypassword'
 )
 
-# Damit Sinatra weiß, wo sich der public-Ordner (für CSS, JS, Bilder) befindet:
-set :public_folder, File.expand_path('../frontend/public', __dir__)
+# Hard coded as docker sets up directory structure
+set :public_folder, '/app/frontend/public'
 
 get '/' do
   "Hello World! Connected to database: #{DB.opts[:database]}"
