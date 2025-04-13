@@ -1,0 +1,19 @@
+/* public/css/profile.css */
+h1 {
+  margin-bottom: 10px;
+}
+
+.info-block {
+  margin-top: 20px;
+}
+
+.info-block p {
+  margin: 5px 0;
+  font-size: 1em;
+}
+
+.edit-icon {
+  margin-left: 10px;
+  cursor: pointer;
+  color: #615dfa;
+}

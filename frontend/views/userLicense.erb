@@ -1,0 +1,210 @@
+
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Landing page</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: Arial, sans-serif;
+      color: #333;
+      background-color: #f8f8f8;
+      margin: 0;
+      padding: 0;
+    }
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 220px;
+      height: 100vh;
+      background-color: #2f2f3e;
+      color: #fff;
+    }
+    .main-content {
+      margin-left: 220px; 
+      padding: 20px;
+    }
+
+    .sidebar-header {
+      display: flex;
+      align-items: center;
+      padding: 15px;
+      background-color: #383854;
+      font-size: 1.2em;
+    }
+    .sidebar-header span {
+      margin-right: 10px;
+      cursor: pointer; 
+    }
+    .sidebar-header h2 {
+      margin: 0;
+      font-size: 1.1em;
+    }
+
+    nav ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    nav ul li a {
+      display: block;
+      padding: 12px 15px;
+      color: #ccc;
+      text-decoration: none;
+      border-bottom: 1px solid #3f3f58;
+    }
+    nav ul li a:hover {
+      background-color: #45456c;
+      color: #fff;
+    }
+
+    .main-content h1 {
+      margin-bottom: 5px;
+    }
+    .main-content .products {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      margin-top: 20px;
+    }
+    .product {
+      background-color: #fff;
+      border-radius: 8px;
+      width: 220px;
+      padding: 15px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      cursor: pointer;
+      transition: transform 0.2s ease;
+    }
+    .product:hover {
+      transform: scale(1.02);
+    }
+    .product h2 {
+      margin-bottom: 10px;
+    }
+    .product p {
+      font-size: 0.9em;
+      line-height: 1.4em;
+      color: #666;
+    }
+
+    .popup {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.4);
+      display: none; /* Wird per JavaScript eingeblendet */
+      justify-content: center;
+      align-items: center;
+      z-index: 999;
+    }
+    .popup-content {
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      width: 300px;
+      text-align: center;
+    }
+    .popup-content h3 {
+      margin-bottom: 15px;
+    }
+    .popup-content p {
+      margin-bottom: 20px;
+    }
+    .popup-content button {
+      margin: 0 5px;
+      padding: 8px 12px;
+      cursor: pointer;
+      border: none;
+      border-radius: 4px;
+    }
+    .popup-content button#getKeyBtn {
+      background-color: #615dfa;
+      color: #fff;
+    }
+    .popup-content button#cancelBtn {
+      background-color: #ccc;
+    }
+  </style>
+</head>
+<body>
+  <!-- ---------- Sidebar (aus dem 2. Bild) ---------- -->
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <span>☰</span>
+      <h2>Landing page</h2>
+    </div>
+    <nav>
+      <ul>
+        <li><a href="/profile">Profile</a></li>
+        <li><a href="/license">License</a></li>
+        <li><a href="/my_license">My License</a></li>
+      </ul>
+    </nav>
+  </div>
+
+  <!-- ---------- Hauptbereich ---------- -->
+  <div class="main-content">
+    <h1>Available Licences</h1>
+    <p>for self assignment</p>
+
+    <div class="products">
+      <!-- Statische Produkte als Beispiel -->
+      <div class="product" onclick="showPopup('Product 1')">
+        <h2>product 1</h2>
+        <p>Body text for whatever you’d like to say. Add in news, updates, quotes, stories, anecdotes, or even a very very short story.</p>
+      </div>
+      <div class="product" onclick="showPopup('Product 2')">
+        <h2>product 2</h2>
+        <p>Body text for whatever you’d like to say. Add in news, updates, quotes, stories, anecdotes, or even a very very short story.</p>
+      </div>
+      <div class="product" onclick="showPopup('Product 3')">
+        <h2>product 3</h2>
+        <p>Body text for whatever you’d like to say. Add in news, updates, quotes, stories, anecdotes, or even a very very short story.</p>
+      </div>
+      <div class="product" onclick="showPopup('Product 4')">
+        <h2>product 4</h2>
+        <p>Body text for whatever you’d like to say. Add in news, updates, quotes, stories, anecdotes, or even a very very short story.</p>
+      </div>
+      <div class="product" onclick="showPopup('Product 5')">
+        <h2>product 5</h2>
+        <p>Body text for whatever you’d like to say. Add in news, updates, quotes, stories, anecdotes, or even a very very short story.</p>
+      </div>
+      <div class="product" onclick="showPopup('Product 6')">
+        <h2>product 6</h2>
+        <p>Body text for whatever you’d like to say. Add in news, updates, quotes, stories, anecdotes, or even a very very short story.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ---------- Popup (aus dem 3. Bild) ---------- -->
+  <div class="popup" id="licensePopup">
+    <div class="popup-content">
+      <h3 id="popupTitle">Product x</h3>
+      <p>are you sure that you want the License Key?</p>
+      <button id="getKeyBtn">Get License Key</button>
+      <button id="cancelBtn" onclick="hidePopup()">Cancel</button>
+    </div>
+  </div>
+
+  <!-- ---------- JavaScript für Popup-Logik ---------- -->
+  <script>
+    function showPopup(productName) {
+      document.getElementById("popupTitle").textContent = productName;
+      document.getElementById("licensePopup").style.display = "flex";
+    }
+
+    function hidePopup() {
+      document.getElementById("licensePopup").style.display = "none";
+    }
+  </script>
+</body>
+</html>

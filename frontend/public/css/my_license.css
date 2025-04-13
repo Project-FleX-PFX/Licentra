@@ -1,0 +1,13 @@
+/* public/css/my_license.css */
+h2 {
+  margin-bottom: 10px;
+}
+
+.info-block {
+  margin-top: 20px;
+}
+
+.info-block p {
+  margin: 10px 0;
+  font-size: 1em;
+}

@@ -13,6 +13,9 @@ DB = Sequel.connect(
   password: ENV['DATABASE_PASSWORD'] || 'mypassword'
 )
 
+# Damit Sinatra weiß, wo sich der public-Ordner (für CSS, JS, Bilder) befindet:
+set :public_folder, File.expand_path('../frontend/public', __dir__)
+
 get '/' do
   "Hello World! Connected to database: #{DB.opts[:database]}"
 end
@@ -34,3 +37,24 @@ get '/test' do
   erb :test
 end
 
+get '/userLicense' do
+  erb :userLicense
+end
+
+get '/license' do
+  @title = "License"
+  @css   = "license"
+  erb :license
+end
+
+get '/profile' do
+  @title = "Profile"
+  @css   = "profile"
+  erb :profile
+end
+
+get '/my_license' do
+  @title = "My License"
+  @css   = "my_license"
+  erb :my_license
+end
