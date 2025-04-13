@@ -56,5 +56,5 @@ end
 get '/my_license' do
   @title = "My License"
   @css   = "my_license"
-  erb :my_license
+  erb :my_licenses
 end
