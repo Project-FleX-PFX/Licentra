@@ -33,8 +33,8 @@ get '/data' do
   erb :data
 end
 
-get '/test' do
-  erb :test
+get '/login' do
+  erb :login
 end
 
 get '/userLicense' do
