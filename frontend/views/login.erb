@@ -4,89 +4,14 @@
     <title>Licentra - Login</title>
     <meta charset="utf-8" />
     <!-- Hier ggf. noch eigene CSS-Dateien oder CDN-Links einbinden -->
-    <style>
-      body {
-        font-family: Arial, sans-serif;
-        margin: 0;
-        padding: 0;
-        background-color: #ffffff; /* Weißer Hintergrund */
-      }
-
-      .login-container {
-        max-width: 360px;
-        margin: 80px auto;
-        padding: 20px;
-        border: 1px solid #e8e8e8;
-        border-radius: 8px;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-      }
-
-      .logo-placeholder {
-        text-align: center;
-        margin-bottom: 20px;
-      }
-
-      .login-container h2 {
-        text-align: center;
-        margin-bottom: 20px;
-      }
-
-      .field {
-        margin-bottom: 15px;
-      }
-
-      .actions {
-        margin-top: 20px;
-      }
-
-      label {
-        display: block;
-        margin-bottom: 5px;
-        font-weight: bold;
-      }
-
-      input[type="email"],
-      input[type="password"],
-      input[type="text"] {
-        width: 100%;
-        padding: 8px;
-        box-sizing: border-box;
-      }
-
-      .checkbox-remember {
-        display: inline-block;
-        margin-right: 5px;
-      }
-
-      .forgot-password-link {
-        display: inline-block;
-        margin-left: 8px;
-      }
-
-      .login-button {
-        width: 100%;
-        padding: 10px;
-        border: none;
-        background-color: #333;
-        color: #fff;
-        font-weight: bold;
-        cursor: pointer;
-        border-radius: 4px;
-      }
-
-      .login-button:hover {
-        background-color: #555;
-      }
-    </style>
+    <link rel="stylesheet" type="text/css" href="/css/login.css">
   </head>
 
   <body>
     <div class="login-container">
 
-      <!-- Platzhalter für dein Bild/Logo -->
-      <div class="logo-placeholder">
-        <!-- Hier das Bild einsetzen -->
-        <img src="/images/licentra_logo.png" alt="Licentra Logo">
+      <div class="logo">
+        <img src="/css/LizentraLogo.png" alt="Licentra Logo">
       </div>
 
       <!-- Überschrift oder Titel oberhalb des Formulars -->
@@ -117,8 +42,9 @@
 
         <!-- Login-Button -->
         <div class="actions">
-          <input type="submit" value="Login" class="login-button">
+          <input type="button" value="Login" class="login-button" onclick="window.location.href='/profile';">
         </div>
+
       </form>
     </div>
   </body>

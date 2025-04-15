@@ -30,15 +30,11 @@ get '/data' do
   @assignments = LicenseAssignment.eager(:license, :user, :device).order(:assignment_id).all
   @logs = AssignmentLog.eager(:license_assignment).order(Sequel.desc(:log_timestamp)).all
 
-  erb :data
+  erb :data, layout: false
 end
 
 get '/login' do
-  erb :login
-end
-
-get '/userLicense' do
-  erb :userLicense
+  erb :login, layout: false
 end
 
 get '/license' do

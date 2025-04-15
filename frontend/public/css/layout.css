@@ -30,6 +30,7 @@ body {
   height: 100vh;
   background-color: #000000e7;
   color: #fff;
+  transition: width 0.3s;
 }
 .sidebar-header {
   display: flex;
@@ -37,6 +38,7 @@ body {
   padding: 15px;
   background-color: #000000e7;
   font-size: 1.2em;
+  margin-left: 0px;
 }
 .sidebar-header span {
   margin-right: 10px;
@@ -45,6 +47,7 @@ body {
 .sidebar-header h2 {
   margin: 0;
   font-size: 1.1em;
+  margin-left: 40px;
 }
 nav ul {
   list-style: none;
@@ -67,4 +70,48 @@ nav ul li a:hover {
 .main-content {
   margin-left: 220px;
   padding: 20px;
+  transition: margin-left 0.1s;
+}
+
+.sidebar .logout {
+  position: absolute;
+  bottom: 0;      /* Direkt am unteren Rand */
+  left: 0;        /* Direkt am linken Rand */
+  width: 100%;    /* Optional: Damit kannst du bestimmen, ob der Container die gesamte Breite nutzt */
+  padding: 10px;  /* Optional: Etwas Abstand zum Rand, falls gewünscht */
+  text-align: left; /* Damit bleibt der Inhalt (Button) linksbündig */
+}
+
+.logout-button {
+  font-size: 13px;             /* Etwas größere Schrift */
+  padding: 12px 15px;          /* Erhöhter Innenabstand für einen größeren Button */
+  min-width: 75px;            /* Mindestbreite definieren */
+  background-color: #0000005d;   /* Hintergrundfarbe */
+  color: #ffffff;                 /* Textfarbe */
+  border: 1px solid #0000005d;   /* Rahmen */
+  border-radius: 4px;          /* Abgerundete Ecken */
+  cursor: pointer;             /* Mauszeiger als Hand-Symbol */
+  display: inline-block;       /* Damit der Button als Block-Element agiert, aber sich an den Inhalt anpasst */
+}
+
+.logout-button:hover {
+  background-color: #83000054;      /* Hover-Effekt */
+}
+
+.toggle-sidebar {
+  position: fixed;
+  top: 5px;
+  left: 5px;
+  z-index: 1000;
+  background-color: #000; /* Beispielhintergrund */
+  color: #fff;
+  border: none;
+  padding: 10px 15px;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.sidebar.collapsed {
+  width: 0;
+  overflow: hidden;
 }
