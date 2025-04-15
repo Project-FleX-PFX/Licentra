@@ -12,9 +12,9 @@
   <% end %>
 </head>
 <body>
+  <button id="toggle-sidebar" class="toggle-sidebar">☰</button>
   <div class="sidebar">
     <div class="sidebar-header">
-      <span>☰</span>
       <h2>Landing page</h2>
     </div>
     <nav>
@@ -24,11 +24,36 @@
         <li><a href="/my_license">My License</a></li>
       </ul>
     </nav>
+    <!-- Logout Button, der zunächst noch keine Funktion hat -->
+    <!-- Logout Button unten in der Sidebar -->
+    <div class="logout">
+      <button class="logout-button">Logout</button>
+    </div>
   </div>
 
   <div class="main-content">
     <%= yield %>
   </div>
+   <!-- JavaScript für das Toggle-Verhalten -->
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      const toggleBtn = document.getElementById("toggle-sidebar");
+      const sidebar = document.querySelector(".sidebar");
+      const mainContent = document.querySelector(".main-content");
+
+      toggleBtn.addEventListener("click", function() {
+        // Toggle der Klasse "collapsed" an der Sidebar
+        sidebar.classList.toggle("collapsed");
+
+        // Passe den linken Rand des Hauptinhalts an
+        if (sidebar.classList.contains("collapsed")) {
+          mainContent.style.marginLeft = "50px";  // voller Bildschirm, wenn Sidebar ausgeblendet
+        } else {
+          mainContent.style.marginLeft = "220px";  // gleiche Breite wie die Sidebar
+        }
+      });
+    });
+  </script>
 </body>
 </html>
 
