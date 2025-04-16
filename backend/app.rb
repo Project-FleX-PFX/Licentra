@@ -2,6 +2,9 @@ require 'sinatra'
 require 'sequel'
 require_relative 'config/environment.rb'
 
+set :host_authorization, { permitted_hosts: ['vmd166389.contaboserver.net', 'localhost', '127.0.0.1'] }
+
+
 # --- Routes ---
 set :views, File.join(File.dirname(__FILE__), 'frontend', 'views')
 
