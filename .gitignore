@@ -15,7 +15,6 @@ backend/*.sqlite3-journal
 
 # Docker
 .docker-sync/
-docker-compose.override.yml
 
 # NPM
 npm-data/
