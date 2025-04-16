@@ -25,5 +25,18 @@ services:
       - ./backend:/app
       - ./frontend:/app/frontend
 
+  nginx-proxy-manager:
+    image: jc21/nginx-proxy-manager:latest
+    restart: unless-stopped
+    profiles: ["proxy"]
+    ports:
+      - "80:80"    # HTTP
+      - "443:443"  # HTTPS
+      - "81:81"    # Admin-UI
+    volumes:
+      - ./npm-data:/data
+      - ./npm-letsencrypt:/etc/letsencrypt
+
 volumes:
   postgres_data:
+
