@@ -1,0 +1,86 @@
+<!-- views/register.erb -->
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Registrieren – Licentra</title>
+  <link rel="stylesheet" href="/css/register.css">
+</head>
+<body>
+  <div class="container">
+    <div class="logo">
+      <img src="/css/LizentraLogo.png" alt="Schlüssel-Icon" class="logo-icon">
+    </div>
+    <h2>Registrieren</h2>
+
+    <!-- allgemeiner Fehler (leere Felder) -->
+    <div id="form-error" class="error" style="display:none; text-align:center; margin-bottom:15px;">
+      Bitte füllen Sie alle Felder aus.
+    </div>
+
+    <form id="register-form" action="#" method="post" novalidate>
+      <div class="form-group">
+        <label for="first_name">Vorname</label>
+        <input type="text" id="first_name" name="first_name">
+      </div>
+      <div class="form-group">
+        <label for="last_name">Nachname</label>
+        <input type="text" id="last_name" name="last_name">
+      </div>
+      <div class="form-group">
+        <label for="email">E‑Mail</label>
+        <input type="email" id="email" name="email">
+      </div>
+      <div class="form-group">
+        <label for="password">Passwort</label>
+        <input type="password" id="password" name="password">
+      </div>
+      <div class="form-group">
+        <label for="password_confirmation">Passwort bestätigen</label>
+        <input type="password" id="password_confirmation" name="password_confirmation">
+        <span id="password-error" class="error" style="display:none;">
+          Die Passwörter stimmen nicht überein.
+        </span>
+      </div>
+      <button type="submit" class="btn">Registrieren</button>
+    </form>
+
+    <div class="footer">
+      <p>Schon ein Konto? <a href="/login">Hier einloggen</a></p>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('register-form')
+      .addEventListener('submit', function(e) {
+        // Fehlermeldungen zurücksetzen
+        document.getElementById('form-error').style.display = 'none';
+        document.getElementById('password-error').style.display = 'none';
+
+        // 1. alle Felder prüfen
+        var fields = ['first_name','last_name','email','password','password_confirmation'];
+        var emptyFound = fields.some(function(id) {
+          return !document.getElementById(id).value.trim();
+        });
+        if (emptyFound) {
+          e.preventDefault();
+          document.getElementById('form-error').style.display = 'block';
+          return;
+        }
+
+        // 2. Passwörter matching
+        var pw  = document.getElementById('password').value;
+        var pwc = document.getElementById('password_confirmation').value;
+        if (pw !== pwc) {
+          e.preventDefault();
+          document.getElementById('password-error').style.display = 'block';
+          return;
+        }
+
+        // 3. alles okay → Weiterleitung
+        e.preventDefault();
+        window.location.href = '/profile';
+      });
+  </script>
+</body>
+</html>

@@ -54,3 +54,7 @@ get '/my_license' do
   @css   = "my_license"
   erb :my_license
 end
+
+get '/register' do
+  erb :register, layout: false
+end
