@@ -19,7 +19,8 @@ Sequel.extension :migration
 Sequel::Model.plugin :validation_helpers
 Sequel::Model.plugin :association_proxies
 
-# --- load models ---
+# --- load models and DAOs ---
 unless ENV['MIGRATION_ONLY'] == 'true'
   Dir[File.join(__dir__, '..', 'models', '*.rb')].each { |file| require file }
+  Dir[File.join(__dir__, '..', 'dao', '*.rb')].each { |file| require file }
 end

@@ -3,7 +3,7 @@ class Device < Sequel::Model
   
     def validate
       super
-      validates_presence :device_name
-      validates_unique :serial_number, allow_nil: true
+      validates_presence :device_name, message: "Gerätename darf nicht leer sein"
+      validates_unique :serial_number, allow_nil: true, message: "Seriennummer muss eindeutig sein, wenn angegeben"
     end
 end
