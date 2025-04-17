@@ -19,6 +19,8 @@ DB = Sequel.connect(
 # Hard coded as docker sets up directory structure
 set :public_folder, '/app/frontend/public'
 
+# --- Routes ---
+
 get '/' do
   "Hello World! Connected to database: #{DB.opts[:database]}"
 end
@@ -28,7 +30,7 @@ get '/data' do
   @license_types = LicenseType.order(:type_name).all
   @roles = Role.order(:role_name).all
   @users = User.eager(:roles, :credential).order(:username).all
-  @devices = Device.order(:device_name).all
+  @devices = DeviceDAO.all
   @licenses = License.eager(:product, :license_type).order(:license_name).all
   @assignments = LicenseAssignment.eager(:license, :user, :device).order(:assignment_id).all
   @logs = AssignmentLog.eager(:license_assignment).order(Sequel.desc(:log_timestamp)).all
