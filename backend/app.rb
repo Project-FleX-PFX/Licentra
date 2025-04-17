@@ -25,6 +25,8 @@ end
 before do
   settings.set :isAdmin, isAdmin
 end
+=======
+# --- Routes ---
 
 # --- Routes ---
 get '/' do
