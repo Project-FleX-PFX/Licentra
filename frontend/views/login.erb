@@ -3,7 +3,6 @@
   <head>
     <title>Licentra - Login</title>
     <meta charset="utf-8" />
-    <!-- Hier ggf. noch eigene CSS-Dateien oder CDN-Links einbinden -->
     <link rel="stylesheet" type="text/css" href="/css/login.css">
   </head>
 
@@ -14,38 +13,60 @@
         <img src="/css/LizentraLogo.png" alt="Licentra Logo">
       </div>
 
-      <!-- Überschrift oder Titel oberhalb des Formulars -->
       <h2>Licentra</h2>
 
-      <!-- Login-Formular -->
-      <form action="/login" method="post">
-        <!-- Email-Feld -->
+      <!-- allgemeine Fehlermeldung -->
+      <div id="form-error" class="error">
+        Bitte E‑Mail und Passwort ausfüllen.
+      </div>
+
+      <form id="login-form" action="#" method="post" novalidate>
         <div class="field">
           <label for="email">Email</label>
           <input type="email" id="email" name="email" placeholder="Value">
         </div>
 
-        <!-- Passwort-Feld -->
         <div class="field">
           <label for="password">Password</label>
           <input type="password" id="password" name="password" placeholder="Value">
         </div>
 
-        <!-- "Remember data" + "forgot password?" -->
         <div class="field">
           <label class="checkbox-remember">
             <input type="checkbox" id="remember_data" name="remember_data">
             <span>remember data</span>
           </label>
-          <a href="#" class="forgot-password-link">forgot password?</a>
         </div>
 
-        <!-- Login-Button -->
         <div class="actions">
-          <input type="button" value="Login" class="login-button" onclick="window.location.href='/profile';">
+          <input 
+            type="button" 
+            id="login-button"
+            value="Login" 
+            class="login-button">
         </div>
-
       </form>
+
+      <div class="footer">
+        <p>Noch kein Konto? <a href="/register">Hier registrieren</a></p>
+      </div>
     </div>
+
+    <script>
+      document.getElementById('login-button').addEventListener('click', function() {
+        var errorDiv = document.getElementById('form-error');
+        errorDiv.style.display = 'none';
+
+        var email = document.getElementById('email').value.trim();
+        var pw    = document.getElementById('password').value.trim();
+
+        if (!email || !pw) {
+          errorDiv.style.display = 'block';
+          return;
+        }
+
+        window.location.href = '/profile';
+      });
+    </script>
   </body>
 </html>
