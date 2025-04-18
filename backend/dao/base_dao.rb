@@ -4,9 +4,9 @@ require_relative 'errors'
 
 class BaseDAO
   class << self
-    include DaoErrorHandling  # Änderung von extend zu include
+    include DaoErrorHandling
 
-    # Gemeinsame Logging-Methoden
+    # common logging methods
     def log_info(message)
       DaoLogger.log_info(message)
     end
@@ -20,4 +20,3 @@ class BaseDAO
     end
   end
 end
-

@@ -14,4 +14,3 @@ module DeviceErrorHandling
     raise RecordNotFound, "Device not found for criteria: #{criteria.inspect}"
   end
 end
-
