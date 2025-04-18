@@ -15,4 +15,3 @@ module DaoLogger
     end
   end
 end
-

@@ -114,4 +114,3 @@ class DeviceDAO < BaseDAO
     end
   end
 end
-

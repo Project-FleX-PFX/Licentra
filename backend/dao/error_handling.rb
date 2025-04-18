@@ -1,4 +1,5 @@
 module DaoErrorHandling
+  
   def with_error_handling(context)
     yield
   rescue Sequel::ValidationFailed => e
@@ -14,5 +15,5 @@ module DaoErrorHandling
     DaoLogger.log_error("Unknown error while #{context}: #{e.message}")
     raise
   end
-end
 
+end
