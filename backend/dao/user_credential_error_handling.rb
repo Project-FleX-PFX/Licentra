@@ -8,8 +8,13 @@ module UserCredentialErrorHandling
   end
 
   def handle_record_not_found(user_id)
-    log_credential_not_found(user_id) # Aus Logging-Modul
+    log_record_not_found(user_id)
     raise RecordNotFound, "UserCredential for user_id #{user_id} not found"
+  end
+
+  def handle_record_not_found_by_criteria(criteria)
+    log_record_not_found_by_criteria(criteria)
+    raise RecordNotFound, "UserCredential not found for criteria: #{criteria.inspect}"
   end
 
 end
