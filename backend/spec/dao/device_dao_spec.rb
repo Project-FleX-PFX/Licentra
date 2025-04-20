@@ -46,7 +46,7 @@ RSpec.describe DeviceDAO do
         }.to raise_error(DAO::ValidationError) do |error|
           expect(error.message).to match(/creating device/i)
           expect(error.errors).to have_key(:device_name)
-          expect(error.errors[:device_name]).to include(/is not present/i)
+          expect(error.errors[:device_name]).to include(/device name can not be empty/i)
         end
       end
 
@@ -66,7 +66,7 @@ RSpec.describe DeviceDAO do
            described_class.create(duplicate_attributes)
          }.to raise_error(DAO::ValidationError) do |error|
            expect(error.errors).to have_key(:serial_number)
-           expect(error.errors[:serial_number]).to include(/is already taken/i)
+           expect(error.errors[:serial_number]).to include(/serial number must be unique if specified/i)
          end
        end
      end
@@ -181,7 +181,7 @@ RSpec.describe DeviceDAO do
           expect {
             described_class.update(device_to_update.pk, invalid_update_attributes)
           }.to raise_error(DAO::ValidationError) do |error|
-             expect(error.errors[:device_name]).to include(/is not present/i)
+             expect(error.errors[:device_name]).to include(/device name can not be empty/i)
           end
        end
      end

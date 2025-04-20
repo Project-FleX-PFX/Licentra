@@ -1,4 +1,4 @@
-require_relative '../lib/logger'
+require_relative '../lib/licentra_logger'
 
 module DaoLogger
   class << self
