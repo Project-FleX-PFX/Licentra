@@ -8,14 +8,6 @@ set :host_authorization, { permitted_hosts: ['vmd166389.contaboserver.net', 'loc
 # --- Routes ---
 set :views, File.join(File.dirname(__FILE__), 'frontend', 'views')
 
-DB = Sequel.connect(
-  adapter: 'postgres',
-  host: ENV['DATABASE_HOST'] || 'db',
-  database: ENV['DATABASE_NAME'] || 'licentra_development',
-  user: ENV['DATABASE_USER'] || 'myusername',
-  password: ENV['DATABASE_PASSWORD'] || 'mypassword'
-)
-
 # Hard coded as docker sets up directory structure
 set :public_folder, '/app/frontend/public'
 

@@ -1,5 +1,13 @@
 require 'sequel'
 require 'logger'
+require 'rspec/core/rake_task'
+
+desc "Run all specs"
+RSpec::Core::RakeTask.new(:spec) do |t|
+  t.pattern = 'spec/**/*_spec.rb'
+  t.rspec_opts = "--color --format documentation"
+end
+
 require_relative 'config/environment.rb'
 
 namespace :db do
@@ -17,7 +25,7 @@ namespace :db do
 
   desc "Load seed data"
   task seed: :load_config do
-    seed_file = File.join(File.dirname(__FILE__), 'db', 'seeds.rb')
+    seed_file = File.join(__dir__, 'db', 'seeds.rb')
     if File.exist?(seed_file)
       puts "Loading seed data..."
       load(seed_file)
