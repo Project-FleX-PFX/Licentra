@@ -1,14 +1,18 @@
-class DAOError < StandardError; end
+module DAO
 
-class RecordNotFound < DAOError; end
+  class DAOError < StandardError; end
 
-class ValidationError < DAOError
-  attr_reader :errors, :model
-  def initialize(message = "Validation failed", errors = {}, model = nil)
-    super(message)
-    @errors = errors
-    @model = model
+  class RecordNotFound < DAOError; end
+
+  class ValidationError < DAOError
+    attr_reader :errors, :model
+    def initialize(message = "Validation failed", errors = {}, model = nil)
+      super(message)
+      @errors = errors
+      @model = model
+    end
   end
-end
 
-class DatabaseError < DAOError; end
+  class DatabaseError < DAOError; end
+
+end

@@ -7,3 +7,10 @@ gem 'pg'
 gem 'sequel'
 gem 'rake'
 gem 'bcrypt'
+
+group :development, :test do
+  gem 'rspec'
+  gem 'sqlite3', '~> 1.7.3'
+  gem 'database_cleaner-sequel'
+  gem 'fabrication'
+end
