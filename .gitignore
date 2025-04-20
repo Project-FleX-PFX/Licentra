@@ -13,6 +13,9 @@ backend/.bundle/
 backend/*.sqlite3
 backend/*.sqlite3-journal
 
+# Backend (RSpec)
+backend/spec/*.txt
+
 # Docker
 .docker-sync/
 
