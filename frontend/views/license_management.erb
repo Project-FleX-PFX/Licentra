@@ -1,0 +1,120 @@
+<%# views/admin/license_management.erb %>
+<% @title = "License Management" %>
+<% @css   = "license_management" %>
+
+<div class="license-management-container">
+  <div class="toolbar">
+    <div class="search-box">
+      <input type="text" id="search-input" placeholder="Search License…">
+      <button id="search-btn" aria-label="Search">🔍</button>
+      <button id="add-license-btn" class="add-btn" title="Add new License">＋</button>
+    </div>
+  </div>
+
+  <ul class="license-list">
+    <% licenses = [
+      { name: "Enterprise License", key: "ENT-999-ZZZ", parent_product: "ProX 200", user_count: 5 },
+      { name: "Standard License",   key: "STD-111-AAA", parent_product: "Alpha Gadget", user_count: 2 }
+    ] %>
+    <% licenses.each do |l| %>
+      <li class="license-item"
+          data-license_name="<%= l[:name] %>"
+          data-license_key="<%= l[:key] %>"
+          data-parent_product="<%= l[:parent_product] %>"
+          data-user_count="<%= l[:user_count] %>">
+        <span class="license-name"><%= l[:name] %></span>
+      </li>
+    <% end %>
+  </ul>
+</div>
+
+<!-- Modal für Add/Edit -->
+<div id="license-modal" class="modal hidden">
+  <div class="modal-content">
+    <span class="close-btn" title="Schließen">&times;</span>
+    <h2 id="modal-title">License configuration</h2>
+    <form id="license-form">
+      <label>Name:</label>
+      <input type="text" name="license_name" disabled>
+
+      <label>License Key:</label>
+      <input type="text" name="license_key" disabled>
+
+      <label>Sub product of:</label>
+      <input type="text" name="parent_product" disabled>
+
+      <label>Volume license user:</label>
+      <input type="number" name="user_count" disabled min="0">
+
+      <div class="modal-actions">
+        <button type="button" id="edit-btn">Edit</button>
+        <button type="submit" id="save-btn" disabled>Save</button>
+        <button type="button" id="delete-btn" class="delete-btn">Delete</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const items     = document.querySelectorAll(".license-item");
+  const modal     = document.getElementById("license-modal");
+  const closeBtn  = modal.querySelector(".close-btn");
+  const form      = document.getElementById("license-form");
+  const editBtn   = document.getElementById("edit-btn");
+  const saveBtn   = document.getElementById("save-btn");
+  const deleteBtn = document.getElementById("delete-btn");
+  const title     = document.getElementById("modal-title");
+
+  function openModal(mode, data={}) {
+    title.textContent = mode === 'add'
+      ? 'Add new License '
+      : 'License configuration';
+
+    form.license_name.value  = data.license_name  || '';
+    form.license_key.value   = data.license_key   || '';
+    form.parent_product.value= data.parent_product|| '';
+    form.user_count.value    = data.user_count    || 0;
+
+    [...form.elements].forEach(el => {
+      if (['edit-btn','save-btn','delete-btn'].includes(el.id)) return;
+      el.disabled = true;
+    });
+    saveBtn.disabled = true;
+    deleteBtn.style.display = mode === 'edit' ? 'inline-block' : 'none';
+    modal.classList.remove("hidden");
+  }
+
+  items.forEach(item =>
+    item.addEventListener("click", () =>
+      openModal('edit', item.dataset)
+    )
+  );
+
+  document.getElementById("add-license-btn")
+    .addEventListener("click", () => openModal('add'));
+
+  closeBtn.addEventListener("click", () =>
+    modal.classList.add("hidden")
+  );
+
+  editBtn.addEventListener("click", () => {
+    [...form.elements].forEach(el => {
+      if (['edit-btn','delete-btn'].includes(el.id)) return;
+      el.disabled = false;
+    });
+    saveBtn.disabled = false;
+  });
+
+  deleteBtn.addEventListener("click", () => {
+    if (confirm("Soll diese License wirklich gelöscht werden?")) {
+      modal.classList.add("hidden");
+    }
+  });
+
+  form.addEventListener("submit", e => {
+    e.preventDefault();
+    modal.classList.add("hidden");
+  });
+});
+</script>

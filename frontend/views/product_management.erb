@@ -1,0 +1,112 @@
+<%# views/admin/product_management.erb %>
+<% @title = "Product Management" %>
+<% @css   = "product_management" %>
+
+<div class="product-management-container">
+  <div class="toolbar">
+    <div class="search-box">
+      <input type="text" id="search-input" placeholder="Search Product…">
+      <button id="search-btn" aria-label="Search">🔍</button>
+      <button id="add-product-btn" class="add-btn" title="Add new Product">＋</button>
+    </div>
+  </div>
+
+  <ul class="product-list">
+    <% products = [
+      { name: "ProX 200",     license_count: 3 },
+      { name: "Alpha Gadget", license_count: 1 }
+    ] %>
+    <% products.each do |p| %>
+      <li class="product-item"
+          data-product_name="<%= p[:name] %>"
+          data-license_count="<%= p[:license_count] %>">
+        <span class="product-name"><%= p[:name] %></span>
+      </li>
+    <% end %>
+  </ul>
+</div>
+
+<!-- Modal für Add/Edit -->
+<div id="product-modal" class="modal hidden">
+  <div class="modal-content">
+    <span class="close-btn" title="Schließen">&times;</span>
+    <h2 id="modal-title">Product configuration</h2>
+    <form id="product-form">
+      <label>Name:</label>
+      <input type="text" name="product_name" disabled>
+
+      <label>Number of sub licenses:</label>
+      <input type="number" name="license_count" disabled min="0">
+
+      <div class="modal-actions">
+        <button type="button" id="edit-btn">Edit</button>
+        <button type="submit" id="save-btn" disabled>Save</button>
+        <button type="button" id="delete-btn" class="delete-btn">Delete</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const items     = document.querySelectorAll(".product-item");
+  const modal     = document.getElementById("product-modal");
+  const closeBtn  = modal.querySelector(".close-btn");
+  const form      = document.getElementById("product-form");
+  const editBtn   = document.getElementById("edit-btn");
+  const saveBtn   = document.getElementById("save-btn");
+  const deleteBtn = document.getElementById("delete-btn");
+  const title     = document.getElementById("modal-title");
+
+  function openModal(mode, data={}) {
+    title.textContent = mode === 'add'
+      ? 'Add new Product '
+      : 'Product configuration';
+
+    // Felder mit Daten befüllen (oder leer lassen beim "add")
+    form.product_name.value  = data.product_name  || '';
+    form.license_count.value = data.license_count || 0;
+
+    // Inputs sperren
+    [...form.elements].forEach(el => {
+      if (['edit-btn','save-btn','delete-btn'].includes(el.id)) return;
+      el.disabled = true;
+    });
+    saveBtn.disabled = true;
+    deleteBtn.style.display = mode === 'edit' ? 'inline-block' : 'none';
+    modal.classList.remove("hidden");
+  }
+
+  items.forEach(item =>
+    item.addEventListener("click", () =>
+      openModal('edit', item.dataset)
+    )
+  );
+
+  document.getElementById("add-product-btn")
+    .addEventListener("click", () => openModal('add'));
+
+  closeBtn.addEventListener("click", () =>
+    modal.classList.add("hidden")
+  );
+
+  editBtn.addEventListener("click", () => {
+    [...form.elements].forEach(el => {
+      if (['edit-btn','delete-btn'].includes(el.id)) return;
+      el.disabled = false;
+    });
+    saveBtn.disabled = false;
+  });
+
+  deleteBtn.addEventListener("click", () => {
+    if (confirm("Soll dieses Product wirklich gelöscht werden?")) {
+      modal.classList.add("hidden");
+    }
+  });
+
+  form.addEventListener("submit", e => {
+    e.preventDefault();
+    modal.classList.add("hidden");
+  });
+});
+</script>

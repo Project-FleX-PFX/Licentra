@@ -57,3 +57,18 @@ end
 get '/register' do
   erb :register, layout: false
 end
+
+get '/user_management' do
+  @use_admin_nav = true
+  erb :user_management
+end
+
+get '/product_management' do
+  @use_admin_nav = true
+  erb :product_management
+end
+
+get '/license_management' do
+  @use_admin_nav = true
+  erb :license_management
+end
