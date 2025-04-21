@@ -1,10 +1,12 @@
+# frozen_string_literal: true
+
 require_relative '../models/user_role'
 require_relative 'base_dao'
 require_relative 'user_role_logging'
 require_relative 'user_role_error_handling'
 
+# Data Access Object for UserRole entities, handling database operations
 class UserRoleDAO < BaseDAO
-
   class << self
     include UserRoleLogging
     include UserRoleErrorHandling
@@ -55,19 +57,17 @@ class UserRoleDAO < BaseDAO
       context = "finding specific assignment for user_id #{user_id}, role_id #{role_id}"
       with_error_handling(context) do
         assignment = model_class.first(user_id: user_id, role_id: role_id)
-        unless assignment
-          handle_record_not_found(user_id, role_id)
-        end
+        handle_record_not_found(user_id, role_id) unless assignment
         log_assignment_found(user_id, role_id)
         assignment
       end
     end
 
     def exists?(user_id, role_id)
-       context = "checking existence for user_id #{user_id}, role_id #{role_id}"
-       with_error_handling(context) do
-         model_class.where(user_id: user_id, role_id: role_id).any?
-       end
+      context = "checking existence for user_id #{user_id}, role_id #{role_id}"
+      with_error_handling(context) do
+        model_class.where(user_id: user_id, role_id: role_id).any?
+      end
     end
 
     # DELETE
@@ -75,7 +75,7 @@ class UserRoleDAO < BaseDAO
       context = "deleting assignment for user_id #{user_id}, role_id #{role_id}"
       with_error_handling(context) do
         count = model_class.where(user_id: user_id, role_id: role_id).delete
-        if count > 0
+        if count.positive?
           log_assignment_deleted(user_id, role_id)
           true
         else
@@ -85,23 +85,21 @@ class UserRoleDAO < BaseDAO
     end
 
     def delete_by_user(user_id)
-       context = "deleting all assignments for user_id #{user_id}"
-       with_error_handling(context) do
-         count = model_class.where(user_id: user_id).delete
-         log_assignments_deleted_for_user(user_id, count)
-         count
-       end
+      context = "deleting all assignments for user_id #{user_id}"
+      with_error_handling(context) do
+        count = model_class.where(user_id: user_id).delete
+        log_assignments_deleted_for_user(user_id, count)
+        count
+      end
     end
 
     def delete_by_role(role_id)
-       context = "deleting all assignments for role_id #{role_id}"
-       with_error_handling(context) do
-         count = model_class.where(role_id: role_id).delete
-         log_assignments_deleted_for_role(role_id, count)
-         count
-       end
+      context = "deleting all assignments for role_id #{role_id}"
+      with_error_handling(context) do
+        count = model_class.where(role_id: role_id).delete
+        log_assignments_deleted_for_role(role_id, count)
+        count
+      end
     end
-
   end
-
 end

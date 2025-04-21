@@ -1,5 +1,7 @@
-module LicenseTypeLogging
+# frozen_string_literal: true
 
+# Logging functionality specific to LicenseType operations
+module LicenseTypeLogging
   def log_created(license_type)
     log_info("License Type created: #{license_type.inspect}")
   end
@@ -47,5 +49,4 @@ module LicenseTypeLogging
   def log_license_type_found_by_name(name, license_type)
     log_info("License Type found by name '#{name}': #{license_type.inspect}")
   end
-  
 end

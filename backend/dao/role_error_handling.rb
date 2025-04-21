@@ -1,7 +1,9 @@
+# frozen_string_literal: true
+
 require_relative 'errors'
 
+# Error handling specific to Role operations
 module RoleErrorHandling
-
   def handle_validation_error(role, context)
     log_validation_failed(role, context)
     raise ValidationError.new("Validation failed while #{context}", role.errors, role)
@@ -21,5 +23,4 @@ module RoleErrorHandling
     log_record_not_found_by_name(name)
     raise RecordNotFound, "Role not found with name: '#{name}'"
   end
-  
 end

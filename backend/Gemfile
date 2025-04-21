@@ -1,16 +1,18 @@
+# frozen_string_literal: true
+
 source 'https://rubygems.org'
 
-gem 'sinatra'
-gem 'rackup'
-gem 'puma'
-gem 'pg'
-gem 'sequel'
-gem 'rake'
 gem 'bcrypt'
+gem 'pg'
+gem 'puma'
+gem 'rackup'
+gem 'rake'
+gem 'sequel'
+gem 'sinatra'
 
 group :development, :test do
-  gem 'rspec'
-  gem 'sqlite3', '~> 1.7.3'
   gem 'database_cleaner-sequel'
   gem 'fabrication'
+  gem 'rspec'
+  gem 'sqlite3', '~> 1.7.3'
 end

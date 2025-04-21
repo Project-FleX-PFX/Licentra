@@ -1,5 +1,7 @@
-module UserCredentialLogging
+# frozen_string_literal: true
 
+# Logging functionality specific to UserCredential operations
+module UserCredentialLogging
   def log_created(credential)
     log_info("UserCredential created for user_id: #{credential.user_id}")
   end
@@ -43,5 +45,4 @@ module UserCredentialLogging
   def log_password_updated(credential)
     log_info("Password updated successfully for user_id: #{credential.user_id}")
   end
-  
 end

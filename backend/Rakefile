@@ -1,62 +1,64 @@
+# frozen_string_literal: true
+
 require 'sequel'
 require 'logger'
 require 'rspec/core/rake_task'
 
-desc "Run all specs"
+desc 'Run all specs'
 RSpec::Core::RakeTask.new(:spec) do |t|
   t.pattern = 'spec/**/*_spec.rb'
-  t.rspec_opts = "--color --format documentation"
+  t.rspec_opts = '--color --format documentation'
 end
 
-require_relative 'config/environment.rb'
+require_relative 'config/environment'
 
 namespace :db do
   task :load_config do
-    raise "Database constant DB not found. Ensure connection is established." unless defined?(DB)
+    raise 'Database constant DB not found. Ensure connection is established.' unless defined?(DB)
   end
 
-  desc "Run database migrations"
+  desc 'Run database migrations'
   task migrate: :load_config do
     Sequel.extension :migration
-    puts "Running migrations..."
+    puts 'Running migrations...'
     Sequel::Migrator.run(DB, 'db/migrations')
-    puts "Migrations finished."
+    puts 'Migrations finished.'
   end
 
-  desc "Load seed data"
+  desc 'Load seed data'
   task seed: :load_config do
     seed_file = File.join(__dir__, 'db', 'seeds.rb')
     if File.exist?(seed_file)
-      puts "Loading seed data..."
+      puts 'Loading seed data...'
       load(seed_file)
-      puts "Seed data loaded."
+      puts 'Seed data loaded.'
     else
       puts "Seed file not found: #{seed_file}"
     end
   end
 
-  desc "Create database (usually handled by Docker/Postgres init)"
+  desc 'Create database (usually handled by Docker/Postgres init)'
   task :create do
-    puts "Database creation typically handled by the PostgreSQL container on first start."
-    puts "Ensure POSTGRES_DB is set correctly in your environment/docker-compose.yml."
+    puts 'Database creation typically handled by the PostgreSQL container on first start.'
+    puts 'Ensure POSTGRES_DB is set correctly in your environment/docker-compose.yml.'
   end
 
-  desc "Drop database (Caution!) - Often better to recreate container volume"
+  desc 'Drop database (Caution!) - Often better to recreate container volume'
   task :drop do
-     puts "Dropping the database via Rake is complex and risky."
-     puts "Consider using 'docker-compose down -v' to remove the volume and 'docker-compose up' to recreate."
+    puts 'Dropping the database via Rake is complex and risky.'
+    puts "Consider using 'docker-compose down -v' to remove the volume and 'docker-compose up' to recreate."
   end
 
-  desc "Setup database: migrate and seed"
-  task setup: [:migrate, :seed] do
-    puts "Database setup complete (migrated and seeded)."
+  desc 'Setup database: migrate and seed'
+  task setup: %i[migrate seed] do
+    puts 'Database setup complete (migrated and seeded).'
   end
 
-  desc "Reset database: drop (manual/docker), create (manual/docker), setup"
+  desc 'Reset database: drop (manual/docker), create (manual/docker), setup'
   task reset: :load_config do
-    puts "For a full reset:"
-    puts "1. Stop services: docker-compose down -v"
-    puts "2. Start services: docker-compose up -d --build"
-    puts "3. Run setup: docker-compose exec app bundle exec rake db:setup"
+    puts 'For a full reset:'
+    puts '1. Stop services: docker-compose down -v'
+    puts '2. Start services: docker-compose up -d --build'
+    puts '3. Run setup: docker-compose exec app bundle exec rake db:setup'
   end
 end

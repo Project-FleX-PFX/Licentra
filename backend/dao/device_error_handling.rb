@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+
+# Error handling specific to Device operations
 module DeviceErrorHandling
   def handle_validation_error(device, context)
     log_validation_failed(device, context)
@@ -14,4 +17,3 @@ module DeviceErrorHandling
     raise DAO::RecordNotFound, "Device not found for criteria: #{criteria.inspect}"
   end
 end
-

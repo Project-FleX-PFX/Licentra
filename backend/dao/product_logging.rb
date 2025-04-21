@@ -1,5 +1,7 @@
-module ProductLogging
+# frozen_string_literal: true
 
+# Logging functionality specific to Product operations
+module ProductLogging
   def log_created(product)
     log_info("Product created: #{product.inspect}")
   end
@@ -47,5 +49,4 @@ module ProductLogging
   def log_product_found_by_name(name, product)
     log_info("Product found by name '#{name}': #{product.inspect}")
   end
-
 end

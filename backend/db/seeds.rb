@@ -1,12 +1,13 @@
-require_relative '../config/environment.rb'
+# frozen_string_literal: true
+
+require_relative '../config/environment'
 require 'date'
 require 'bcrypt'
 
-puts "Seeding database..."
+puts 'Seeding database...'
 
 DB.transaction(rollback: :reraise) do
-
-  puts "Deleting existing data..."
+  puts 'Deleting existing data...'
   AssignmentLog.dataset.delete
   LicenseAssignment.dataset.delete
   License.dataset.delete
@@ -18,46 +19,53 @@ DB.transaction(rollback: :reraise) do
   LicenseType.dataset.delete
   Product.dataset.delete
 
-  puts "Creating Products..."
+  puts 'Creating Products...'
   p_editor = Product.create(product_name: 'PowerEdit Pro')
   p_suite = Product.create(product_name: 'Office Suite Deluxe')
   p_cad = Product.create(product_name: 'CAD Master 3D')
   p_db = Product.create(product_name: 'DataCruncher DB')
 
-  puts "Creating License Types..."
+  puts 'Creating License Types...'
   lt_perp_user = LicenseType.create(type_name: 'Perpetual User', description: 'Einmaliger Kauf pro Benutzer.')
   lt_sub_user = LicenseType.create(type_name: 'Subscription User', description: 'Abonnement pro Benutzer.')
-  lt_vol_user = LicenseType.create(type_name: 'Volume Subscription User', description: 'Abonnement für mehrere Benutzer (pro Platz).')
+  lt_vol_user = LicenseType.create(type_name: 'Volume Subscription User',
+                                   description: 'Abonnement für mehrere Benutzer (pro Platz).')
   lt_dev = LicenseType.create(type_name: 'Device License', description: 'Lizenz ist an ein Gerät gebunden.')
-  lt_conc = LicenseType.create(type_name: 'Concurrent Usage', description: 'Maximale Anzahl gleichzeitiger Nutzer.')
+  LicenseType.create(type_name: 'Concurrent Usage', description: 'Maximale Anzahl gleichzeitiger Nutzer.')
 
-  puts "Creating Roles..."
+  puts 'Creating Roles...'
   r_admin = Role.create(role_name: 'Admin')
   r_manager = Role.create(role_name: 'LicenseManager')
   r_user = Role.create(role_name: 'User')
 
-  puts "Creating Devices..."
-  dev_ws01 = Device.create(device_name: 'Workstation-Dev-01', serial_number: 'WKSDEV01XYZ', notes: 'Dev Team Workstation')
-  dev_lap05 = Device.create(device_name: 'Laptop-Sales-05', serial_number: 'LAPSAL05ABC', notes: 'Sales Team Laptop')
-  dev_kiosk = Device.create(device_name: 'Reception Kiosk', notes: 'Shared device in reception')
+  puts 'Creating Devices...'
+  dev_ws01 = Device.create(device_name: 'Workstation-Dev-01', serial_number: 'WKSDEV01XYZ',
+                           notes: 'Dev Team Workstation')
+  Device.create(device_name: 'Laptop-Sales-05', serial_number: 'LAPSAL05ABC', notes: 'Sales Team Laptop')
+  Device.create(device_name: 'Reception Kiosk', notes: 'Shared device in reception')
 
-  puts "Creating Users & Credentials..."
-  admin = User.new(username: 'admin', email: 'admin@company.local', first_name: 'Admin', last_name: 'Istrator', is_active: true, credential_attributes: { password_plain: 'secureAdminPass123!' })
+  puts 'Creating Users & Credentials...'
+  admin = User.new(username: 'admin', email: 'admin@company.local', first_name: 'Admin', last_name: 'Istrator',
+                   is_active: true, credential_attributes: { password_plain: 'secureAdminPass123!' })
   admin.save
 
-  manager = User.new(username: 'lic_manager', email: 'manager@company.local', first_name: 'Lisa', last_name: 'Manager', is_active: true, credential_attributes: { password_plain: 'manageMyLicenses!' })
+  manager = User.new(username: 'lic_manager', email: 'manager@company.local', first_name: 'Lisa', last_name: 'Manager',
+                     is_active: true, credential_attributes: { password_plain: 'manageMyLicenses!' })
   manager.save
 
-  alice = User.new(username: 'alice', email: 'alice@company.local', first_name: 'Alice', last_name: 'Dev', is_active: true, credential_attributes: { password_plain: 'alicePassw0rd' })
+  alice = User.new(username: 'alice', email: 'alice@company.local', first_name: 'Alice', last_name: 'Dev',
+                   is_active: true, credential_attributes: { password_plain: 'alicePassw0rd' })
   alice.save
 
-  bob = User.new(username: 'bob', email: 'bob@company.local', first_name: 'Bob', last_name: 'Sales', is_active: true, credential_attributes: { password_plain: 'bobLikesSales1' })
+  bob = User.new(username: 'bob', email: 'bob@company.local', first_name: 'Bob', last_name: 'Sales', is_active: true,
+                 credential_attributes: { password_plain: 'bobLikesSales1' })
   bob.save
 
-  inactive_user = User.new(username: 'inactive', email: 'inactive@company.local', first_name: 'Inactive', last_name: 'User', is_active: false, credential_attributes: { password_plain: 'tempPass' })
+  inactive_user = User.new(username: 'inactive', email: 'inactive@company.local', first_name: 'Inactive',
+                           last_name: 'User', is_active: false, credential_attributes: { password_plain: 'tempPass' })
   inactive_user.save
 
-  puts "Assigning Roles..."
+  puts 'Assigning Roles...'
   admin.add_role(r_admin)
   admin.add_role(r_user)
   manager.add_role(r_manager)
@@ -66,7 +74,7 @@ DB.transaction(rollback: :reraise) do
   bob.add_role(r_user)
   inactive_user.add_role(r_user)
 
-  puts "Creating Licenses..."
+  puts 'Creating Licenses...'
   today = Date.today
   lic_editor_single = License.create(
     product: p_editor,
@@ -123,76 +131,75 @@ DB.transaction(rollback: :reraise) do
     cost: 99.00, currency: 'EUR', vendor: 'Office Corp.', status: 'Expired'
   )
 
-  puts "Creating License Assignments..."
-  ass_alice_editor = LicenseAssignment.create(
+  puts 'Creating License Assignments...'
+  LicenseAssignment.create(
     license: lic_editor_single,
     user: alice,
-    assignment_date: Time.now - 60*60*24*30,
+    assignment_date: Time.now - 60 * 60 * 24 * 30,
     is_active: true
   )
 
-  ass_bob_suite = LicenseAssignment.create(
+  LicenseAssignment.create(
     license: lic_suite_volume,
     user: bob,
-    assignment_date: Time.now - 60*60*24*10,
+    assignment_date: Time.now - 60 * 60 * 24 * 10,
     is_active: true
   )
 
-  ass_manager_suite = LicenseAssignment.create(
+  LicenseAssignment.create(
     license: lic_suite_volume,
     user: manager,
-    assignment_date: Time.now - 60*60*24*10,
+    assignment_date: Time.now - 60 * 60 * 24 * 10,
     is_active: true
   )
 
-  ass_inactive_suite = LicenseAssignment.create(
+  LicenseAssignment.create(
     license: lic_suite_volume,
     user: inactive_user,
-    assignment_date: Time.now - 60*60*24*5,
+    assignment_date: Time.now - 60 * 60 * 24 * 5,
     is_active: true,
-    notes: "Assigned to currently inactive user"
+    notes: 'Assigned to currently inactive user'
   )
 
-  ass_dev_cad = LicenseAssignment.create(
+  LicenseAssignment.create(
     license: lic_cad_device,
     device: dev_ws01,
-    assignment_date: Time.now - 60*60*24*90,
+    assignment_date: Time.now - 60 * 60 * 24 * 90,
     is_active: true,
     notes: 'Primary CAD license for Dev Workstation 01'
   )
 
-  ass_bob_db = LicenseAssignment.create(
+  LicenseAssignment.create(
     license: lic_db_perpetual,
     user: bob,
-    assignment_date: Time.now - 60*60*24*365,
+    assignment_date: Time.now - 60 * 60 * 24 * 365,
     is_active: true
   )
 
   ass_alice_suite_expired = LicenseAssignment.create(
-     license: lic_suite_expired,
-     user: alice,
-     assignment_date: Time.now - 60*60*24*200,
-     is_active: false,
-     notes: 'Assignment related to an expired license'
+    license: lic_suite_expired,
+    user: alice,
+    assignment_date: Time.now - 60 * 60 * 24 * 200,
+    is_active: false,
+    notes: 'Assignment related to an expired license'
   )
 
-   AssignmentLog.create(
-       assignment_id: ass_alice_suite_expired.assignment_id,
-       action: 'DEACTIVATED',
-       details: 'Assignment deactivated manually or due to license expiry.',
-       log_timestamp: (lic_suite_expired.expire_date + 1).to_time
-   )
+  AssignmentLog.create(
+    assignment_id: ass_alice_suite_expired.assignment_id,
+    action: 'DEACTIVATED',
+    details: 'Assignment deactivated manually or due to license expiry.',
+    log_timestamp: (lic_suite_expired.expire_date + 1).to_time
+  )
 
-   temp_ass = LicenseAssignment.create(
-       license: lic_suite_volume,
-       user: alice,
-       assignment_date: Time.now - 60*60*24*2,
-       is_active: true,
-       notes: 'Temporary assignment for Alice'
-   )
-   puts "Deactivating temporary assignment for Alice (ID: #{temp_ass.assignment_id})..."
-   temp_ass.update(is_active: false, notes: 'Deactivated shortly after creation for testing.')
+  temp_ass = LicenseAssignment.create(
+    license: lic_suite_volume,
+    user: alice,
+    assignment_date: Time.now - 60 * 60 * 24 * 2,
+    is_active: true,
+    notes: 'Temporary assignment for Alice'
+  )
+  puts "Deactivating temporary assignment for Alice (ID: #{temp_ass.assignment_id})..."
+  temp_ass.update(is_active: false, notes: 'Deactivated shortly after creation for testing.')
 
-  puts "Seeding finished successfully."
-
+  puts 'Seeding finished successfully.'
 end

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 Sequel.migration do
   change do
     create_table(:license_assignments) do
@@ -11,10 +13,10 @@ Sequel.migration do
       Boolean :is_active, null: false, default: true
 
       # to ensure that either user_id or device_id is set
-      constraint(:user_or_device_check, "user_id IS NOT NULL OR device_id IS NOT NULL")
+      constraint(:user_or_device_check, 'user_id IS NOT NULL OR device_id IS NOT NULL')
 
-      index [:license_id, :user_id]
-      index [:license_id, :device_id]
+      index %i[license_id user_id]
+      index %i[license_id device_id]
       index :is_active
     end
   end

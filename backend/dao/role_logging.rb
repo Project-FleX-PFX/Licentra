@@ -1,5 +1,7 @@
-module RoleLogging
+# frozen_string_literal: true
 
+# Logging functionality specific to Role operations
+module RoleLogging
   def log_created(role)
     log_info("Role created: #{role.inspect}")
   end
@@ -47,5 +49,4 @@ module RoleLogging
   def log_role_found_by_name(name, role)
     log_info("Role found by name '#{name}': #{role.inspect}")
   end
-
 end

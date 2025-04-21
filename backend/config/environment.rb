@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'sequel'
 require 'logger'
 
@@ -23,8 +25,8 @@ unless ENV['RACK_ENV'] == 'test'
 
   # --- load models and DAOs ---
   unless ENV['MIGRATION_ONLY'] == 'true'
-    Dir[File.join(__dir__, '..', 'models', '*.rb')].each { |file| require file }
-    Dir[File.join(__dir__, '..', 'dao', '*.rb')].each { |file| require file }
+    Dir[File.join(__dir__, '..', 'models', '*.rb')].sort.each { |file| require file }
+    Dir[File.join(__dir__, '..', 'dao', '*.rb')].sort.each { |file| require file }
   end
 
 end

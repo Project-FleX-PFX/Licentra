@@ -1,5 +1,7 @@
-module LicenseLogging
+# frozen_string_literal: true
 
+# Logging functionality specific to License operations
+module LicenseLogging
   def log_created(license)
     log_info("License created: ID #{license.pk}, Product ID #{license.product_id}, Type ID #{license.license_type_id}, Seats #{license.seat_count}")
   end
@@ -47,5 +49,4 @@ module LicenseLogging
   def log_licenses_for_type_fetched(type_id, count)
     log_info("Fetched #{count} licenses for Type ID #{type_id}")
   end
-
 end
