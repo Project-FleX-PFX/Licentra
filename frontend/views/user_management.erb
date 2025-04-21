@@ -1,0 +1,139 @@
+<%# views/admin/user_management.erb %>
+<% @title = "User Management" %>
+<% @css   = "user_management" %>
+
+<div class="user-management-container">
+  <div class="toolbar">
+    <div class="search-box">
+      <input type="text" id="search-input" placeholder="Search User…">
+      <button id="search-btn" aria-label="Search">🔍</button>
+      <button id="add-user-btn" class="add-btn" title="Add new User">＋</button>
+    </div>
+  </div>
+
+  <ul class="user-list">
+    <% 
+      users = [
+        { first_name: "Max",    last_name: "Mustermann", username: "mmuster", email: "max@beispiel.de",    role: "user"  },
+        { first_name: "Erika",  last_name: "Musterfrau", username: "emuster", email: "erika@beispiel.de",  role: "admin" },
+        { first_name: "Hans",   last_name: "Meier",      username: "hmeier",  email: "hans@beispiel.de",   role: "user"  }
+      ] 
+    %>
+    <% users.each do |u| %>
+      <li class="user-item"
+          data-first_name="<%= u[:first_name] %>"
+          data-last_name="<%= u[:last_name] %>"
+          data-username="<%= u[:username] %>"
+          data-email="<%= u[:email] %>"
+          data-role="<%= u[:role] %>">
+        <span class="user-name"><%= "#{u[:first_name]} #{u[:last_name]}" %></span>
+      </li>
+    <% end %>
+  </ul>
+</div>
+
+<!-- Modal für Add/Edit -->
+<div id="user-modal" class="modal hidden">
+  <div class="modal-content">
+    <span class="close-btn" title="Schließen">&times;</span>
+    <h2 id="modal-title">User configuration</h2>
+    <form id="user-form">
+      <label>First Name:</label>
+      <input type="text" name="first_name" disabled>
+
+      <label>Last Name:</label>
+      <input type="text" name="last_name" disabled>
+
+      <label>Username:</label>
+      <input type="text" name="username" disabled>
+
+      <label>Email:</label>
+      <input type="email" name="email" disabled>
+
+      <label>Password:</label>
+      <input type="password" name="password" disabled placeholder="••••••">
+
+      <label>Role:</label>
+      <select name="role" disabled>
+        <option value="user">User</option>
+        <option value="admin">Admin</option>
+      </select>
+
+      <div class="modal-actions">
+        <button type="button" id="edit-btn">Edit</button>
+        <button type="submit" id="save-btn" disabled>Save</button>
+        <button type="button" id="delete-btn" class="delete-btn">Delete</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const items    = document.querySelectorAll(".user-item");
+  const modal    = document.getElementById("user-modal");
+  const closeBtn = modal.querySelector(".close-btn");
+  const form     = document.getElementById("user-form");
+  const editBtn  = document.getElementById("edit-btn");
+  const saveBtn  = document.getElementById("save-btn");
+  const deleteBtn= document.getElementById("delete-btn");
+  const title    = document.getElementById("modal-title");
+
+  function openModal(mode, data={}) {
+    title.textContent = mode === 'add' ? 'Add new User' : 'User configuration';
+    // Felder mit Daten befüllen oder leeren
+    form.first_name.value = data.first_name || '';
+    form.last_name.value  = data.last_name  || '';
+    form.username.value   = data.username   || '';
+    form.email.value      = data.email      || '';
+    form.password.value   = '';
+    form.role.value       = data.role       || 'user';
+
+    // Felder sperren
+    [...form.elements].forEach(el => {
+      if (['edit-btn','save-btn','delete-btn'].includes(el.id)) return;
+      el.disabled = true;
+    });
+    saveBtn.disabled = true;
+    deleteBtn.style.display = mode === 'edit' ? 'inline-block' : 'none';
+
+    modal.classList.remove("hidden");
+  }
+
+  items.forEach(item => {
+    item.addEventListener("click", () => {
+      const data = item.dataset;
+      openModal('edit', data);
+    });
+  });
+
+  document.getElementById("add-user-btn").addEventListener("click", () => {
+    openModal('add');
+  });
+
+  closeBtn.addEventListener("click", () => {
+    modal.classList.add("hidden");
+  });
+
+  editBtn.addEventListener("click", () => {
+    [...form.elements].forEach(el => {
+      if (['edit-btn','delete-btn'].includes(el.id)) return;
+      el.disabled = false;
+    });
+    saveBtn.disabled = false;
+  });
+
+  deleteBtn.addEventListener("click", () => {
+    if (confirm("Soll dieser User wirklich gelöscht werden?")) {
+      // hier später Lösch-Request an Server
+      modal.classList.add("hidden");
+    }
+  });
+
+  form.addEventListener("submit", e => {
+    e.preventDefault();
+    // hier später Save-Request an Server
+    modal.classList.add("hidden");
+  });
+});
+</script>
