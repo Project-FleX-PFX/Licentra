@@ -1,5 +1,7 @@
-module LicenseAssignmentLogging
+# frozen_string_literal: true
 
+# Logging functionality specific to LicenseAssignment operations
+module LicenseAssignmentLogging
   def log_created(assignment)
     log_info("License Assignment record created: ID #{assignment.pk}, License ID #{assignment.license_id}, #{assignment.assignee_type} ID #{assignment.assignee_id}, Active: #{assignment.is_active}")
   end
@@ -22,7 +24,13 @@ module LicenseAssignmentLogging
 
   def log_updated(assignment)
     log_info("License Assignment record updated: ID #{assignment.pk}")
-    details = assignment.previous_changes.map { |col, vals| "#{col}: #{vals[0]} -> #{vals[1]}" }.join(', ') rescue "Changes unavailable"
+    details = begin
+      assignment.previous_changes.map do |col, vals|
+        "#{col}: #{vals[0]} -> #{vals[1]}"
+      end.join(', ')
+    rescue StandardError
+      'Changes unavailable'
+    end
     log_info("License Assignment record updated: ID #{assignment.pk}. Changes: #{details}")
   end
 
@@ -51,15 +59,14 @@ module LicenseAssignmentLogging
   end
 
   def log_assignments_for_device_fetched(device_id, count)
-     log_info("Fetched #{count} assignments for Device ID #{device_id}")
+    log_info("Fetched #{count} assignments for Device ID #{device_id}")
   end
 
   def log_assignment_activated(assignment)
-     log_info("License Assignment activated: ID #{assignment.pk}")
-   end
+    log_info("License Assignment activated: ID #{assignment.pk}")
+  end
 
-   def log_assignment_deactivated(assignment)
-     log_info("License Assignment deactivated: ID #{assignment.pk}")
-   end
-   
+  def log_assignment_deactivated(assignment)
+    log_info("License Assignment deactivated: ID #{assignment.pk}")
+  end
 end

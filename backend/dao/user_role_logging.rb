@@ -1,11 +1,13 @@
+# frozen_string_literal: true
+
+# Logging functionality specific to UserRole operations
 module UserRoleLogging
-  
   def log_assignment_created(user_id, role_id)
     log_info("UserRole assignment created: User ID #{user_id} <-> Role ID #{role_id}")
   end
 
   def log_assignment_object_found(assignment)
-     log_info("UserRole assignment object found: #{assignment.inspect}")
+    log_info("UserRole assignment object found: #{assignment.inspect}")
   end
 
   def log_assignment_found(user_id, role_id)
@@ -39,5 +41,4 @@ module UserRoleLogging
   def log_validation_failed(assignment, context)
     log_warn("Validation failed while #{context} assignment: #{assignment.errors.inspect}")
   end
-  
 end

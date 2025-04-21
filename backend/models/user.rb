@@ -1,5 +1,9 @@
+# frozen_string_literal: true
+
 require 'bcrypt'
 
+# Represents a user in the system who can be assigned licenses
+# Contains user identification and profile information
 class User < Sequel::Model
   plugin :nested_attributes
   one_to_one :credential, class: 'UserCredential', key: :user_id
@@ -9,7 +13,7 @@ class User < Sequel::Model
   many_to_many :roles, join_table: :user_roles, left_key: :user_id, right_key: :role_id
 
   def authenticate(plain_password)
-    self.credential && self.credential.authenticate(plain_password)
+    credential&.authenticate(plain_password)
   end
 
   def validate

@@ -1,7 +1,9 @@
+# frozen_string_literal: true
+
 require_relative 'errors'
 
+# Error handling specific to User operations
 module UserErrorHandling
-
   def handle_validation_error(user, context)
     log_validation_failed(user, context)
     raise ValidationError.new("Validation failed while #{context}", user.errors, user)
@@ -26,5 +28,4 @@ module UserErrorHandling
     log_record_not_found_by_email(email)
     raise RecordNotFound, "User not found with email: '#{email}'"
   end
-
 end

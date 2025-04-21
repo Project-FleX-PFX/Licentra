@@ -1,9 +1,10 @@
+# frozen_string_literal: true
+
 require 'sinatra'
 require 'sequel'
-require_relative 'config/environment.rb'
+require_relative 'config/environment'
 
 set :host_authorization, { permitted_hosts: ['vmd166389.contaboserver.net', 'localhost', '127.0.0.1'] }
-
 
 # --- Routes ---
 set :views, File.join(File.dirname(__FILE__), 'frontend', 'views')
@@ -35,20 +36,20 @@ get '/login' do
 end
 
 get '/license' do
-  @title = "License"
-  @css   = "license"
+  @title = 'License'
+  @css   = 'license'
   erb :license
 end
 
 get '/profile' do
-  @title = "Profile"
-  @css   = "profile"
+  @title = 'Profile'
+  @css   = 'profile'
   erb :profile
 end
 
 get '/my_license' do
-  @title = "My License"
-  @css   = "my_license"
+  @title = 'My License'
+  @css   = 'my_license'
   erb :my_license
 end
 

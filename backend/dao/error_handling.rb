@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
+# Provides error handling functionality for all DAO operations
 module DaoErrorHandling
-  
   def with_error_handling(context)
     yield
   rescue Sequel::ValidationFailed => e
@@ -11,9 +13,8 @@ module DaoErrorHandling
   rescue Sequel::Error => e
     DaoLogger.log_error("Sequel error while #{context}: #{e.message}")
     raise DatabaseError, "Sequel error while #{context}: #{e.message}"
-  rescue => e
+  rescue StandardError => e
     DaoLogger.log_error("Unknown error while #{context}: #{e.message}")
     raise
   end
-
 end

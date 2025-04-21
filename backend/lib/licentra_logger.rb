@@ -1,5 +1,9 @@
+# frozen_string_literal: true
+
 require 'logger'
 
+# Main namespace for the Licentra license management system
+# Contains core functionality and utilities used throughout the application
 module Licentra
   class << self
     # By default, logs are written to STDOUT (the console).

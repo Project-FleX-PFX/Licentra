@@ -1,7 +1,9 @@
+# frozen_string_literal: true
+
 require_relative 'errors'
 
+# Error handling specific to UserRole operations
 module UserRoleErrorHandling
-  
   def handle_record_not_found(user_id, role_id)
     log_assignment_not_found(user_id, role_id)
     raise RecordNotFound, "UserRole assignment not found for User ID #{user_id} and Role ID #{role_id}"
@@ -13,8 +15,7 @@ module UserRoleErrorHandling
   end
 
   def handle_record_not_found_by_criteria(criteria)
-     log_assignment_not_found_by_criteria(criteria)
-     raise RecordNotFound, "UserRole assignment not found for criteria: #{criteria.inspect}"
+    log_assignment_not_found_by_criteria(criteria)
+    raise RecordNotFound, "UserRole assignment not found for criteria: #{criteria.inspect}"
   end
-
 end

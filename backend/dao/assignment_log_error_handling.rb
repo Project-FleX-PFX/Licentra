@@ -1,7 +1,9 @@
+# frozen_string_literal: true
+
 require_relative 'errors'
 
+# Error handling specific to AssignmentLog operations
 module LicenseAssignmentErrorHandling
-
   def handle_validation_error(assignment, context)
     log_validation_failed(assignment, context)
     raise ValidationError.new("Validation failed while #{context}", assignment.errors, assignment)
@@ -16,5 +18,4 @@ module LicenseAssignmentErrorHandling
     log_record_not_found_by_criteria(criteria)
     raise RecordNotFound, "License Assignment not found for criteria: #{criteria.inspect}"
   end
-
 end

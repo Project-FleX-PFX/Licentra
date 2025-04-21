@@ -1,5 +1,8 @@
+# frozen_string_literal: true
+
 require_relative '../lib/licentra_logger'
 
+# Provides logging functionality for all DAO operations
 module DaoLogger
   class << self
     def log_info(message)

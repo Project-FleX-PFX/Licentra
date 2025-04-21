@@ -1,11 +1,13 @@
+# frozen_string_literal: true
+
 require_relative '../models/user_credential'
 require_relative 'base_dao'
 require_relative 'concerns/crud_operations'
 require_relative 'user_credential_logging'
 require_relative 'user_credential_error_handling'
 
+# Data Access Object for UserCredential entities, handling database operations
 class UserCredentialDAO < BaseDAO
-
   def self.model_class
     UserCredential
   end
@@ -22,9 +24,8 @@ class UserCredentialDAO < BaseDAO
   end
 
   class << self
-
     def update(id, attributes)
-      raise NotImplementedError, "Generic update is not supported for UserCredential. Use update_password."
+      raise NotImplementedError, 'Generic update is not supported for UserCredential. Use update_password.'
     end
 
     def update_password(user_id, new_plain_password)
@@ -38,12 +39,11 @@ class UserCredentialDAO < BaseDAO
           log_password_updated(credential)
           credential
         rescue ArgumentError => e
-           handle_validation_error(credential, "#{context} - invalid input: #{e.message}")
+          handle_validation_error(credential, "#{context} - invalid input: #{e.message}")
         rescue Sequel::ValidationFailed => e
-           handle_validation_error(e.model, context)
+          handle_validation_error(e.model, context)
         end
       end
     end
-
   end
 end

@@ -1,7 +1,9 @@
+# frozen_string_literal: true
+
 require_relative 'errors'
 
+# Error handling specific to LicenseType operations
 module LicenseTypeErrorHandling
-
   def handle_validation_error(license_type, context)
     log_validation_failed(license_type, context)
     raise ValidationError.new("Validation failed while #{context}", license_type.errors, license_type)
@@ -21,5 +23,4 @@ module LicenseTypeErrorHandling
     log_record_not_found_by_name(name)
     raise RecordNotFound, "License Type not found with name: '#{name}'"
   end
-  
 end

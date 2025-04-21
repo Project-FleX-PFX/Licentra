@@ -1,7 +1,9 @@
+# frozen_string_literal: true
+
 require_relative 'errors'
 
+# Error handling specific to Product operations
 module ProductErrorHandling
-
   def handle_validation_error(product, context)
     log_validation_failed(product, context)
     raise ValidationError.new("Validation failed while #{context}", product.errors, product)
@@ -21,5 +23,4 @@ module ProductErrorHandling
     log_record_not_found_by_name(name)
     raise RecordNotFound, "Product not found with name: '#{name}'"
   end
-  
 end
