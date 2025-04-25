@@ -4,7 +4,8 @@ require 'sinatra'
 require 'sequel'
 require_relative 'config/environment'
 
-set :host_authorization, { permitted_hosts: ['vmd166389.contaboserver.net', 'localhost', '127.0.0.1'] }
+set :host_authorization,
+    { permitted_hosts: ['vmd166389.contaboserver.net', 'licensemanager.licentra.de', 'localhost', '127.0.0.1'] }
 
 # --- Routes ---
 set :views, File.join(File.dirname(__FILE__), 'frontend', 'views')
