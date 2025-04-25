@@ -10,9 +10,7 @@ gem 'rake'
 gem 'sequel'
 gem 'sinatra'
 
-group :development, :test do
-  gem 'database_cleaner-sequel'
-  gem 'fabrication'
-  gem 'rspec'
-  gem 'sqlite3', '~> 1.7.3'
-end
+gem 'database_cleaner-sequel'
+gem 'fabrication'
+gem 'rspec'
+gem 'sqlite3', '~> 1.7.3'
