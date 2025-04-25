@@ -1,6 +1,9 @@
 <!-- layout.erb -->
+<head>
+  <link rel="icon" type="image/png" href="/css/icon.png">
+</head>
 <body>
-  <% if @use_admin_nav %>
+  <% if admin? %>
     <%= erb :admin_nav, layout: false %>
   <% else %>
     <%= erb :user_nav,  layout: false %>

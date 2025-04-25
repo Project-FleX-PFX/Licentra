@@ -13,8 +13,20 @@ set :views, File.join(File.dirname(__FILE__), 'frontend', 'views')
 # Hard coded as docker sets up directory structure
 set :public_folder, '/app/frontend/public'
 
-# --- Routes ---
+# Globale Testvariable
+isAdmin = true  # Zum Testen hier einfach auf true oder false setzen für admin/user view
 
+helpers do
+  def admin?
+    settings.isAdmin
+  end
+end
+
+before do
+  settings.set :isAdmin, isAdmin
+end
+
+# --- Routes ---
 get '/' do
   "Hello World! Connected to database: #{DB.opts[:database]}"
 end
@@ -59,16 +71,13 @@ get '/register' do
 end
 
 get '/user_management' do
-  @use_admin_nav = true
   erb :user_management
 end
 
 get '/product_management' do
-  @use_admin_nav = true
   erb :product_management
 end
 
 get '/license_management' do
-  @use_admin_nav = true
   erb :license_management
 end
