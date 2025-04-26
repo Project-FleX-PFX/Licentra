@@ -2,6 +2,8 @@
 
 # Error handling specific to Device operations
 module DeviceErrorHandling
+  include DAO
+
   def handle_validation_error(device, context)
     log_validation_failed(device, context)
     raise DAO::ValidationError.new("Validation failed while #{context}", device.errors, device)

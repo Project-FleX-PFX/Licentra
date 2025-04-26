@@ -4,6 +4,8 @@ require_relative 'errors'
 
 # Error handling specific to User operations
 module UserErrorHandling
+  include DAO
+
   def handle_validation_error(user, context)
     log_validation_failed(user, context)
     raise ValidationError.new("Validation failed while #{context}", user.errors, user)

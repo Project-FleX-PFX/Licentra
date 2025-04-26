@@ -84,6 +84,14 @@
       return;
     }
 
+    if (field === 'email') {
+      const emailRegExp = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
+      if (!emailRegExp.test(newValue)) {
+        alert("Bitte geben Sie eine gültige E-Mail-Adresse ein.");
+        return;
+      }
+    }
+
     // AJAX-Request zum Speichern der Änderungen
     fetch('/update_profile', {
       method: 'POST',

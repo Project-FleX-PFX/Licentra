@@ -4,6 +4,8 @@ require_relative 'errors'
 
 # Error handling specific to UserCredential operations
 module UserCredentialErrorHandling
+  include DAO
+
   def handle_validation_error(credential, context)
     log_validation_failed(credential, context)
     raise ValidationError.new("Validation failed while #{context}", credential.errors, credential)

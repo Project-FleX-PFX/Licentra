@@ -4,6 +4,8 @@ require_relative 'errors'
 
 # Error handling specific to AssignmentLog operations
 module LicenseAssignmentErrorHandling
+  include DAO
+
   def handle_validation_error(assignment, context)
     log_validation_failed(assignment, context)
     raise ValidationError.new("Validation failed while #{context}", assignment.errors, assignment)
