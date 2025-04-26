@@ -9,7 +9,22 @@ require_relative 'dao/role_dao'
 # Enable sessions
 enable :sessions
 set :session_secret, ENV.fetch('SESSION_SECRET') { SecureRandom.hex(64) }
-set :host_authorization, { permitted_hosts: ['vmd166389.contaboserver.net', 'localhost', '127.0.0.1'] }
+
+# Behalte deine allgemeine Konfiguration (falls nötig) oder setze sie pro Umgebung
+# Beispiel: Für Production und Development
+configure :production, :development do
+  set :host_authorization, { permitted_hosts: ['vmd166389.contaboserver.net', 'localhost', '127.0.0.1'] }
+end
+
+# Füge die Konfiguration spezifisch für die Test-Umgebung hinzu
+configure :test do
+  # Option A: Füge 'example.org' zu deiner bestehenden Liste hinzu
+  set :host_authorization, { permitted_hosts: ['vmd166389.contaboserver.net', 'localhost', '127.0.0.1', 'example.org'] }
+
+  # Option B (Alternative, oft einfacher für Tests): Erlaube alle Hosts NUR im Test
+  # Wenn du diese Option wählst, kommentiere Option A aus.
+  # set :host_authorization, { permitted_hosts: [] }
+end
 
 # --- Helper Methods ---
 helpers do
@@ -251,14 +266,17 @@ post '/register' do
 end
 
 get '/user_management' do
+  require_role('Admin')
   erb :user_management
 end
 
 get '/product_management' do
+  require_role('Admin')
   erb :product_management
 end
 
 get '/license_management' do
+  require_role('Admin')
   erb :license_management
 end
 
