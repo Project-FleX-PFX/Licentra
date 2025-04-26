@@ -1,12 +1,70 @@
-<!-- layout.erb -->
+<%# views/layout.erb %>
+<!DOCTYPE html>
+<html lang="de">
 <head>
+  <meta charset="UTF-8">
+  <title><%= @title || "Licentra" %></title>
   <link rel="icon" type="image/png" href="/css/icon.png">
+  <!-- Gemeinsame Styles -->
+  <link rel="stylesheet" type="text/css" href="/css/layout.css">
+  <!-- Seiten-spezifische Styles -->
+  <% if @css %>
+    <link rel="stylesheet" type="text/css" href="/css/<%= @css %>.css">
+  <% end %>
 </head>
 <body>
-  <% if admin? %>
-    <%= erb :admin_nav, layout: false %>
-  <% else %>
-    <%= erb :user_nav,  layout: false %>
-  <% end %>
-  <div class="main-content"><%= yield %></div>
+  <button id="toggle-sidebar" class="toggle-sidebar">☰</button>
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <h2>Licentra</h2>
+    </div>
+    <nav>
+      <ul>
+        <!-- Gemeinsame Links für alle Benutzer -->
+        <li><a href="/profile">Profile</a></li>
+        <li><a href="/license">License</a></li>
+        <li><a href="/my_license">My License</a></li>
+        
+        <!-- Admin-spezifische Links -->
+        <% if admin? %>
+          <li><a href="/user_management">User Management</a></li>
+          <li><a href="/product_management">Product Management</a></li>
+          <li><a href="/license_management">License Management</a></li>
+          <li><a href="/data">Raw Data View</a></li>
+        <% end %>
+      </ul>
+    </nav>
+    <!-- Logout Button mit korrektem Link zur Logout-Route -->
+    <div class="logout">
+      <a href="/logout" class="logout-button">Logout</a>
+    </div>
+  </div>
+  
+  <!-- Hauptinhalt -->
+  <div class="main-content">
+    <%= yield %>
+  </div>
+
+  <!-- JavaScript für das Toggle-Verhalten -->
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      const toggleBtn = document.getElementById("toggle-sidebar");
+      const sidebar = document.querySelector(".sidebar");
+      const mainContent = document.querySelector(".main-content");
+
+      toggleBtn.addEventListener("click", function() {
+        // Toggle der Klasse "collapsed" an der Sidebar
+        sidebar.classList.toggle("collapsed");
+
+        // Passe den linken Rand des Hauptinhalts an
+        if (sidebar.classList.contains("collapsed")) {
+          mainContent.style.marginLeft = "50px";  // voller Bildschirm, wenn Sidebar ausgeblendet
+        } else {
+          mainContent.style.marginLeft = "220px";  // gleiche Breite wie die Sidebar
+        }
+      });
+    });
+  </script>
 </body>
+</html>
+

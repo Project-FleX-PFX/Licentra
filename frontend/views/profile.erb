@@ -2,31 +2,51 @@
 <div class="container">
   <h1>User Information</h1>
   <div class="info-block">
-    
+
     <!-- USERNAME-Block -->
     <div class="info-item" id="username-item">
       <label>Username:</label>
-      <span class="info-display" id="username-display">K.West@gmail.com</span>
-      <input type="text" class="info-input" id="username-input" value="User1" style="display:none;">
-      
+      <span class="info-display" id="username-display"><%= @user.username %></span>
+      <input type="text" class="info-input" id="username-input" value="<%= @user.username %>" style="display:none;">
+
       <button class="edit-button" onclick="toggleEdit('username')">
         <span class="edit-icon">✎</span>
       </button>
       <button class="save-button" id="username-save" onclick="saveEdit('username')" style="display:none;">Save</button>
     </div>
-    
+
+    <!-- EMAIL-Block -->
+    <div class="info-item" id="email-item">
+      <label>Email:</label>
+      <span class="info-display" id="email-display"><%= @user.email %></span>
+      <input type="email" class="info-input" id="email-input" value="<%= @user.email %>" style="display:none;">
+
+      <button class="edit-button" onclick="toggleEdit('email')">
+        <span class="edit-icon">✎</span>
+      </button>
+      <button class="save-button" id="email-save" onclick="saveEdit('email')" style="display:none;">Save</button>
+    </div>
+
     <!-- PASSWORD-Block -->
     <div class="info-item" id="password-item">
       <label>Password:</label>
       <span class="info-display" id="password-display">********</span>
-      <input type="text" class="info-input" id="password-input" placeholder="New Password" style="display:none;">
-      
+      <input type="password" class="info-input" id="password-input" placeholder="New Password" style="display:none;">
+
       <button class="edit-button" onclick="toggleEdit('password')">
         <span class="edit-icon">✎</span>
       </button>
       <button class="save-button" id="password-save" onclick="saveEdit('password')" style="display:none;">Save</button>
     </div>
-    
+
+    <!-- ROLE-Block (nur Anzeige) -->
+    <div class="info-item" id="role-item">
+      <label>Roles:</label>
+      <span class="info-display" id="role-display">
+        <%= @user.roles.map(&:role_name).join(', ') %>
+      </span>
+    </div>
+
   </div>
 </div>
 
@@ -36,49 +56,66 @@
     const inputElem   = document.getElementById(field + '-input');
     const editButton  = document.querySelector('#' + field + '-item .edit-button');
     const saveButton  = document.getElementById(field + '-save');
-    
+
     // In den Editiermodus wechseln
     if (inputElem.style.display === 'none' || inputElem.style.display === '') {
-      // Passwort soll beim Bearbeiten im Klartext angezeigt werden
-      if (field === 'password') {
-        inputElem.type = 'text';
-      }
       displayElem.style.display  = 'none';
       inputElem.style.display    = 'inline-block';
       editButton.style.display   = 'none';
       saveButton.style.display   = 'inline-block';
-    } 
+    }
     // Zurück in den Anzeigemodus
     else {
-      // Nach dem Bearbeiten wieder als Passwort markieren
-      if (field === 'password') {
-        inputElem.type = 'password';
-      }
       inputElem.style.display    = 'none';
       displayElem.style.display  = 'inline-block';
       editButton.style.display   = 'inline-block';
       saveButton.style.display   = 'none';
     }
   }
-  
+
   function saveEdit(field) {
     const displayElem = document.getElementById(field + '-display');
     const inputElem   = document.getElementById(field + '-input');
     const newValue    = inputElem.value.trim();
-    
+
     // Nicht-leere Eingabe erzwingen
     if (newValue === '') {
       alert("Feld darf nicht leer sein.");
       return;
     }
-    
-    // Beim Speichern des Passworts -> Anzeige wieder auf ******** setzen
-    if (field === 'password') {
-      displayElem.textContent = '********';
-    } else {
-      displayElem.textContent = newValue;
-    }
-    // Modus zurückschalten
-    toggleEdit(field);
+
+    // AJAX-Request zum Speichern der Änderungen
+    fetch('/update_profile', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: `field=${field}&value=${encodeURIComponent(newValue)}`
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      return response.json();
+    })
+    .then(data => {
+      if (data.success) {
+        // Beim Speichern des Passworts -> Anzeige wieder auf ******** setzen
+        if (field === 'password') {
+          displayElem.textContent = '********';
+        } else {
+          displayElem.textContent = newValue;
+        }
+        // Modus zurückschalten
+        toggleEdit(field);
+      } else {
+        alert(data.message || "Error updating profile");
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('Failed to update profile. Please try again.');
+    });
   }
 </script>
+
