@@ -1,3 +1,4 @@
+<!-- views/login.erb -->
 <!DOCTYPE html>
 <html>
   <head>
@@ -17,11 +18,11 @@
       <h2>Licentra</h2>
 
       <!-- allgemeine Fehlermeldung -->
-      <div id="form-error" class="error">
-        Bitte E‑Mail und Passwort ausfüllen.
+      <div id="form-error" class="error" style="<%= @error ? 'display:block' : 'display:none' %>">
+        <%= @error || 'Bitte E‑Mail und Passwort ausfüllen.' %>
       </div>
 
-      <form id="login-form" action="#" method="post" novalidate>
+      <form id="login-form" action="/login" method="post">
         <div class="field">
           <label for="email">Email</label>
           <input type="email" id="email" name="email" placeholder="Value">
@@ -40,10 +41,10 @@
         </div>
 
         <div class="actions">
-          <input 
-            type="button" 
+          <input
+            type="submit"
             id="login-button"
-            value="Login" 
+            value="Login"
             class="login-button">
         </div>
       </form>
@@ -52,22 +53,6 @@
         <p>Noch kein Konto? <a href="/register">Hier registrieren</a></p>
       </div>
     </div>
-
-    <script>
-      document.getElementById('login-button').addEventListener('click', function() {
-        var errorDiv = document.getElementById('form-error');
-        errorDiv.style.display = 'none';
-
-        var email = document.getElementById('email').value.trim();
-        var pw    = document.getElementById('password').value.trim();
-
-        if (!email || !pw) {
-          errorDiv.style.display = 'block';
-          return;
-        }
-
-        window.location.href = '/profile';
-      });
-    </script>
   </body>
 </html>
+
