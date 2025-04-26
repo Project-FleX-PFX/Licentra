@@ -3,6 +3,7 @@
 require 'logger'
 require 'sequel'
 require 'rspec'
+require 'rack/test'
 require 'fabrication'
 require 'database_cleaner/sequel'
 
@@ -32,4 +33,8 @@ RSpec.configure do |config|
   config.default_formatter = 'doc' if config.files_to_run.one?
 
   require_relative 'support/database_cleaner_config'
+end
+
+def session
+  last_request.env['rack.session']
 end
