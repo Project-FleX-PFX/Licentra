@@ -42,6 +42,10 @@ module AssignmentLogLogging
     log_info("Assignment Log deleted: ID #{log.pk}")
   end
 
+  def log_logs_deleted_for_assignment(assignment_id, count)
+    log_info("Deleted #{count} logs for Assignment ID #{assignment_id}")
+  end
+
   def log_logs_for_assignment_fetched(assignment_id, count)
     log_info("Fetched #{count} logs for Assignment ID #{assignment_id}")
   end
