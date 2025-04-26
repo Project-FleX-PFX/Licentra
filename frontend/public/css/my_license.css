@@ -1,8 +1,4 @@
-/* Beispielhafte CSS-Datei für einen professionellen Look.
-   Platziere sie z. B. unter app/assets/stylesheets/my_license.css und
-   binde sie in deiner Layout-Datei (application.html.erb) ein. */
-
-/* Container für die ganze Lizenzseite */
+/* Container for the entire license page */
 .license-page {
   max-width: 600px;
   margin: 2rem auto;
@@ -10,22 +6,20 @@
   color: #333;
 }
 
-/* Überschrift */
 .license-page h1 {
   margin-bottom: 1.5rem;
   text-align: center;
 }
 
-/* Jeder Lizenzblock */
+/* Every license block */
 .license-item {
   background-color: #f9f9f9;
   margin-bottom: 1rem;
   border: 1px solid #ccc;
   border-radius: 5px;
-  overflow: hidden; /* Damit Inhalte sauber ein- und ausgeklappt werden */
+  overflow: hidden;
 }
 
-/* Header-Bereich pro Lizenz */
 .license-header {
   display: flex;
   justify-content: space-between;
@@ -34,18 +28,17 @@
   cursor: pointer;
 }
 
-/* Detail-Bereich, der standardmäßig ausgeblendet wird */
+/* Detail area, which is hidden by default */
 .license-detail {
   padding: 1rem;
   border-top: 1px solid #ddd;
 }
 
-/* Klasse, um ein- oder auszublenden */
 .hidden {
   display: none;
 }
 
-/* Aufklapp-Button */
+/* Expand button */
 .toggle-button {
   background-color: #000000e7;
   color: #fff;
@@ -59,7 +52,6 @@
   background-color: #000000d0;
 }
 
-/* Lösch-Button */
 .delete-button {
   background-color: #ff4c4c;
   color: #fff;

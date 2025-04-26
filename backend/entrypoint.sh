@@ -34,7 +34,7 @@ else
   MIGRATION_ONLY=true bundle exec rake db:migrate
   echo "[Entrypoint] Migrations finished."
 
-  # Wähle die Seed-Methode basierend auf der Umgebungsvariable
+  # Select the seed method based on the environment variable
   if [ "$ENVIRONMENT" = "production" ]; then
     echo "[Entrypoint] Running production database seeds..."
     bundle exec rake db:seed_production
@@ -46,4 +46,3 @@ else
 
   exec bundle exec rackup --host 0.0.0.0 -p 4567
 fi
-

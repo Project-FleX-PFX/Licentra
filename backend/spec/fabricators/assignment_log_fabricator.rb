@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 Fabricator(:assignment_log) do
-  # Verwende einen existierenden LicenseAssignment oder erstelle einen neuen
+  # Use an existing LicenseAssignment or create a new one
   transient license_assignment: nil
 
   assignment_id do |attrs|

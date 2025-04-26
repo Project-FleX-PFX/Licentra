@@ -12,10 +12,10 @@ html, body {
 }
 
 body {
-  background-image: url('background.png'); /* Pfad zum Bild */
-  background-size: cover;                 /* Bild skaliert auf gesamte Seite */
-  background-position: center;            /* Bild zentriert */
-  background-repeat: no-repeat;           /* Bild wird nicht wiederholt */
+  background-image: url('background.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
   margin: 0;
   padding: 0;
   font-family: Arial, sans-serif;   
@@ -66,7 +66,7 @@ nav ul li a:hover {
   color: #fff;
 }
 
-/* Hauptinhalt */
+/* main content */
 .main-content {
   margin-left: 220px;
   padding: 20px;
@@ -75,27 +75,27 @@ nav ul li a:hover {
 
 .sidebar .logout {
   position: absolute;
-  bottom: 0;      /* Direkt am unteren Rand */
-  left: 0;        /* Direkt am linken Rand */
-  width: 100%;    /* Optional: Damit kannst du bestimmen, ob der Container die gesamte Breite nutzt */
-  padding: 10px;  /* Optional: Etwas Abstand zum Rand, falls gewünscht */
-  text-align: left; /* Damit bleibt der Inhalt (Button) linksbündig */
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  padding: 10px;
+  text-align: left;
 }
 
 .logout-button {
-  font-size: 13px;             /* Etwas größere Schrift */
-  padding: 12px 15px;          /* Erhöhter Innenabstand für einen größeren Button */
-  min-width: 75px;            /* Mindestbreite definieren */
-  background-color: #0000005d;   /* Hintergrundfarbe */
-  color: #ffffff;                 /* Textfarbe */
-  border: 1px solid #0000005d;   /* Rahmen */
-  border-radius: 4px;          /* Abgerundete Ecken */
-  cursor: pointer;             /* Mauszeiger als Hand-Symbol */
-  display: inline-block;       /* Damit der Button als Block-Element agiert, aber sich an den Inhalt anpasst */
+  font-size: 13px;
+  padding: 12px 15px;
+  min-width: 75px;
+  background-color: #0000005d;
+  color: #ffffff;
+  border: 1px solid #0000005d;
+  border-radius: 4px;
+  cursor: pointer;
+  display: inline-block;
 }
 
 .logout-button:hover {
-  background-color: #83000054;      /* Hover-Effekt */
+  background-color: #83000054;
 }
 
 .toggle-sidebar {
@@ -103,7 +103,7 @@ nav ul li a:hover {
   top: 5px;
   left: 5px;
   z-index: 1000;
-  background-color: #000; /* Beispielhintergrund */
+  background-color: #000;
   color: #fff;
   border: none;
   padding: 10px 15px;

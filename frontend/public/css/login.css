@@ -2,7 +2,7 @@ body {
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 0;
-    background-color: #ffffff; /* Weißer Hintergrund */
+    background-color: #ffffff;
   }
 
   .login-container {
@@ -21,9 +21,9 @@ body {
   }
 
   .logo img {
-    width: 200px;  /* oder eine andere gewünschte Breite */
-    height: auto;  /* bewahrt das Seitenverhältnis */
-    max-width: 100%; /* stellt sicher, dass das Bild nicht über den Container hinauswächst */
+    width: 200px;
+    height: auto;
+    max-width: 100%;
   }
 
   .login-container h2 {

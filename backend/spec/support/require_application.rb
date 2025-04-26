@@ -13,7 +13,7 @@ end
 def require_daos
   dao_files = Dir[File.expand_path('../../dao/**/*.rb', __dir__)]
 
-  # Lade zuerst Logging und Error Handling
+  # Load logging and error handling first
   dao_files.sort_by! do |f|
     [f.include?('logging') || f.include?('error_handling') ? 0 : 1, f]
   end
