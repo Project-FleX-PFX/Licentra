@@ -25,15 +25,52 @@ namespace :db do
     puts 'Migrations finished.'
   end
 
-  desc 'Load seed data'
+  desc 'Load development seed data'
   task seed: :load_config do
     seed_file = File.join(__dir__, 'db', 'seeds.rb')
     if File.exist?(seed_file)
-      puts 'Loading seed data...'
+      puts 'Loading development seed data...'
       load(seed_file)
-      puts 'Seed data loaded.'
+      puts 'Development seed data loaded.'
     else
       puts "Seed file not found: #{seed_file}"
+    end
+  end
+
+  desc 'Load minimal production seed data'
+  task seed_production: :load_config do
+    seed_file = File.join(__dir__, 'db', 'seeds_production.rb')
+    if File.exist?(seed_file)
+      puts 'Loading production seed data...'
+      load(seed_file)
+      puts 'Production seed data loaded.'
+    else
+      puts "Production seed file not found: #{seed_file}"
+      puts 'Creating it with minimal required data...'
+
+      # Inline minimal seeding if file doesn't exist
+      DB.transaction(rollback: :reraise) do
+        # Only create roles if they don't exist
+        unless Role.where(role_name: 'Admin').first
+          puts 'Creating Roles...'
+          Role.create(role_name: 'Admin')
+          Role.create(role_name: 'LicenseManager')
+          Role.create(role_name: 'User')
+        end
+
+        # Create license types if they don't exist
+        unless LicenseType.where(type_name: 'Perpetual User').first
+          puts 'Creating License Types...'
+          LicenseType.create(type_name: 'Perpetual User', description: 'Einmaliger Kauf pro Benutzer.')
+          LicenseType.create(type_name: 'Subscription User', description: 'Abonnement pro Benutzer.')
+          LicenseType.create(type_name: 'Volume Subscription User',
+                             description: 'Abonnement für mehrere Benutzer (pro Platz).')
+          LicenseType.create(type_name: 'Device License', description: 'Lizenz ist an ein Gerät gebunden.')
+          LicenseType.create(type_name: 'Concurrent Usage', description: 'Maximale Anzahl gleichzeitiger Nutzer.')
+        end
+      end
+
+      puts 'Minimal production data created.'
     end
   end
 
@@ -49,16 +86,29 @@ namespace :db do
     puts "Consider using 'docker-compose down -v' to remove the volume and 'docker-compose up' to recreate."
   end
 
-  desc 'Setup database: migrate and seed'
+  desc 'Setup database: migrate and seed with development data'
   task setup: %i[migrate seed] do
-    puts 'Database setup complete (migrated and seeded).'
+    puts 'Database setup complete (migrated and seeded with development data).'
+  end
+
+  desc 'Setup database: migrate and seed with production data'
+  task setup_production: %i[migrate seed_production] do
+    puts 'Database setup complete (migrated and seeded with production data).'
   end
 
   desc 'Reset database: drop (manual/docker), create (manual/docker), setup'
   task reset: :load_config do
-    puts 'For a full reset:'
+    puts 'For a full reset with development data:'
     puts '1. Stop services: docker-compose down -v'
     puts '2. Start services: docker-compose up -d --build'
     puts '3. Run setup: docker-compose exec app bundle exec rake db:setup'
+  end
+
+  desc 'Reset database: drop (manual/docker), create (manual/docker), setup with production data'
+  task reset_production: :load_config do
+    puts 'For a full reset with production data:'
+    puts '1. Stop services: docker-compose down -v'
+    puts '2. Start services: docker-compose up -d --build'
+    puts '3. Run setup: docker-compose exec app bundle exec rake db:setup_production'
   end
 end

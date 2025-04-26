@@ -14,23 +14,34 @@
     </div>
     <h2>Registrieren</h2>
 
+    <!-- Fehlermeldungen vom Server -->
+    <% if @error %>
+    <div class="error" style="text-align:center; margin-bottom:15px;">
+      <%= @error %>
+    </div>
+    <% end %>
+
     <!-- allgemeiner Fehler (leere Felder) -->
     <div id="form-error" class="error" style="display:none; text-align:center; margin-bottom:15px;">
       Bitte füllen Sie alle Felder aus.
     </div>
 
-    <form id="register-form" action="#" method="post" novalidate>
+    <form id="register-form" action="/register" method="post">
+      <div class="form-group">
+        <label for="username">Benutzername</label>
+        <input type="text" id="username" name="username" value="<%= params[:username] %>">
+      </div>
       <div class="form-group">
         <label for="first_name">Vorname</label>
-        <input type="text" id="first_name" name="first_name">
+        <input type="text" id="first_name" name="first_name" value="<%= params[:first_name] %>">
       </div>
       <div class="form-group">
         <label for="last_name">Nachname</label>
-        <input type="text" id="last_name" name="last_name">
+        <input type="text" id="last_name" name="last_name" value="<%= params[:last_name] %>">
       </div>
       <div class="form-group">
         <label for="email">E‑Mail</label>
-        <input type="email" id="email" name="email">
+        <input type="email" id="email" name="email" value="<%= params[:email] %>">
       </div>
       <div class="form-group">
         <label for="password">Passwort</label>
@@ -59,7 +70,7 @@
         document.getElementById('password-error').style.display = 'none';
 
         // 1. alle Felder prüfen
-        var fields = ['first_name','last_name','email','password','password_confirmation'];
+        var fields = ['username', 'first_name','last_name','email','password','password_confirmation'];
         var emptyFound = fields.some(function(id) {
           return !document.getElementById(id).value.trim();
         });
@@ -78,10 +89,9 @@
           return;
         }
 
-        // 3. alles okay → Weiterleitung
-        e.preventDefault();
-        window.location.href = '/profile';
+        // Bei erfolgreicher Client-Validierung wird das Formular normal abgesendet
       });
   </script>
 </body>
 </html>
+

@@ -32,18 +32,18 @@ helpers do
   end
 
   def require_login
-    unless logged_in?
-      session[:return_to] = request.path_info
-      redirect '/login'
-    end
+    return if logged_in?
+
+    session[:return_to] = request.path_info
+    redirect '/login'
   end
 
   def require_role(role_name)
     require_login
 
-    unless has_role?(role_name)
-      halt 403, erb(:forbidden, layout: true, locals: { message: "You don't have permission to access this page." })
-    end
+    return if has_role?(role_name)
+
+    halt 403, erb(:forbidden, layout: true, locals: { message: "You don't have permission to access this page." })
   end
 end
 
@@ -68,14 +68,14 @@ post '/login' do
   password = params[:password]
 
   if email.nil? || email.empty? || password.nil? || password.empty?
-    @error = "Bitte E‑Mail und Passwort ausfüllen."
+    @error = 'Bitte E‑Mail und Passwort ausfüllen.'
     return erb :login, layout: false
   end
 
   begin
     user = UserDAO.find_by_email(email)
 
-    if user && user.is_active && user.authenticate(password)
+    if user&.is_active && user.authenticate(password)
       session[:user_id] = user.user_id
 
       # Redirect to the original requested URL or default to profile
@@ -83,10 +83,10 @@ post '/login' do
       session.delete(:return_to)
       redirect redirect_url
     else
-      @error = "Ungültige E-Mail oder Passwort."
+      @error = 'Ungültige E-Mail oder Passwort.'
       erb :login, layout: false
     end
-  rescue => e
+  rescue StandardError => e
     @error = "Ein Fehler ist aufgetreten: #{e.message}"
     erb :login, layout: false
   end
@@ -136,46 +136,118 @@ end
 post '/update_profile' do
   require_login
   content_type :json
-  
+
   field = params[:field]
   value = params[:value]
-  
-  allowed_fields = ['username', 'email', 'password']
-  unless allowed_fields.include?(field)
-    return { success: false, message: "Invalid field" }.to_json
-  end
-  
+
+  allowed_fields = %w[username email password]
+  return { success: false, message: 'Invalid field' }.to_json unless allowed_fields.include?(field)
+
   begin
     user = current_user
-    
+
     case field
     when 'username'
       # Prüfen, ob der Username bereits existiert
       existing_user = UserDAO.find_by_username(value)
       if existing_user && existing_user.user_id != user.user_id
-        return { success: false, message: "Username already exists" }.to_json
+        return { success: false, message: 'Username already exists' }.to_json
       end
+
       UserDAO.update(user.user_id, username: value)
     when 'email'
       # Prüfen, ob die Email bereits existiert
       existing_user = UserDAO.find_by_email(value)
       if existing_user && existing_user.user_id != user.user_id
-        return { success: false, message: "Email already exists" }.to_json
+        return { success: false, message: 'Email already exists' }.to_json
       end
+
       UserDAO.update(user.user_id, email: value)
     when 'password'
       # Passwort aktualisieren
       UserCredentialDAO.update_password(user.user_id, value)
     end
-    
+
     { success: true }.to_json
-  rescue => e
+  rescue StandardError => e
     { success: false, message: e.message }.to_json
   end
 end
 
 get '/register' do
   erb :register, layout: false
+end
+
+post '/register' do
+  # Validierung der Eingaben
+  username = params[:username]
+  first_name = params[:first_name]
+  last_name = params[:last_name]
+  email = params[:email]
+  password = params[:password]
+  password_confirmation = params[:password_confirmation]
+
+  # Überprüfen, ob alle Felder ausgefüllt sind
+  if [username, first_name, last_name, email, password, password_confirmation].any?(&:empty?)
+    @error = 'Bitte füllen Sie alle Felder aus.'
+    return erb :register, layout: false
+  end
+
+  # Überprüfen, ob die Passwörter übereinstimmen
+  if password != password_confirmation
+    @error = 'Die Passwörter stimmen nicht überein.'
+    return erb :register, layout: false
+  end
+
+  # Überprüfen, ob der Benutzername bereits existiert
+  if UserDAO.find_by_username(username)
+    @error = 'Der Benutzername ist bereits vergeben.'
+    return erb :register, layout: false
+  end
+
+  # Überprüfen, ob die E-Mail bereits existiert
+  if UserDAO.find_by_email(email)
+    @error = 'Die E-Mail-Adresse ist bereits registriert.'
+    return erb :register, layout: false
+  end
+
+  is_first_user = UserDAO.all.empty?
+
+  begin
+    # Benutzer erstellen
+    user = User.new(
+      username: username,
+      email: email,
+      first_name: first_name,
+      last_name: last_name,
+      is_active: true,
+      credential_attributes: { password_plain: password }
+    )
+
+    # Speichern des Benutzers
+    user.save
+
+    if is_first_user
+      admin_role = RoleDAO.find_by_name('Admin')
+      user.add_role(admin_role) if admin_role
+      # Log-Eintrag für Sicherheitsaudit
+      puts "First user #{username} registered and assigned Admin role"
+    end
+
+    # Standardrolle "User" zuweisen
+    user_role = RoleDAO.find_by_name('User')
+    user.add_role(user_role) if user_role
+
+    # Benutzer in der Session speichern und einloggen
+    session[:user_id] = user.user_id
+
+    # Weiterleitung zum Profil
+    redirect '/profile'
+  rescue StandardError => e
+    # Fehlerbehandlung
+    @error = "Fehler bei der Registrierung: #{e.message}"
+    erb :register, layout: false
+  end
 end
 
 get '/user_management' do
