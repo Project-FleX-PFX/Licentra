@@ -4,6 +4,8 @@ require_relative 'errors'
 
 # Error handling specific to Product operations
 module ProductErrorHandling
+  include DAO
+
   def handle_validation_error(product, context)
     log_validation_failed(product, context)
     raise ValidationError.new("Validation failed while #{context}", product.errors, product)

@@ -4,6 +4,8 @@ require_relative 'errors'
 
 # Error handling specific to LicenseType operations
 module LicenseTypeErrorHandling
+  include DAO
+
   def handle_validation_error(license_type, context)
     log_validation_failed(license_type, context)
     raise ValidationError.new("Validation failed while #{context}", license_type.errors, license_type)

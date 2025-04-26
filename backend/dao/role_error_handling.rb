@@ -4,6 +4,8 @@ require_relative 'errors'
 
 # Error handling specific to Role operations
 module RoleErrorHandling
+  include DAO
+
   def handle_validation_error(role, context)
     log_validation_failed(role, context)
     raise ValidationError.new("Validation failed while #{context}", role.errors, role)

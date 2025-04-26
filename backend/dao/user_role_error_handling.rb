@@ -4,6 +4,8 @@ require_relative 'errors'
 
 # Error handling specific to UserRole operations
 module UserRoleErrorHandling
+  include DAO
+
   def handle_record_not_found(user_id, role_id)
     log_assignment_not_found(user_id, role_id)
     raise RecordNotFound, "UserRole assignment not found for User ID #{user_id} and Role ID #{role_id}"
