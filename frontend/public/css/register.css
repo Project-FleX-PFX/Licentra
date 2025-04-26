@@ -27,9 +27,9 @@ body {
   }
 
   .logo img {
-    width: 180px;  /* oder eine andere gewünschte Breite */
-    height: auto;  /* bewahrt das Seitenverhältnis */
-    max-width: 100%; /* stellt sicher, dass das Bild nicht über den Container hinauswächst */
+    width: 180px;
+    height: auto;
+    max-width: 100%;
   }
   
   h2 {

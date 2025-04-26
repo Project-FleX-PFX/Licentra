@@ -106,14 +106,14 @@ end
 
 get '/data' do
   require_role('Admin')
-  @products = Product.order(:product_name).all
-  @license_types = LicenseType.order(:type_name).all
-  @roles = Role.order(:role_name).all
-  @users = User.eager(:roles, :credential).order(:username).all
+  @products = ProductDAO.all
+  @license_types = LicenseTypeDAO.all
+  @roles = RoleDAO.all
+  @users = UserDAO.all
   @devices = DeviceDAO.all
-  @licenses = License.eager(:product, :license_type).order(:license_name).all
-  @assignments = LicenseAssignment.eager(:license, :user, :device).order(:assignment_id).all
-  @logs = AssignmentLog.eager(:license_assignment).order(Sequel.desc(:log_timestamp)).all
+  @licenses = LicenseDAO.all
+  @assignments = LicenseAssignmentDAO.all
+  @logs = AssignmentLogDAO.all
 
   erb :data, layout: false
 end
@@ -155,7 +155,7 @@ post '/update_profile' do
 
     case field
     when 'username'
-      # Prüfen, ob der Username bereits existiert
+      # Check whether the username already exists
       existing_user = UserDAO.find_by_username(value)
       if existing_user && existing_user.user_id != user.user_id
         return { success: false, message: 'Username already exists' }.to_json
@@ -163,7 +163,7 @@ post '/update_profile' do
 
       UserDAO.update(user.user_id, username: value)
     when 'email'
-      # Prüfen, ob die Email bereits existiert
+      # Check whether the email already exists
       existing_user = UserDAO.find_by_email(value)
       if existing_user && existing_user.user_id != user.user_id
         return { success: false, message: 'Email already exists' }.to_json
@@ -171,7 +171,7 @@ post '/update_profile' do
 
       UserDAO.update(user.user_id, email: value)
     when 'password'
-      # Passwort aktualisieren
+      # Update password
       UserCredentialDAO.update_password(user.user_id, value)
     end
 
@@ -186,7 +186,7 @@ get '/register' do
 end
 
 post '/register' do
-  # Validierung der Eingaben
+  # Validation of the entries
   username = params[:username]
   first_name = params[:first_name]
   last_name = params[:last_name]
@@ -194,25 +194,25 @@ post '/register' do
   password = params[:password]
   password_confirmation = params[:password_confirmation]
 
-  # Überprüfen, ob alle Felder ausgefüllt sind
+  # Check that all fields are filled in
   if [username, first_name, last_name, email, password, password_confirmation].any?(&:empty?)
     @error = 'Bitte füllen Sie alle Felder aus.'
     return erb :register, layout: false
   end
 
-  # Überprüfen, ob die Passwörter übereinstimmen
+  # Check whether the passwords match
   if password != password_confirmation
     @error = 'Die Passwörter stimmen nicht überein.'
     return erb :register, layout: false
   end
 
-  # Überprüfen, ob der Benutzername bereits existiert
+  # Check whether the user name already exists
   if UserDAO.find_by_username(username)
     @error = 'Der Benutzername ist bereits vergeben.'
     return erb :register, layout: false
   end
 
-  # Überprüfen, ob die E-Mail bereits existiert
+  # Check whether the e-mail already exists
   if UserDAO.find_by_email(email)
     @error = 'Die E-Mail-Adresse ist bereits registriert.'
     return erb :register, layout: false
@@ -221,7 +221,7 @@ post '/register' do
   is_first_user = UserDAO.all.empty?
 
   begin
-    # Benutzer erstellen
+    # Create user
     user = User.new(
       username: username,
       email: email,
@@ -231,27 +231,25 @@ post '/register' do
       credential_attributes: { password_plain: password }
     )
 
-    # Speichern des Benutzers
     user.save
 
     if is_first_user
       admin_role = RoleDAO.find_by_name('Admin')
       user.add_role(admin_role) if admin_role
-      # Log-Eintrag für Sicherheitsaudit
+      # Log entry for security audit
       puts "First user #{username} registered and assigned Admin role"
     end
 
-    # Standardrolle "User" zuweisen
+    # Assign standard role "User
     user_role = RoleDAO.find_by_name('User')
     user.add_role(user_role) if user_role
 
-    # Benutzer in der Session speichern und einloggen
+    # Save user in the session and log in
     session[:user_id] = user.user_id
 
-    # Weiterleitung zum Profil
+    # Forwarding to the profile
     redirect '/profile'
   rescue StandardError => e
-    # Fehlerbehandlung
     @error = "Fehler bei der Registrierung: #{e.message}"
     erb :register, layout: false
   end

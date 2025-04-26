@@ -1,9 +1,8 @@
 services:
   db:
     ports:
-      - "6543:5432"  # DB lokal erreichbar
+      - "6543:5432" # DB locally accessible
 
   backend:
     ports:
-      - "4567:4567"  # Backend lokal erreichbar
-
+      - "4567:4567" # Backend locally accessible

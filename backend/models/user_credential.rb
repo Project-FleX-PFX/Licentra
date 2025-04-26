@@ -10,7 +10,7 @@ class UserCredential < Sequel::Model(:user_credentials)
   include BCrypt
 
   def password_plain=(plain_pass)
-    self.password = plain_pass # Ruft den normalen password= Setter auf
+    self.password = plain_pass # Calls the normal password= setter
   end
 
   def password=(new_password)

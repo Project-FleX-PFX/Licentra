@@ -50,7 +50,7 @@ RSpec.describe 'Authentication, Authorization, and Session Handling' do
   # --- Helper for login in tests ---
   def login_as(email, password)
     post '/login', { email: email, password: password }
-    follow_redirect! while last_response.redirect? # Folgt eventuellen Redirects nach Login
+    follow_redirect! while last_response.redirect? # Follows any redirects after login
   end
 
   # --- Test Sections ---
