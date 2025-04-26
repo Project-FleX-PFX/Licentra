@@ -30,7 +30,7 @@ class UserDAO < BaseDAO
     def find_by_username(username)
       return nil if username.nil? || username.empty?
 
-      user = find_one_by(username: username)
+      user = find_one_by(Sequel.function(:lower, :username) => username.downcase)
       log_user_found_by_username(username, user) if user
       user
     end
