@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-# frozen_string_literal: true
-
 require 'sinatra'
 require 'sequel'
 require_relative 'config/environment'
@@ -29,6 +27,10 @@ helpers do
     current_user.roles.any? { |role| role.role_name == role_name }
   end
 
+  def admin?
+    has_role?('Admin')
+  end
+
   def require_login
     unless logged_in?
       session[:return_to] = request.path_info
@@ -50,19 +52,6 @@ set :views, File.join(File.dirname(__FILE__), 'frontend', 'views')
 
 # Hard coded as docker sets up directory structure
 set :public_folder, '/app/frontend/public'
-
-# Globale Testvariable
-isAdmin = true  # Zum Testen hier einfach auf true oder false setzen für admin/user view
-
-helpers do
-  def admin?
-    settings.isAdmin
-  end
-end
-
-before do
-  settings.set :isAdmin, isAdmin
-end
 
 # --- Routes ---
 get '/' do
@@ -142,6 +131,47 @@ get '/my_license' do
   @title = 'My License'
   @css   = 'my_license'
   erb :my_license
+end
+
+post '/update_profile' do
+  require_login
+  content_type :json
+  
+  field = params[:field]
+  value = params[:value]
+  
+  allowed_fields = ['username', 'email', 'password']
+  unless allowed_fields.include?(field)
+    return { success: false, message: "Invalid field" }.to_json
+  end
+  
+  begin
+    user = current_user
+    
+    case field
+    when 'username'
+      # Prüfen, ob der Username bereits existiert
+      existing_user = UserDAO.find_by_username(value)
+      if existing_user && existing_user.user_id != user.user_id
+        return { success: false, message: "Username already exists" }.to_json
+      end
+      UserDAO.update(user.user_id, username: value)
+    when 'email'
+      # Prüfen, ob die Email bereits existiert
+      existing_user = UserDAO.find_by_email(value)
+      if existing_user && existing_user.user_id != user.user_id
+        return { success: false, message: "Email already exists" }.to_json
+      end
+      UserDAO.update(user.user_id, email: value)
+    when 'password'
+      # Passwort aktualisieren
+      UserCredentialDAO.update_password(user.user_id, value)
+    end
+    
+    { success: true }.to_json
+  rescue => e
+    { success: false, message: e.message }.to_json
+  end
 end
 
 get '/register' do

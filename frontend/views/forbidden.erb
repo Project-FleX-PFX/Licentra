@@ -1,7 +1,12 @@
 <!-- views/forbidden.erb -->
 <div class="error-container">
-  <h2>Zugriff verweigert</h2>
-  <p><%= message %></p>
-  <p><a href="/profile">Zurück zum Profil</a></p>
+  <h1>Access Denied</h1>
+  <div class="error-message">
+    <p><%= message %></p>
+    <p>You don't have the necessary permissions to access this page.</p>
+  </div>
+  <div class="error-actions">
+    <a href="/profile" class="button">Return to Profile</a>
+  </div>
 </div>
 
