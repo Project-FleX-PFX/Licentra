@@ -18,7 +18,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Run backend tests
-        run: docker-compose run --rm backend bundle exec rake spec
+        run: docker compose run --rm backend bundle exec rake spec
         env:
           RACK_ENV: test
 
@@ -45,8 +45,8 @@ jobs:
             git checkout ${{ github.event.inputs.branch }}
             git pull origin ${{ github.event.inputs.branch }}
 
-            docker-compose -f docker-compose.yml pull
+            docker compose -f docker-compose.yml pull
 
-            docker-compose -f docker-compose.yml --profile proxy up -d --build --force-recreate
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile proxy up -d --build --force-recreate
 
             docker image prune -f
