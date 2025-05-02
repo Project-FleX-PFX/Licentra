@@ -47,23 +47,23 @@ DB.transaction(rollback: :reraise) do
   puts 'Creating Users & Credentials...'
   admin = User.new(username: 'admin', email: 'admin@company.local', first_name: 'Admin', last_name: 'Istrator',
                    is_active: true, credential_attributes: { password_plain: 'secureAdminPass123!' })
-  admin.save
+  admin.save_changes
 
   manager = User.new(username: 'lic_manager', email: 'manager@company.local', first_name: 'Lisa', last_name: 'Manager',
                      is_active: true, credential_attributes: { password_plain: 'manageMyLicenses!' })
-  manager.save
+  manager.save_changes
 
   alice = User.new(username: 'alice', email: 'alice@company.local', first_name: 'Alice', last_name: 'Dev',
                    is_active: true, credential_attributes: { password_plain: 'alicePassw0rd' })
-  alice.save
+  alice.save_changes
 
   bob = User.new(username: 'bob', email: 'bob@company.local', first_name: 'Bob', last_name: 'Sales', is_active: true,
                  credential_attributes: { password_plain: 'bobLikesSales1' })
-  bob.save
+  bob.save_changes
 
   inactive_user = User.new(username: 'inactive', email: 'inactive@company.local', first_name: 'Inactive',
                            last_name: 'User', is_active: false, credential_attributes: { password_plain: 'tempPass' })
-  inactive_user.save
+  inactive_user.save_changes
 
   puts 'Assigning Roles...'
   admin.add_role(r_admin)
@@ -135,28 +135,28 @@ DB.transaction(rollback: :reraise) do
   LicenseAssignment.create(
     license: lic_editor_single,
     user: alice,
-    assignment_date: Time.now - 60 * 60 * 24 * 30,
+    assignment_date: Time.now - (60 * 60 * 24 * 30),
     is_active: true
   )
 
   LicenseAssignment.create(
     license: lic_suite_volume,
     user: bob,
-    assignment_date: Time.now - 60 * 60 * 24 * 10,
+    assignment_date: Time.now - (60 * 60 * 24 * 10),
     is_active: true
   )
 
   LicenseAssignment.create(
     license: lic_suite_volume,
     user: manager,
-    assignment_date: Time.now - 60 * 60 * 24 * 10,
+    assignment_date: Time.now - (60 * 60 * 24 * 10),
     is_active: true
   )
 
   LicenseAssignment.create(
     license: lic_suite_volume,
     user: inactive_user,
-    assignment_date: Time.now - 60 * 60 * 24 * 5,
+    assignment_date: Time.now - (60 * 60 * 24 * 5),
     is_active: true,
     notes: 'Assigned to currently inactive user'
   )
@@ -164,7 +164,7 @@ DB.transaction(rollback: :reraise) do
   LicenseAssignment.create(
     license: lic_cad_device,
     device: dev_ws01,
-    assignment_date: Time.now - 60 * 60 * 24 * 90,
+    assignment_date: Time.now - (60 * 60 * 24 * 90),
     is_active: true,
     notes: 'Primary CAD license for Dev Workstation 01'
   )
@@ -172,14 +172,14 @@ DB.transaction(rollback: :reraise) do
   LicenseAssignment.create(
     license: lic_db_perpetual,
     user: bob,
-    assignment_date: Time.now - 60 * 60 * 24 * 365,
+    assignment_date: Time.now - (60 * 60 * 24 * 365),
     is_active: true
   )
 
   ass_alice_suite_expired = LicenseAssignment.create(
     license: lic_suite_expired,
     user: alice,
-    assignment_date: Time.now - 60 * 60 * 24 * 200,
+    assignment_date: Time.now - (60 * 60 * 24 * 200),
     is_active: false,
     notes: 'Assignment related to an expired license'
   )
@@ -194,7 +194,7 @@ DB.transaction(rollback: :reraise) do
   temp_ass = LicenseAssignment.create(
     license: lic_suite_volume,
     user: alice,
-    assignment_date: Time.now - 60 * 60 * 24 * 2,
+    assignment_date: Time.now - (60 * 60 * 24 * 2),
     is_active: true,
     notes: 'Temporary assignment for Alice'
   )

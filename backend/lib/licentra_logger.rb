@@ -15,7 +15,7 @@ module Licentra
     private
 
     def log_output
-      ENV.fetch('LICENTRA_LOG_OUTPUT', '$stdout') == '$stdout' ? $stdout : ENV['LICENTRA_LOG_OUTPUT']
+      ENV.fetch('LICENTRA_LOG_OUTPUT', '$stdout') == '$stdout' ? $stdout : ENV.fetch('LICENTRA_LOG_OUTPUT', nil)
     end
 
     def log_level

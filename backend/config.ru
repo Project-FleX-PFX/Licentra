@@ -1,5 +1,5 @@
 # frozen_string_literal: true
 
-require './app'
+require_relative 'app'
 
-run Sinatra::Application
+run LicentraApp

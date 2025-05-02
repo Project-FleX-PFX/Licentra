@@ -10,7 +10,7 @@ module CrudOperations
       with_error_handling(context) do
         instance = model_class.new(attributes)
         if instance.valid?
-          instance.save
+          instance.save_changes
           log_created(instance)
           instance
         else
