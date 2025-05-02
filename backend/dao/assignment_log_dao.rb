@@ -20,7 +20,7 @@ class AssignmentLogDAO < BaseDAO
         attributes[:log_timestamp] ||= Time.now
         log_entry = AssignmentLog.new(attributes)
         if log_entry.valid?
-          log_entry.save
+          log_entry.save_changes
           log_log_created(log_entry)
           log_entry
         else

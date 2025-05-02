@@ -12,7 +12,7 @@ RSpec.describe 'Authentication, Authorization, and Session Handling' do
   end
 
   def app
-    Sinatra::Application
+    LicentraApp.new
   end
 
   # --- Test Data Setup using Fabricators ---
@@ -78,7 +78,7 @@ RSpec.describe 'Authentication, Authorization, and Session Handling' do
 
   describe 'Access Control (Authorization)' do
     context 'when user is an Admin' do
-      before(:each) { login_as(admin_user.email, 'password123') }
+      before { login_as(admin_user.email, 'password123') }
 
       it 'can access admin-specific pages' do
         get '/user_management'
@@ -104,7 +104,7 @@ RSpec.describe 'Authentication, Authorization, and Session Handling' do
     end
 
     context 'when user is a Regular User' do
-      before(:each) { login_as(regular_user.email, 'password123') }
+      before { login_as(regular_user.email, 'password123') }
 
       it 'can access regular user pages' do
         get '/profile'

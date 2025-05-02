@@ -30,7 +30,7 @@ class LicenseAssignmentDAO < BaseDAO
       attributes[:assignment_date] ||= Time.now
       attributes[:is_active] = true if attributes[:is_active].nil?
 
-      super(attributes)
+      super
     end
 
     # --- SPECIAL QUERIES / ACTIONS ---

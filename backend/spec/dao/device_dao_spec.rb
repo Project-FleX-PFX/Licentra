@@ -132,7 +132,7 @@ RSpec.describe DeviceDAO do
     it 'returns all existing devices', :aggregate_failures do
       devices = described_class.all
       expect(devices.count).to eq(2)
-      expect(devices.map(&:device_name)).to match_array(['Device A', 'Device B'])
+      expect(devices.map(&:device_name)).to contain_exactly('Device A', 'Device B')
     end
 
     it 'logs the fetch operation' do

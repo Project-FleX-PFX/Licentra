@@ -8,7 +8,7 @@ RSpec.describe 'User Registration' do
   include Rack::Test::Methods
 
   def app
-    Sinatra::Application
+    LicentraApp.new
   end
 
   def register_user(username, email, first_name: 'Test', last_name: 'User', password: 'password123')
@@ -30,7 +30,7 @@ RSpec.describe 'User Registration' do
   end
 
   describe 'First User Admin Assignment' do
-    before(:each) do
+    before do
       Role.find_or_create(role_name: 'Admin')
       Role.find_or_create(role_name: 'User')
     end
@@ -62,7 +62,7 @@ RSpec.describe 'User Registration' do
   end
 
   describe 'Validation Errors' do
-    before(:each) do
+    before do
       Role.find_or_create(role_name: 'User')
       register_user('existinguser', 'existing@example.com')
       expect(last_response).to be_redirect
@@ -72,14 +72,14 @@ RSpec.describe 'User Registration' do
       register_user('existinguser', 'new@example.com')
 
       expect(last_response).to be_ok
-      expect(last_response.body).to include('bereits')
+      expect(last_response.body).to include('already taken')
     end
 
     it 'rejects registration with duplicate email' do
       register_user('newuser', 'existing@example.com')
 
       expect(last_response).to be_ok
-      expect(last_response.body).to include('bereits')
+      expect(last_response.body).to include('already registered')
     end
 
     it 'rejects registration with mismatched passwords' do
