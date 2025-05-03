@@ -24,7 +24,29 @@ module AdminRoutes
 
     app.get '/product_management' do
       require_role('Admin')
+      @products = ProductDAO.all
       erb :product_management
+    end
+
+    app.post '/product_management' do
+      require_role('Admin')
+      product_name = params[:product_name]
+
+      # Neues Produkt anlegen
+      begin
+        product = Product.new(product_name: product_name)
+        if product.valid?
+          product.save_changes
+          status 201
+          body 'Product created successfully'
+        else
+          status 422
+          body product.errors.full_messages.join(', ')
+        end
+      rescue => e
+        status 500
+        body "Error creating product: #{e.message}"
+      end
     end
 
     app.get '/license_management' do
