@@ -12,15 +12,11 @@
   </div>
 
   <ul class="product-list">
-    <% products = [
-      { name: "ProX 200",     license_count: 3 },
-      { name: "Alpha Gadget", license_count: 1 }
-    ] %>
-    <% products.each do |p| %>
+    <% @products.each do |p| %>
       <li class="product-item"
-          data-product_name="<%= p[:name] %>"
-          data-license_count="<%= p[:license_count] %>">
-        <span class="product-name"><%= p[:name] %></span>
+          data-product_name="<%= p.product_name %>"
+          data-license_count="<%= p.licenses.count %>">
+        <span class="product-name"><%= p.product_name %></span>
       </li>
     <% end %>
   </ul>
@@ -70,9 +66,9 @@ document.addEventListener("DOMContentLoaded", () => {
     // Inputs sperren
     [...form.elements].forEach(el => {
       if (['edit-btn','save-btn','delete-btn'].includes(el.id)) return;
-      el.disabled = true;
+      el.disabled = mode === 'edit'; // Bei 'add' nicht sperren
     });
-    saveBtn.disabled = true;
+    saveBtn.disabled = mode === 'edit';
     deleteBtn.style.display = mode === 'edit' ? 'inline-block' : 'none';
     modal.classList.remove("hidden");
   }
@@ -106,7 +102,35 @@ document.addEventListener("DOMContentLoaded", () => {
 
   form.addEventListener("submit", e => {
     e.preventDefault();
+    
+    // Nur beim Speichern eines neuen Produkts
+    if (title.textContent.includes('Add new Product')) {
+      fetch('/product_management', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          'product_name': form.product_name.value
+        })
+      })
+      .then(response => {
+        if (response.ok) {
+          // Seite neu laden, um das neue Produkt anzuzeigen
+          window.location.reload();
+        } else {
+          return response.text().then(text => {
+            alert('Fehler: ' + text);
+          });
+        }
+      })
+      .catch(error => {
+        alert('Fehler: ' + error);
+      });
+    }
+    
     modal.classList.add("hidden");
   });
 });
 </script>
+
