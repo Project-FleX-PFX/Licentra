@@ -67,7 +67,32 @@ module AdminRoutes
 
     app.get '/license_management' do
       require_role('Admin')
+      @licenses = License.eager(:product, :license_type).all
+      @products = Product.all
+      @license_types = LicenseType.all
       erb :license_management
+    end
+
+    app.post '/licenses' do
+      require_role('Admin')
+      LicenseDAO.create(
+        license_key: params[:license_key],
+        seat_count: params[:seat_count],
+        product_id: params[:product_id],
+        license_type_id: params[:license_type_id]
+      )
+      redirect '/license_management'
+    end
+
+    app.patch '/licenses/:id' do
+      require_role('Admin')
+      LicenseDAO.update(params[:id], {
+        license_key: params[:license_key],
+        seat_count: params[:seat_count],
+        product_id: params[:product_id],
+        license_type_id: params[:license_type_id]
+      })
+      redirect '/license_management'
     end
   end
 end
