@@ -154,74 +154,66 @@ document.addEventListener("DOMContentLoaded", () => {
   form.addEventListener("submit", e => {
     e.preventDefault();
     
-    // Nur beim Speichern eines neuen Produkts
-    if (title.textContent.includes('Add new Product')) {
-      fetch('/product_management', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: new URLSearchParams({
-          'product_name': form.product_name.value
-        })
-      })
-      .then(response => {
-        if (response.ok) {
-          // Seite neu laden, um das neue Produkt anzuzeigen
-          window.location.reload();
-        } else {
-          return response.text().then(errorText => {
-            const errorMessage = errorText.includes('Validation failed')
-              ? 'Der Produktname wird bereits verwendet. Bitte wähle einen anderen Namen.'
-              : 'Fehler beim Aktualisieren des Produkts: ' + errorText;
+    // Ziel-URL und Methode bestimmen
+    let url = '/product_management';
+    let method = 'POST';
+    let bodyParams = { 'product_name': form.product_name.value };
 
-            showErrorNotification(errorMessage);
-          });
-        }
-      })
-      .catch(error => {
-        alert('Fehler: ' + error);
-      });
-    } else {
-      // Update eines bestehenden Produkts
-      const productName = form.product_name.value;
+    if (!title.textContent.includes('Add new Product')) {
+      // Update-Fall
       const productId = document.querySelector('.product-item.active')?.dataset.product_id;
       if (!productId || productId === 'undefined') {
-        alert('Fehler: Produkt-ID konnte nicht ermittelt werden');
+        showErrorNotification('Fehler: Produkt-ID konnte nicht ermittelt werden'); // Besser als alert
         return;
       }
-      
-      fetch(`/product_management/${productId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: new URLSearchParams({
-          'product_name': productName
-        })
-      })
-      .then(response => {
-        if (response.ok) {
-          window.location.reload();
-        } else {
-          return response.text().then(errorText => {
-            // Fehlermeldung in einem benutzerfreundlichen Format anzeigen
-            const errorMessage = errorText.includes('Validation failed')
-              ? 'Der Produktname wird bereits verwendet. Bitte wähle einen anderen Namen.'
-              : 'Fehler beim Aktualisieren des Produkts: ' + errorText;
-
-            // Elegantere Anzeige statt alert
-            showErrorNotification(errorMessage);
-          });
-        }
-      })
-      .catch(error => {
-        alert('Fehler: ' + error);
-      });
+      url = `/product_management/${productId}`;
+      method = 'PUT';
     }
-    
-    modal.classList.add("hidden");
+
+    // Fetch-Aufruf
+    fetch(url, {
+      method: method,
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams(bodyParams)
+    })
+    .then(response => {
+      if (response.ok) {
+        // === ERFOLGSFALL ===
+        modal.classList.add("hidden"); // Modal NUR bei Erfolg schließen
+        window.location.reload(); // Seite neu laden
+      } else {
+        // === FEHLERFALL (z.B. 422 Validation Error) ===
+        return response.text().then(errorText => {
+          // Fehlermeldung bestimmen
+          const errorMessage = errorText.includes('already taken') // Prüft auf die spezifische Fehlermeldung
+            ? 'Der Produktname wird bereits verwendet. Bitte wähle einen anderen Namen.'
+            : `Fehler beim ${method === 'POST' ? 'Erstellen' : 'Aktualisieren'} des Produkts: ${errorText}`;
+          
+          // Benachrichtigung anzeigen (Modal bleibt offen)
+          showErrorNotification(errorMessage);
+
+          // Optional: Sicherstellen, dass der Edit-Modus aktiv bleibt, falls es ein Update war
+          if (method === 'PUT') {
+             isEditMode = true; // Erzwinge Edit-Mode, falls er durch Klicks o.ä. verloren ging
+             editBtn.textContent = "Abbrechen";
+             editBtn.classList.add("cancel-btn");
+             saveBtn.disabled = false; 
+             // Felder bleiben entsperrt, da der Fehler im Edit-Modus auftrat
+          }
+        });
+      }
+    })
+    .catch(error => {
+      // Netzwerkfehler etc.
+      showErrorNotification('Netzwerkfehler oder anderer Fehler: ' + error.message);
+      // Modal bleibt ebenfalls offen, damit der Benutzer es erneut versuchen kann
+    });
+
+    // modal.classList.add("hidden"); // <-- DIESE ZEILE WIRD HIER ENTFERNT!
   });
+
 });
 
 function showErrorNotification(message) {
