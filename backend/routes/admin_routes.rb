@@ -55,15 +55,13 @@ module AdminRoutes
       product_name = params[:product_name]
 
       begin
-        # Produkt aktualisieren
         result = ProductDAO.update(product_id, product_name: product_name)
-        if result
-          status 200
-          body 'Product updated successfully'
-        else
-          status 422
-          body 'Product could not be updated'
-        end
+        status 200
+        body 'Product updated successfully'
+      rescue DAO::ValidationError => e
+        status 422
+        error_messages = e.respond_to?(:errors) ? e.errors.full_messages.join(',') : e.message
+        body error_messages
       rescue => e
         status 500
         body "Error updating product: #{e.message}"
