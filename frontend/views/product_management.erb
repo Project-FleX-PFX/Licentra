@@ -14,6 +14,7 @@
   <ul class="product-list">
     <% @products.each do |p| %>
       <li class="product-item"
+          data-product_id="<%= p.product_id %>"
           data-product_name="<%= p.product_name %>"
           data-license_count="<%= p.licenses.count %>">
         <span class="product-name"><%= p.product_name %></span>
@@ -31,8 +32,12 @@
       <label>Name:</label>
       <input type="text" name="product_name" disabled>
 
-      <label>Number of sub licenses:</label>
-      <input type="number" name="license_count" disabled min="0">
+      <div id="license-info-container" style="display: none;">
+        <div class="info-field">
+          <span class="info-label">Number of sub licenses:</span>
+          <span id="license-count-display">0</span>
+        </div>
+      </div>
 
       <div class="modal-actions">
         <button type="button" id="edit-btn">Edit</button>
@@ -53,6 +58,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const saveBtn   = document.getElementById("save-btn");
   const deleteBtn = document.getElementById("delete-btn");
   const title     = document.getElementById("modal-title");
+  const licenseCountDisplay = document.getElementById("license-count-display");
 
   function openModal(mode, data={}) {
     title.textContent = mode === 'add'
@@ -60,16 +66,36 @@ document.addEventListener("DOMContentLoaded", () => {
       : 'Product configuration';
 
     // Felder mit Daten befüllen (oder leer lassen beim "add")
-    form.product_name.value  = data.product_name  || '';
-    form.license_count.value = data.license_count || 0;
+    form.product_name.value = data.product_name || '';
+    
+    // License info container nur im Edit-Modus anzeigen
+    const licenseInfoContainer = document.getElementById('license-info-container');
+    licenseInfoContainer.style.display = mode === 'edit' ? 'block' : 'none';
+    
+    // Lizenzanzahl als Text anzeigen
+    if (mode === 'edit') {
+      licenseCountDisplay.textContent = data.license_count || '0';
+    }
 
     // Inputs sperren
     [...form.elements].forEach(el => {
       if (['edit-btn','save-btn','delete-btn'].includes(el.id)) return;
-      el.disabled = mode === 'edit'; // Bei 'add' nicht sperren
+      el.disabled = mode === 'edit'; // Felder nur im Edit-Modus sperren
     });
+    
     saveBtn.disabled = mode === 'edit';
     deleteBtn.style.display = mode === 'edit' ? 'inline-block' : 'none';
+    
+    // Aktives Element markieren
+    document.querySelectorAll('.product-item').forEach(item => {
+      item.classList.remove('active');
+    });
+    
+    if (mode === 'edit') {
+      const clickedItem = document.querySelector(`[data-product_name="${data.product_name}"]`);
+      if (clickedItem) clickedItem.classList.add('active');
+    }
+    
     modal.classList.remove("hidden");
   }
 
@@ -82,23 +108,48 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("add-product-btn")
     .addEventListener("click", () => openModal('add'));
 
-  closeBtn.addEventListener("click", () =>
-    modal.classList.add("hidden")
-  );
+  let isEditMode = false;
+
+  closeBtn.addEventListener("click", () => {
+    modal.classList.add("hidden");
+    // Zustand zurücksetzen
+    isEditMode = false;
+    editBtn.textContent = "Edit";
+    editBtn.classList.remove("cancel-btn");
+  });
+
 
   editBtn.addEventListener("click", () => {
-    [...form.elements].forEach(el => {
-      if (['edit-btn','delete-btn'].includes(el.id)) return;
-      el.disabled = false;
-    });
-    saveBtn.disabled = false;
-  });
-
-  deleteBtn.addEventListener("click", () => {
-    if (confirm("Soll dieses Product wirklich gelöscht werden?")) {
-      modal.classList.add("hidden");
+    isEditMode = !isEditMode;
+    
+    if (isEditMode) {
+      // Wechsel zu Edit-Modus
+      editBtn.textContent = "Abbrechen";
+      editBtn.classList.add("cancel-btn");
+      
+      // Felder entsperren
+      [...form.elements].forEach(el => {
+        if (['edit-btn','delete-btn'].includes(el.id)) return;
+        el.disabled = false;
+      });
+      saveBtn.disabled = false;
+    } else {
+      // Wechsel zurück zum Ansichtsmodus
+      editBtn.textContent = "Edit";
+      editBtn.classList.remove("cancel-btn");
+      
+      // Felder wieder sperren
+      [...form.elements].forEach(el => {
+        if (['edit-btn','delete-btn'].includes(el.id)) return;
+        el.disabled = true;
+      });
+      saveBtn.disabled = true;
     }
   });
+
+
+  deleteBtn.disabled = true;
+  deleteBtn.title = "Diese Funktion ist noch nicht implementiert";
 
   form.addEventListener("submit", e => {
     e.preventDefault();
@@ -119,8 +170,48 @@ document.addEventListener("DOMContentLoaded", () => {
           // Seite neu laden, um das neue Produkt anzuzeigen
           window.location.reload();
         } else {
-          return response.text().then(text => {
-            alert('Fehler: ' + text);
+          return response.text().then(errorText => {
+            const errorMessage = errorText.includes('Validation failed')
+              ? 'Der Produktname wird bereits verwendet. Bitte wähle einen anderen Namen.'
+              : 'Fehler beim Aktualisieren des Produkts: ' + errorText;
+
+            showErrorNotification(errorMessage);
+          });
+        }
+      })
+      .catch(error => {
+        alert('Fehler: ' + error);
+      });
+    } else {
+      // Update eines bestehenden Produkts
+      const productName = form.product_name.value;
+      const productId = document.querySelector('.product-item.active')?.dataset.product_id;
+      if (!productId || productId === 'undefined') {
+        alert('Fehler: Produkt-ID konnte nicht ermittelt werden');
+        return;
+      }
+      
+      fetch(`/product_management/${productId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          'product_name': productName
+        })
+      })
+      .then(response => {
+        if (response.ok) {
+          window.location.reload();
+        } else {
+          return response.text().then(errorText => {
+            // Fehlermeldung in einem benutzerfreundlichen Format anzeigen
+            const errorMessage = errorText.includes('Validation failed')
+              ? 'Der Produktname wird bereits verwendet. Bitte wähle einen anderen Namen.'
+              : 'Fehler beim Aktualisieren des Produkts: ' + errorText;
+
+            // Elegantere Anzeige statt alert
+            showErrorNotification(errorMessage);
           });
         }
       })
@@ -132,5 +223,48 @@ document.addEventListener("DOMContentLoaded", () => {
     modal.classList.add("hidden");
   });
 });
-</script>
 
+function showErrorNotification(message) {
+  // Bestehende Benachrichtigungen entfernen
+  const existingNotification = document.querySelector('.error-notification');
+  if (existingNotification) {
+    existingNotification.remove();
+  }
+  
+  // Neue Benachrichtigung erstellen
+  const notification = document.createElement('div');
+  notification.className = 'error-notification';
+  notification.innerHTML = `
+    <div class="notification-content">
+      <span class="notification-message">${message}</span>
+      <button class="notification-close">&times;</button>
+    </div>
+  `;
+  
+  // Styling für die Benachrichtigung
+  notification.style.position = 'fixed';
+  notification.style.top = '20px';
+  notification.style.right = '20px';
+  notification.style.backgroundColor = '#f8d7da';
+  notification.style.color = '#721c24';
+  notification.style.padding = '15px';
+  notification.style.borderRadius = '4px';
+  notification.style.boxShadow = '0 4px 8px rgba(0,0,0,0.1)';
+  notification.style.zIndex = '1000';
+  
+  // Benachrichtigung zum DOM hinzufügen
+  document.body.appendChild(notification);
+  
+  // Schließen-Button-Funktionalität
+  notification.querySelector('.notification-close').addEventListener('click', () => {
+    notification.remove();
+  });
+  
+  // Automatisches Ausblenden nach 5 Sekunden
+  setTimeout(() => {
+    notification.remove();
+  }, 5000);
+}
+
+
+</script>

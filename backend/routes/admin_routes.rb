@@ -49,6 +49,27 @@ module AdminRoutes
       end
     end
 
+    app.put '/product_management/:id' do
+      require_role('Admin')
+      product_id = params[:id]
+      product_name = params[:product_name]
+
+      begin
+        # Produkt aktualisieren
+        result = ProductDAO.update(product_id, product_name: product_name)
+        if result
+          status 200
+          body 'Product updated successfully'
+        else
+          status 422
+          body 'Product could not be updated'
+        end
+      rescue => e
+        status 500
+        body "Error updating product: #{e.message}"
+      end
+    end
+
     app.get '/license_management' do
       require_role('Admin')
       erb :license_management

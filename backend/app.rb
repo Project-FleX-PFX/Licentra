@@ -12,6 +12,7 @@ Dir.glob('./services/*.rb').sort.each { |file| require file }
 Dir.glob('./routes/*.rb').sort.each { |file| require file }
 
 class LicentraApp < Sinatra::Base
+  enable :method_override
   enable :sessions
   set :session_secret, ENV.fetch('SESSION_SECRET') { SecureRandom.hex(64) }
   set :views, File.join(File.dirname(__FILE__), 'frontend', 'views')
