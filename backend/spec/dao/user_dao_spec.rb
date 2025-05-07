@@ -311,4 +311,234 @@ RSpec.describe UserDAO do
       expect(described_class).to have_received(:log_deleted).with(user_to_delete)
     end
   end
+
+  # Tests for locking users
+  describe '.increment_failed_attempts' do
+    let!(:user) { Fabricate(:user, failed_login_attempts: 1) }
+
+    context 'when the user exists' do
+      it 'increments the failed_login_attempts counter by 1' do
+        UserDAO.increment_failed_attempts(user)
+        expect(user.reload.failed_login_attempts).to eq(2)
+      end
+
+      it 'logs the increment event' do
+        expect(UserDAO).to receive(:log_info).with("Incremented failed attempts for user #{user.email}. New count: 2")
+        UserDAO.increment_failed_attempts(user)
+      end
+
+      it 'returns the updated user instance' do
+        updated_user = UserDAO.increment_failed_attempts(user)
+        expect(updated_user).to be_a(User)
+        expect(updated_user.pk).to eq(user.pk)
+        expect(updated_user.failed_login_attempts).to eq(2)
+      end
+    end
+
+    context 'when the user is nil' do
+      it 'returns nil and does not attempt to log' do
+        expect(UserDAO).not_to receive(:log_info)
+        expect(UserDAO).not_to receive(:log_error)
+        expect(UserDAO.increment_failed_attempts(nil)).to be_nil
+      end
+    end
+
+    context 'when the database update fails (simulated)' do
+      before do
+        allow(UserDAO.model_class).to receive_message_chain(:where, :update).and_return(0)
+      end
+
+      it 'logs an error' do
+        expect(UserDAO).to receive(:log_error).with("Failed to increment failed login attempts for user ID #{user.pk}. No rows updated.")
+        UserDAO.increment_failed_attempts(user)
+      end
+
+      it 'returns nil' do
+        expect(UserDAO.increment_failed_attempts(user)).to be_nil
+      end
+
+      it 'does not change the original user instance attributes in memory (before reload)' do
+        original_attempts = user.failed_login_attempts
+        UserDAO.increment_failed_attempts(user)
+        expect(user.failed_login_attempts).to eq(original_attempts)
+      end
+    end
+  end
+
+  describe '.lock_user' do
+    let!(:user) { Fabricate(:user, locked_at: nil) }
+
+    context 'when the user exists' do
+      it 'sets the locked_at timestamp to the current time' do
+        time_before_lock = Time.now
+        UserDAO.lock_user(user)
+        time_after_lock = Time.now
+
+        locked_time = user.reload.locked_at
+        expect(locked_time).to be_a(Time)
+        expect(locked_time).to be >= time_before_lock
+        expect(locked_time).to be <= time_after_lock
+      end
+
+      it 'logs the lock event' do
+        expect(UserDAO).to receive(:log_info).with("Locked account for user #{user.email}")
+        UserDAO.lock_user(user)
+      end
+
+      it 'returns the updated user instance' do
+        updated_user = UserDAO.lock_user(user)
+        expect(updated_user).to be_a(User)
+        expect(updated_user.pk).to eq(user.pk)
+        expect(updated_user.locked_at).not_to be_nil
+      end
+    end
+
+    context 'when the user is nil' do
+      it 'returns nil and does not attempt to log' do
+        expect(UserDAO).not_to receive(:log_info)
+        expect(UserDAO).not_to receive(:log_error)
+        expect(UserDAO.lock_user(nil)).to be_nil
+      end
+    end
+
+    context 'when the database update fails (simulated)' do
+      before do
+        allow(UserDAO.model_class).to receive_message_chain(:where, :update).and_return(0)
+      end
+
+      it 'logs an error' do
+        expect(UserDAO).to receive(:log_error).with("Failed to lock account for user ID #{user.pk}. No rows updated.")
+        UserDAO.lock_user(user)
+      end
+
+      it 'returns nil' do
+        expect(UserDAO.lock_user(user)).to be_nil
+      end
+    end
+  end
+
+  describe '.reset_lockout' do
+    let!(:locked_user) { Fabricate(:user, failed_login_attempts: 3, locked_at: Time.now) }
+    let!(:unlocked_user) { Fabricate(:user, failed_login_attempts: 0, locked_at: nil) }
+
+    context 'when the user exists and is locked out' do
+      it 'resets failed_login_attempts to 0' do
+        UserDAO.reset_lockout(locked_user)
+        expect(locked_user.reload.failed_login_attempts).to eq(0)
+      end
+
+      it 'clears the locked_at timestamp (sets to nil)' do
+        UserDAO.reset_lockout(locked_user)
+        expect(locked_user.reload.locked_at).to be_nil
+      end
+
+      it 'logs the reset event' do
+        expect(UserDAO).to receive(:log_info).with("Reset lockout status for user #{locked_user.email}")
+        UserDAO.reset_lockout(locked_user)
+      end
+
+      it 'returns the updated user instance' do
+        updated_user = UserDAO.reset_lockout(locked_user)
+        expect(updated_user).to be_a(User)
+        expect(updated_user.pk).to eq(locked_user.pk)
+        expect(updated_user.failed_login_attempts).to eq(0)
+        expect(updated_user.locked_at).to be_nil
+      end
+    end
+
+    context 'when the user is not locked out (no action needed)' do
+      it 'returns the user instance without modification' do
+        expect(UserDAO.model_class).not_to receive(:where)
+
+        original_user_attributes = unlocked_user.values.dup
+
+        returned_user = UserDAO.reset_lockout(unlocked_user)
+
+        expect(returned_user).to eq(unlocked_user)
+        expect(unlocked_user.values).to eq(original_user_attributes)
+      end
+
+      it 'does not log an event' do
+        expect(UserDAO).not_to receive(:log_info)
+        UserDAO.reset_lockout(unlocked_user)
+      end
+    end
+
+    context 'when the user is nil' do
+      it 'returns nil and does not attempt to log' do
+        expect(UserDAO).not_to receive(:log_info)
+        expect(UserDAO).not_to receive(:log_error)
+        expect(UserDAO.reset_lockout(nil)).to be_nil
+      end
+    end
+
+    context 'when the database update fails for a locked user (simulated)' do
+      before do
+        allow(locked_user).to receive(:failed_login_attempts).and_return(3)
+        allow(locked_user).to receive(:locked_at).and_return(Time.now)
+        allow(UserDAO.model_class).to receive_message_chain(:where, :update).and_return(0)
+      end
+
+      it 'logs an error' do
+        expect(UserDAO).to receive(:log_error).with("Failed to reset lockout status for user ID #{locked_user.pk}. No rows updated.")
+        UserDAO.reset_lockout(locked_user)
+      end
+
+      it 'returns nil' do
+        expect(UserDAO.reset_lockout(locked_user)).to be_nil
+      end
+    end
+  end
+
+  describe '._perform_atomic_user_update' do
+    let!(:user) { Fabricate(:user, email: 'privatetest@example.com', failed_login_attempts: 1) }
+    let(:update_payload) do
+      { failed_login_attempts: Sequel.+(:failed_login_attempts, 2), email: 'newprivate@example.com' }
+    end
+    let(:action_description) { 'perform a test update' }
+    let(:context_string) do
+      "#{action_description.capitalize} for user ID #{user.pk}"
+    end
+
+    context 'when update fails (0 rows updated)' do
+      before do
+        allow(UserDAO.model_class).to receive_message_chain(:where, :update).and_return(0)
+      end
+
+      it 'logs an error' do
+        expect(UserDAO).to receive(:log_error).with("Failed to #{action_description.downcase} for user ID #{user.pk}. No rows updated.")
+        UserDAO.send(:_perform_atomic_user_update, user, update_payload, action_description)
+      end
+
+      it 'returns nil' do
+        expect(UserDAO.send(:_perform_atomic_user_update, user, update_payload, action_description)).to be_nil
+      end
+    end
+
+    context 'when a Sequel::DatabaseError occurs during update' do
+      let(:db_error_message) { 'Connection timeout' }
+      before do
+        allow(UserDAO.model_class).to receive_message_chain(:where, :update).and_raise(
+          Sequel::DatabaseError.new(db_error_message)
+        )
+        allow(DaoLogger).to receive(:log_error)
+      end
+    end
+
+    context 'when a generic StandardError occurs during update' do
+      let(:generic_error_message) { 'Something unexpected happened' }
+      let(:generic_error) { StandardError.new(generic_error_message) }
+      before do
+        allow(UserDAO.model_class).to receive_message_chain(:where, :update).and_raise(generic_error)
+        allow(DaoLogger).to receive(:log_error)
+      end
+
+      it 'logs the unknown error via DaoLogger' do
+        expect(DaoLogger).to receive(:log_error).with("Unknown error while #{context_string}: #{generic_error_message}")
+        expect do
+          UserDAO.send(:_perform_atomic_user_update, user, update_payload, action_description)
+        end.to raise_error(generic_error)
+      end
+    end
+  end
 end

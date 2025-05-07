@@ -9,6 +9,8 @@ Sequel.migration do
       String :first_name
       String :last_name
       Boolean :is_active, null: false, default: true
+      Integer :failed_login_attempts, null: false, default: 0
+      DateTime :locked_at
 
       index :email
     end
