@@ -85,7 +85,9 @@ document.addEventListener("DOMContentLoaded", () => {
     
     saveBtn.disabled = mode === 'edit';
     deleteBtn.style.display = mode === 'edit' ? 'inline-block' : 'none';
-    
+
+    editBtn.style.display = mode === 'add' ? 'none' : 'inline-block';
+
     // Aktives Element markieren
     document.querySelectorAll('.product-item').forEach(item => {
       item.classList.remove('active');
@@ -124,7 +126,7 @@ document.addEventListener("DOMContentLoaded", () => {
     
     if (isEditMode) {
       // Wechsel zu Edit-Modus
-      editBtn.textContent = "Abbrechen";
+      editBtn.textContent = "Cancel";
       editBtn.classList.add("cancel-btn");
       
       // Felder entsperren
@@ -197,7 +199,7 @@ document.addEventListener("DOMContentLoaded", () => {
           // Optional: Sicherstellen, dass der Edit-Modus aktiv bleibt, falls es ein Update war
           if (method === 'PUT') {
              isEditMode = true; // Erzwinge Edit-Mode, falls er durch Klicks o.ä. verloren ging
-             editBtn.textContent = "Abbrechen";
+             editBtn.textContent = "Cancel";
              editBtn.classList.add("cancel-btn");
              saveBtn.disabled = false; 
              // Felder bleiben entsperrt, da der Fehler im Edit-Modus auftrat
