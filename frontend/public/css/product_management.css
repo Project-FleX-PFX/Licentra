@@ -105,8 +105,28 @@
 .modal-actions {
   margin-top: 20px;
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 10px; /* Abstand zwischen den Buttons */
+}
+
+/* Standardverhalten für 3+ Buttons: Breite verteilen */
+.modal-actions:not(:has(button:only-child)):not(:has(button:nth-child(2):last-child)) {
+  justify-content: space-between; /* Verteilt den Platz gleichmäßig */
+  width: 100%; /* Füllt die Breite des Containers */
+}
+
+/* Fall 1: Nur ein Button im Container */
+.modal-actions:has(button:only-child) {
+  justify-content: flex-end; /* Button ganz rechts */
+  width: 100%; /* Füllt die Breite des Containers */
+  gap: 0; /* Kein Gap nötig bei einem Button */
+}
+
+/* Fall 2: Genau zwei Buttons im Container */
+.modal-actions:has(button:nth-child(2):last-child) {
+  justify-content: space-between; /* Ein Button links, einer rechts */
+  width: 100%; /* Füllt die Breite des Containers */
+  gap: 0; /* Kein Gap nötig bei zwei Buttons */
 }
 
 .modal-actions button {
@@ -114,7 +134,10 @@
   border: none;
   border-radius: 4px;
   cursor: pointer;
+  flex-grow: 1; /* Buttons nehmen gleichen Platz ein */
+  min-width: 0; /* Wichtig, damit flex-grow funktioniert */
 }
-#edit-btn    { background: #ffd666; }
-#save-btn    { background: #722ed1; color: #fff; }
-.delete-btn  { background: #ff4d4f; color: #fff; }
+
+#edit-btn    { background: #c6beab; }
+#save-btn    { background: #d3d9e1; color: #230505; }
+.delete-btn  { background: #c8b6b6; color: #330303; }
