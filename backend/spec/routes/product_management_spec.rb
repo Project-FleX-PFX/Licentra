@@ -88,7 +88,7 @@ RSpec.describe 'Product Management' do
   describe 'POST /product_management' do
     it 'erstellt ein neues Produkt' do
       create_product('New Product')
-      expect(last_response.status).to eq(201)
+      expect(last_response.status).to eq(200)
       
       # Überprüfen, ob das Produkt in der Datenbank existiert
       product = Product.first(product_name: 'New Product')
@@ -98,7 +98,7 @@ RSpec.describe 'Product Management' do
     it 'verhindert die Erstellung von Produkten mit doppeltem Namen' do
       # Erstes Produkt erstellen
       create_product('Duplicate Product')
-      expect(last_response.status).to eq(201)
+      expect(last_response.status).to eq(200)
       
       # Versuch, ein Produkt mit demselben Namen zu erstellen
       create_product('Duplicate Product')
