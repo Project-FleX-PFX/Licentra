@@ -69,7 +69,6 @@ DEPENDENCIES
   pg
   puma
   rack-test
-  rack_csrf
   rackup
   rake
   rspec
