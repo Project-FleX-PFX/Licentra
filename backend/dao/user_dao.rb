@@ -25,6 +25,9 @@ class UserDAO < BaseDAO
     include UserErrorHandling
   end
 
+  MAX_LOGIN_ATTEMPTS = 3
+  LOCKOUT_DURATION = 15 * 60
+
   class << self
     # User lookup methods
     def find_by_username(username)
@@ -70,6 +73,56 @@ class UserDAO < BaseDAO
     def find_inactive_users(options = {})
       inactive_criteria = { is_active: false }
       all(options.merge(where: options.fetch(:where, {}).merge(inactive_criteria)))
+    end
+
+    def locked?(user)
+      return false unless user&.locked_at
+
+      if LOCKOUT_DURATION && user.locked_at < (Time.now - LOCKOUT_DURATION)
+        reset_lockout(user)
+        return false
+      end
+
+      true
+    end
+
+    def increment_failed_attempts(user)
+      return nil unless user
+
+      update_payload = { failed_login_attempts: Sequel.+(:failed_login_attempts, 1) }
+      action_description = 'increment failed login attempts'
+
+      updated_user = _perform_atomic_user_update(user, update_payload, action_description)
+
+      if updated_user
+        log_info("Incremented failed attempts for user #{updated_user.email}. New count: #{updated_user.failed_login_attempts}")
+      end
+      updated_user
+    end
+
+    def lock_user(user)
+      return nil unless user
+
+      update_payload = { locked_at: Time.now }
+      action_description = 'lock account'
+
+      updated_user = _perform_atomic_user_update(user, update_payload, action_description)
+
+      log_info("Locked account for user #{updated_user.email}") if updated_user
+      updated_user
+    end
+
+    def reset_lockout(user)
+      return nil unless user
+      return user if user.failed_login_attempts.zero? && user.locked_at.nil?
+
+      update_payload = { failed_login_attempts: 0, locked_at: nil }
+      action_description = 'reset lockout status'
+
+      updated_user = _perform_atomic_user_update(user, update_payload, action_description)
+
+      log_info("Reset lockout status for user #{updated_user.email}") if updated_user
+      updated_user
     end
 
     # User state management
@@ -161,6 +214,22 @@ class UserDAO < BaseDAO
         user.refresh
         log_user_roles_updated(user)
         user
+      end
+    end
+
+    def _perform_atomic_user_update(user_instance, update_payload, action_description_for_log_and_context)
+      context = "#{action_description_for_log_and_context.capitalize} for user ID #{user_instance.pk}"
+
+      with_error_handling(context) do
+        updated_rows = model_class.where(primary_key => user_instance.pk).update(update_payload)
+
+        if updated_rows == 1
+          user_instance.refresh
+          user_instance
+        else
+          log_error("Failed to #{action_description_for_log_and_context.downcase} for user ID #{user_instance.pk}. No rows updated.")
+          nil
+        end
       end
     end
   end

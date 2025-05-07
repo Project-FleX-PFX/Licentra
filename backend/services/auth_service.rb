@@ -2,10 +2,7 @@
 
 # Service class which handles auth
 class AuthService
-  def self.authenticate(email, password)
-    return nil if credentials_invalid?(email, password)
-
-    user = UserDAO.find_by_email(email)
+  def self.authenticate(user, password)
     return user if user&.is_active && user.authenticate(password)
 
     nil
