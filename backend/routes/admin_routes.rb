@@ -32,20 +32,17 @@ module AdminRoutes
       require_role('Admin')
       product_name = params[:product_name]
 
-      # Neues Produkt anlegen
       begin
-        product = Product.new(product_name: product_name)
-        if product.valid?
-          product.save_changes
-          status 201
-          body 'Product created successfully'
-        else
-          status 422
-          body product.errors.full_messages.join(', ')
-        end
+        ProductDAO.create(product_name: product_name)
+        status 200
+        body 'Product successfully created'
+      rescue DAO::ValidationError => e
+        status 422
+        error_messages = e.respond_to?(:errors) ? e.errors.full_messages.join(',') : e.message
+        body error_messages
       rescue => e
         status 500
-        body "Error creating product: #{e.message}"
+        body "Error updating product: #{e.message}"
       end
     end
 
@@ -55,7 +52,7 @@ module AdminRoutes
       product_name = params[:product_name]
 
       begin
-        result = ProductDAO.update(product_id, product_name: product_name)
+        ProductDAO.update(product_id, product_name: product_name)
         status 200
         body 'Product updated successfully'
       rescue DAO::ValidationError => e
