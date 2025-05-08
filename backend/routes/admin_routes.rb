@@ -67,32 +67,41 @@ module AdminRoutes
 
     app.get '/license_management' do
       require_role('Admin')
-      @licenses = License.eager(:product, :license_type).all
-      @products = Product.all
-      @license_types = LicenseType.all
+      @licenses = LicenseDAO.all
+      @products = ProductDAO.all
+      @license_types = LicenseTypeDAO.all
       erb :license_management
     end
 
-    app.post '/licenses' do
+    app.post '/license_management' do
       require_role('Admin')
-      LicenseDAO.create(
-        license_key: params[:license_key],
-        seat_count: params[:seat_count],
+      license_data = {
         product_id: params[:product_id],
-        license_type_id: params[:license_type_id]
-      )
-      redirect '/license_management'
-    end
+        license_type_id: params[:license_type_id],
+        license_key: params[:license_key],
+        license_name: params[:license_name],
+        seat_count: params[:seat_count],
+        purchase_date: params[:purchase_date],
+        expire_date: params[:expire_date],
+        cost: params[:cost],
+        currency: params[:currency],
+        vendor: params[:vendor],
+        notes: params[:notes],
+        status: params[:status]
+      }
 
-    app.patch '/licenses/:id' do
-      require_role('Admin')
-      LicenseDAO.update(params[:id], {
-        license_key: params[:license_key],
-        seat_count: params[:seat_count],
-        product_id: params[:product_id],
-        license_type_id: params[:license_type_id]
-      })
-      redirect '/license_management'
+      begin
+        LicenseDAO.create(license_data)
+        status 200
+        body 'License successfully created'
+      rescue DAO::ValidationError => e
+        status 422
+        error_messages = e.respond_to?(:errors) ? e.errors.full_messages.join(',') : e.message
+        body error_messages
+      rescue => e
+        status 500
+        body "Error creating license: #{e.message}"
+      end
     end
   end
 end
