@@ -16,22 +16,22 @@
           data-license_id="<%= license.id %>"
           data-license_key="<%= license.license_key %>"
           data-seat_count="<%= license.seat_count %>"
-          data-product_name="<%= license.product.product_name %>"
-          data-license_type="<%= license.license_type.type_name %>">
+          data-product_name="<%= license.product&.product_name || 'Unknown' %>"
+          data-license_type="<%= license.license_type&.type_name || 'Unknown' %>">
         <span class="license-name">
-          <%= license.product.product_name %> - <%= license.license_key %>
+          <%= license.product&.product_name || 'Unknown Product' %> – <%= license.license_key %>
         </span>
       </li>
     <% end %>
   </ul>
 </div>
 
-<!-- Modal nur für Datenanzeige -->
+<!-- Modal für License-Details -->
 <div id="license-modal" class="modal hidden">
   <div class="modal-content">
     <span class="close-btn">&times;</span>
-    <h2 id="modal-title">License Details</h2>
-    <form id="license-form">
+    <h2>License Details</h2>
+    <form>
       <label>License Key:</label>
       <input type="text" name="license_key" readonly>
 
@@ -47,28 +47,130 @@
   </div>
 </div>
 
+<!-- Modal für Add License -->
+<div id="add-license-modal" class="modal hidden">
+  <div class="modal-content">
+    <span class="close-add-btn" title="Close">&times;</span>
+    <h2>Add New License</h2>
+    <form id="add-license-form">
+      <label>License Key:</label>
+      <input type="text" name="license_key" required>
+
+      <label>Seat Count:</label>
+      <input type="number" name="seat_count" min="1" required>
+
+      <label>Product:</label>
+      <select name="product_id" required>
+        <option value="" disabled selected>-- Select Product --</option>
+        <% @products.each do |product| %>
+          <option value="<%= product.id %>"><%= product.product_name %></option>
+        <% end %>
+      </select>
+
+      <label>License Type:</label>
+      <select name="license_type_id" required>
+        <option value="" disabled selected>-- Select Type --</option>
+        <% @license_types.each do |type| %>
+          <option value="<%= type.id %>"><%= type.type_name %></option>
+        <% end %>
+      </select>
+
+      <label>Expire Date (YYYY-MM-DD):</label>
+      <input type="date" name="expire_date" required>
+
+      <label>Cost (e.g., 5.5 EUR):</label>
+      <input type="text" name="cost" required>
+
+      <label>Vendor:</label>
+      <input type="text" name="vendor" required>
+
+      <!-- Hidden field for purchase date -->
+      <input type="hidden" name="purchase_date" id="purchase-date-field">
+
+      <div class="modal-actions">
+        <button type="submit">Create License</button>
+      </div>
+    </form>
+    <div id="add-license-error" style="color: red; margin-top: 0.5em;"></div>
+  </div>
+</div>
+
 <script>
 document.addEventListener("DOMContentLoaded", () => {
-  const items = document.querySelectorAll(".license-item");
-  const modal = document.getElementById("license-modal");
-  const closeBtn = modal.querySelector(".close-btn");
-  const form = document.getElementById("license-form");
+  // License Detail Modal
+  const detailModal = document.getElementById("license-modal");
+  const closeDetailBtn = detailModal.querySelector(".close-btn");
+  const detailForm = detailModal.querySelector("form");
 
-  function openModal(data = {}) {
-    form.license_key.value = data.license_key || '';
-    form.seat_count.value = data.seat_count || '';
-    form.product_name.value = data.product_name || '';
-    form.license_type.value = data.license_type || '';
-
-    modal.classList.remove("hidden");
-  }
-
-  items.forEach(item =>
-    item.addEventListener("click", () => openModal(item.dataset))
+  document.querySelectorAll(".license-item").forEach(item =>
+    item.addEventListener("click", () => {
+      detailForm.license_key.value = item.dataset.license_key;
+      detailForm.seat_count.value = item.dataset.seat_count;
+      detailForm.product_name.value = item.dataset.product_name;
+      detailForm.license_type.value = item.dataset.license_type;
+      detailModal.classList.remove("hidden");
+    })
   );
 
-  closeBtn.addEventListener("click", () =>
-    modal.classList.add("hidden")
+  closeDetailBtn.addEventListener("click", () =>
+    detailModal.classList.add("hidden")
   );
+
+  // Add License Modal
+  const addBtn = document.getElementById("add-license-btn");
+  const addModal = document.getElementById("add-license-modal");
+  const closeAddBtn = addModal.querySelector(".close-add-btn");
+  const addForm = document.getElementById("add-license-form");
+  const errorBox = document.getElementById("add-license-error");
+
+  addBtn.addEventListener("click", () => {
+    addForm.reset();
+    errorBox.textContent = "";
+    document.getElementById("purchase-date-field").value = new Date().toISOString().split('T')[0];
+    addModal.classList.remove("hidden");
+  });
+
+  closeAddBtn.addEventListener("click", () => {
+    addModal.classList.add("hidden");
+  });
+
+  addForm.addEventListener("submit", e => {
+    e.preventDefault();
+    errorBox.textContent = "";
+
+    const formData = new FormData(addForm);
+
+    // Fallback für leere Auswahl
+    if (!formData.get("product_id")) {
+      formData.set("product_id", 9);
+    }
+    if (!formData.get("license_type_id")) {
+      formData.set("license_type_id", 11);
+    }
+
+    const urlParams = new URLSearchParams(formData);
+
+    fetch('/license_management', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: urlParams
+    })
+    .then(response => {
+      if (response.ok) {
+        addModal.classList.add("hidden");
+        window.location.reload();
+      } else {
+        return response.text().then(error => {
+          errorBox.textContent = `Fehler beim Erstellen: ${error}`;
+        });
+      }
+    })
+    .catch(err => {
+      errorBox.textContent = `Netzwerkfehler: ${err.message}`;
+    });
+  });
 });
 </script>
+

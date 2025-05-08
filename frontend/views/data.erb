@@ -241,7 +241,7 @@
               <span class="nil">N/A</span>
             <% end %>
           </td>
-          <td class="status-<%= l.status.downcase %>"><%= l.status %></td>
+          <td class="status-<%= (l.status || 'unknown').downcase %>"><%= l.status || 'Unknown' %></td>
           <td><%= l.notes %></td>
         </tr>
       <% end %>
