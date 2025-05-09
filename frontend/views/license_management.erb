@@ -13,12 +13,15 @@
   <ul class="license-list">
     <% @licenses.each do |license| %>
       <li class="license-item"
-          data-license_name="<%= license.license_name %>"
           data-license_id="<%= license.license_id %>"
+          data-license_name="<%= license.license_name %>"
           data-license_key="<%= license.license_key %>"
           data-seat_count="<%= license.seat_count %>"
-          data-product_name="<%= license.product&.product_name || 'Unknown' %>"
-          data-license_type="<%= license.license_type&.type_name || 'Unknown' %>">
+          data-product_id="<%= license.product_id %>"
+          data-license_type_id="<%= license.license_type_id %>"
+          data-expire_date="<%= license.expire_date %>"
+          data-cost="<%= license.cost %>"
+          data-vendor="<%= license.vendor %>">
         <span class="license-name">
           <%= license.product&.product_name || 'Unknown Product' %> – <%= license.license_name %>
         </span>
@@ -27,38 +30,54 @@
   </ul>
 </div>
 
-<!-- Modal für License-Details -->
+<!-- Modal für License-Details (Edit-Modal) -->
 <div id="license-modal" class="modal hidden">
   <div class="modal-content">
     <span class="close-btn">&times;</span>
     <h2>License Details</h2>
-    <form>
+    <form id="edit-license-form">
       <label>License Name</label>
-      <input name="license_name" type="text">
+      <input name="license_name" type="text" disabled>
 
       <label>License Key:</label>
-      <input type="text" name="license_key">
+      <input type="text" name="license_key" disabled>
 
       <label>Seat Count:</label>
-      <input type="number" name="seat_count" disabled>
+      <input type="number" name="seat_count" min="1" disabled>
 
       <label>Product:</label>
-      <input type="text" name="product_name" disabled>
+      <select name="product_id" disabled>
+        <% @products.each do |product| %>
+          <option value="<%= product.product_id %>"><%= product.product_name %></option>
+        <% end %>
+      </select>
 
       <label>License Type:</label>
-      <input type="text" name="license_type" disabled>
+      <select name="license_type_id" disabled>
+        <% @license_types.each do |type| %>
+          <option value="<%= type.license_type_id %>"><%= type.type_name %></option>
+        <% end %>
+      </select>
 
       <label>Expire Date (YYYY-MM-DD):</label>
-      <input type="date" name="expire_date" required>
+      <input type="date" name="expire_date" required disabled>
 
       <label>Cost</label>
-      <input type="number" step="0.01" min="0" name="cost" required>
+      <input type="number" step="0.01" min="0" name="cost" required disabled>
 
       <label>Vendor:</label>
-      <input type="text" name="vendor" required>
+      <input type="text" name="vendor" required disabled>
+
+      <div class="modal-actions">
+        <button type="button" class="edit-btn" id="edit-license-btn">Edit</button>
+        <button type="submit" class="save-btn" id="save-license-btn" disabled>Save</button>
+        <button type="button" class="delete-btn" id="delete-license-btn">Delete</button>
+      </div>
     </form>
+    <div id="edit-license-error" style="color: red; margin-top: 0.5em;"></div>
   </div>
 </div>
+
 
 <!-- Modal für Add License -->
 <div id="add-license-modal" class="modal hidden">
@@ -112,83 +131,172 @@
 </div>
 
 <script>
-document.addEventListener("DOMContentLoaded", () => {
-  // License Detail Modal
-  const detailModal = document.getElementById("license-modal");
-  const closeDetailBtn = detailModal.querySelector(".close-btn");
-  const detailForm = detailModal.querySelector("form");
+    document.addEventListener("DOMContentLoaded", () => {
+        // === License Edit/Detail Modal ===
+        const licenseItems = document.querySelectorAll(".license-item");
+        const licenseModal = document.getElementById("license-modal");
+        const closeBtn = licenseModal.querySelector(".close-btn");
+        const editForm = document.getElementById("edit-license-form");
+        const editBtn = document.getElementById("edit-license-btn");
+        const saveBtn = document.getElementById("save-license-btn");
+        const deleteBtn = document.getElementById("delete-license-btn");
+        const errorBox = document.getElementById("edit-license-error");
 
-  document.querySelectorAll(".license-item").forEach(item => {
-          item.addEventListener("click", () => {
-              detailForm.license_name.value = item.dataset.license_name;
-              detailForm.license_key.value = item.dataset.license_key;
-              detailForm.seat_count.value = item.dataset.seat_count;
-              detailForm.product_name.value = item.dataset.product_name;
-              detailForm.license_type.value = item.dataset.license_type;
-              detailModal.classList.remove("hidden");
-          });
-      }
-  );
+        let isEditMode = false;
+        let currentLicenseId = null;
 
-  closeDetailBtn.addEventListener("click", () =>
-    detailModal.classList.add("hidden")
-  );
+        // Modal öffnen und Felder befüllen
+        licenseItems.forEach(item => {
+            item.addEventListener("click", () => {
+                currentLicenseId = item.dataset.license_id;
+                editForm.license_name.value = item.dataset.license_name || "";
+                editForm.license_key.value = item.dataset.license_key || "";
+                editForm.seat_count.value = item.dataset.seat_count || "";
+                editForm.product_id.value = item.dataset.product_id || "";
+                editForm.license_type_id.value = item.dataset.license_type_id || "";
+                editForm.expire_date.value = item.dataset.expire_date || "";
+                editForm.cost.value = item.dataset.cost || "";
+                editForm.vendor.value = item.dataset.vendor || "";
 
-  // Add License Modal
-  const addBtn = document.getElementById("add-license-btn");
-  const addModal = document.getElementById("add-license-modal");
-  const closeAddBtn = addModal.querySelector(".close-add-btn");
-  const addForm = document.getElementById("add-license-form");
-  const errorBox = document.getElementById("add-license-error");
+                // Alle Formularfelder sperren, aber nicht die Buttons!
+                [...editForm.elements].forEach(el => {
+                    // Buttons nicht sperren
+                    if (el.tagName === 'BUTTON') return;
+                    el.disabled = true;
+                });
 
-  addBtn.addEventListener("click", () => {
-    addForm.reset();
-    errorBox.textContent = "";
-    document.getElementById("purchase-date-field").value = new Date().toISOString().split('T')[0];
-    addModal.classList.remove("hidden");
-  });
+                saveBtn.disabled = true; // Save-Button ist initial gesperrt
+                isEditMode = false;
+                editBtn.textContent = "Edit";
+                editBtn.classList.remove("cancel-btn");
+                errorBox.textContent = "";
 
-  closeAddBtn.addEventListener("click", () => {
-    addModal.classList.add("hidden");
-  });
-
-  addForm.addEventListener("submit", e => {
-    e.preventDefault();
-    errorBox.textContent = "";
-
-    const formData = new FormData(addForm);
-
-    // Fallback für leere Auswahl
-    if (!formData.get("product_id")) {
-      formData.set("product_id", 9);
-    }
-    if (!formData.get("license_type_id")) {
-      formData.set("license_type_id", 11);
-    }
-
-    const urlParams = new URLSearchParams(formData);
-
-    fetch('/license_management', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
-      },
-      body: urlParams
-    })
-    .then(response => {
-      if (response.ok) {
-        addModal.classList.add("hidden");
-        window.location.reload();
-      } else {
-        return response.text().then(error => {
-          errorBox.textContent = `Fehler beim Erstellen: ${error}`;
+                licenseModal.classList.remove("hidden");
+            });
         });
-      }
-    })
-    .catch(err => {
-      errorBox.textContent = `Netzwerkfehler: ${err.message}`;
-    });
-  });
-});
-</script>
 
+        closeBtn.addEventListener("click", () => {
+            licenseModal.classList.add("hidden");
+            isEditMode = false;
+            editBtn.textContent = "Edit";
+            editBtn.classList.remove("cancel-btn");
+            errorBox.textContent = "";
+        });
+
+        editBtn.addEventListener("click", () => {
+            isEditMode = !isEditMode;
+            if (isEditMode) {
+                editBtn.textContent = "Cancel";
+                editBtn.classList.add("cancel-btn");
+                // Felder entsperren
+                [...editForm.elements].forEach(el => {
+                    // Buttons nicht ändern
+                    if (el.tagName === 'BUTTON') return;
+                    el.disabled = false;
+                });
+                saveBtn.disabled = false;
+            } else {
+                editBtn.textContent = "Edit";
+                editBtn.classList.remove("cancel-btn");
+                [...editForm.elements].forEach(el => {
+                    // Buttons nicht ändern
+                    if (el.tagName === 'BUTTON') return;
+                    el.disabled = true;
+                });
+                saveBtn.disabled = true;
+                errorBox.textContent = "";
+            }
+        });
+
+        editForm.addEventListener("submit", e => {
+            e.preventDefault();
+            errorBox.textContent = "";
+            if (!isEditMode) return;
+
+            const formData = new FormData(editForm);
+            const urlParams = new URLSearchParams(formData);
+
+            fetch(`/license_management/${currentLicenseId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: urlParams
+            })
+                .then(response => {
+                    if (response.ok) {
+                        licenseModal.classList.add("hidden");
+                        window.location.reload();
+                    } else {
+                        return response.text().then(error => {
+                            errorBox.textContent = `Fehler beim Speichern: ${error}`;
+                        });
+                    }
+                })
+                .catch(err => {
+                    errorBox.textContent = `Netzwerkfehler: ${err.message}`;
+                });
+        });
+
+        // Delete-Button (optional, noch nicht implementiert)
+        deleteBtn.addEventListener("click", () => {
+            errorBox.textContent = "Löschen ist noch nicht implementiert.";
+        });
+
+        // === Add License Modal ===
+        const addBtn = document.getElementById("add-license-btn");
+        const addModal = document.getElementById("add-license-modal");
+        const closeAddBtn = addModal.querySelector(".close-add-btn");
+        const addForm = document.getElementById("add-license-form");
+        const addErrorBox = document.getElementById("add-license-error");
+
+        addBtn.addEventListener("click", () => {
+            addForm.reset();
+            addErrorBox.textContent = "";
+            document.getElementById("purchase-date-field").value = new Date().toISOString().split('T')[0];
+            addModal.classList.remove("hidden");
+        });
+
+        closeAddBtn.addEventListener("click", () => {
+            addModal.classList.add("hidden");
+        });
+
+        addForm.addEventListener("submit", e => {
+            e.preventDefault();
+            addErrorBox.textContent = "";
+
+            const formData = new FormData(addForm);
+
+            // Fallback für leere Auswahl
+            if (!formData.get("product_id")) {
+                formData.set("product_id", 9);
+            }
+            if (!formData.get("license_type_id")) {
+                formData.set("license_type_id", 11);
+            }
+
+            const urlParams = new URLSearchParams(formData);
+
+            fetch('/license_management', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: urlParams
+            })
+                .then(response => {
+                    if (response.ok) {
+                        addModal.classList.add("hidden");
+                        window.location.reload();
+                    } else {
+                        return response.text().then(error => {
+                            addErrorBox.textContent = `Fehler beim Erstellen: ${error}`;
+                        });
+                    }
+                })
+                .catch(err => {
+                    addErrorBox.textContent = `Netzwerkfehler: ${err.message}`;
+                });
+        });
+    });
+</script>
