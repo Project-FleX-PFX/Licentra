@@ -67,8 +67,8 @@ module AdminRoutes
 
     app.get '/license_management' do
       require_role('Admin')
-      @licenses = LicenseDAO.all
       @products = ProductDAO.all
+      @licenses = LicenseDAO.all
       @license_types = LicenseTypeDAO.all
       erb :license_management
     end
