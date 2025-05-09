@@ -1,197 +1,132 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-require 'rack/test'
-require_relative '../../app'
+require_relative '../spec_helper'
 
-RSpec.describe 'Product Management' do
-  include Rack::Test::Methods
+RSpec.describe 'Product Management API' do
+  # --- Test User Setup ---
+  let!(:admin_user) { create_admin_user }
+  let!(:regular_user) { create_regular_user }
 
-  def app
-    LicentraApp.new
-  end
-
-  def session
-    last_request.env['rack.session']
-  end
-
-  # --- Test Data Setup using Fabricators ---
-  let!(:admin_role) { Fabricate(:role, role_name: 'Admin') }
-  let!(:user_role)  { Fabricate(:role, role_name: 'User') }
-
-  let!(:admin_user) do
-    user = Fabricate(:user,
-                     username: 'admin_test',
-                     email: 'admin_test@example.com',
-                     first_name: 'Admin',
-                     last_name: 'Test',
-                     is_active: true)
-    Fabricate(:user_credential, user: user, password: 'password123')
-    user.add_role(admin_role)
-    user.add_role(user_role)
-    user.refresh
-    user
-  end
-
-  # Helper-Methode zum Einloggen als Admin
-  def login_as_admin
-    post '/login', { email: admin_user.email, password: 'password123' }
-    follow_redirect! while last_response.redirect?
-  end
-
-  # Helper-Methode zum Erstellen eines Produkts
-  def create_product(name)
+  def create_product_via_api(name)
     post '/product_management', { product_name: name }
   end
 
-  # Helper-Methode zum Aktualisieren eines Produkts
-  def update_product(id, name)
+  def update_product_via_api(id, name)
     put "/product_management/#{id}", { product_name: name }
   end
 
   before(:each) do
-    # Datenbank für jeden Test zurücksetzen
     Product.dataset.delete
-    login_as_admin
+    login_as(admin_user)
   end
 
   describe 'GET /product_management' do
-    it 'zeigt die Produktverwaltungsseite an' do
+    it 'displays the product management page' do
       get '/product_management'
-      expect(last_response).to be_ok
-      expect(last_response.body).to include('Product Management')
+      expect(response_status).to be(200)
+      expect(response_body).to include('Product Management')
     end
 
-    it 'verweigert Zugriff für nicht-authentifizierte Benutzer' do
-      # Ausloggen
-      get '/logout'
-      expect(last_response).to be_redirect
-      
-      # Versuch, auf die Produktverwaltung zuzugreifen
+    it 'denies access for unauthenticated users' do
+      logout
       get '/product_management'
-      expect(last_response).to be_redirect
+      expect(response_status).to be(302)
       expect(last_response.location).to include('/login')
     end
 
-    it 'zeigt alle vorhandenen Produkte an' do
-      # Produkte erstellen
-      ProductDAO.create(product_name: 'Test Product 1')
-      ProductDAO.create(product_name: 'Test Product 2')
-      
+    it 'displays all existing products' do
+      product1 = create_product_via_dao(name: 'Test Product Alpha')
+      product2 = create_product_via_dao(name: 'Test Product Beta')
+
       get '/product_management'
-      expect(last_response).to be_ok
-      expect(last_response.body).to include('Test Product 1')
-      expect(last_response.body).to include('Test Product 2')
+      expect(response_status).to eq(200)
+      expect(response_body).to include(product1.product_name)
+      expect(response_body).to include(product2.product_name)
     end
   end
 
   describe 'POST /product_management' do
-    it 'erstellt ein neues Produkt' do
-      create_product('New Product')
-      expect(last_response.status).to eq(200)
-      
-      # Überprüfen, ob das Produkt in der Datenbank existiert
-      product = Product.first(product_name: 'New Product')
+    it 'creates a new product' do
+      create_product_via_api('New Shiny Product')
+      expect(response_status).to eq(201)
+      product = Product.first(product_name: 'New Shiny Product')
       expect(product).not_to be_nil
     end
 
-    it 'verhindert die Erstellung von Produkten mit doppeltem Namen' do
-      # Erstes Produkt erstellen
-      create_product('Duplicate Product')
-      expect(last_response.status).to eq(200)
-      
-      # Versuch, ein Produkt mit demselben Namen zu erstellen
-      create_product('Duplicate Product')
-      expect(last_response.status).to eq(422)
-      expect(last_response.body).to include('already taken')
+    it 'prevents creating products with duplicate names' do
+      create_product_via_api('Unique Product Name')
+      expect(response_status).to eq(201)
+
+      create_product_via_api('Unique Product Name')
+      expect(response_status).to eq(422)
+      expect(response_body).to include('already taken')
     end
   end
 
   describe 'PUT /product_management/:id' do
-    it 'aktualisiert ein bestehendes Produkt' do
-      # Produkt erstellen
-      product = ProductDAO.create(product_name: 'Original Name')
-      
-      # Produkt aktualisieren
-      update_product(product.product_id, 'Updated Name')
-      expect(last_response.status).to eq(200)
-      
-      # Überprüfen, ob der Name aktualisiert wurde
+    let!(:product) { create_product_via_dao(name: 'Original Product Name') }
+
+    it 'updates an existing product' do
+      update_product_via_api(product.product_id, 'Updated Product Name')
+      expect(response_status).to eq(200)
       updated_product = Product.first(product_id: product.product_id)
-      expect(updated_product.product_name).to eq('Updated Name')
+      expect(updated_product.product_name).to eq('Updated Product Name')
     end
 
-    it 'verhindert die Aktualisierung zu einem bereits verwendeten Namen' do
-      # Zwei Produkte erstellen
-      product1 = ProductDAO.create(product_name: 'Product One')
-      product2 = ProductDAO.create(product_name: 'Product Two')
-      
-      # Versuch, product2 auf denselben Namen wie product1 zu aktualisieren
-      update_product(product2.product_id, 'Product One')
-      expect(last_response.status).to eq(422)
-      expect(last_response.body).to include('already taken')
+    it 'prevents updating to an already used name' do
+      create_product_via_dao(name: 'Another Name')
+      update_product_via_api(product.product_id, 'Another Name')
+      expect(response_status).to eq(422)
+      expect(response_body).to include('already taken')
     end
 
-    it 'gibt einen Fehler zurück, wenn das Produkt nicht existiert' do
-      update_product(999, 'Nonexistent Product')
-      expect(last_response.status).to eq(500)
-      expect(last_response.body).to include('Error updating product')
+    it 'returns an error if the product does not exist' do
+      update_product_via_api(9999, 'Nonexistent Product')
+      expect(response_status).to eq(500)
+      expect(response_body).to include('Error updating product')
     end
   end
 
-  describe 'Zugriffskontrolle für nicht-Admin-Benutzer' do
-    let!(:regular_user) do
-      user = Fabricate(:user,
-                       username: 'user_test',
-                       email: 'user_test@example.com',
-                       first_name: 'User',
-                       last_name: 'Test',
-                       is_active: true)
-      Fabricate(:user_credential, user: user, password: 'password123')
-      user.add_role(user_role)
-      user.refresh
-      user
+  describe 'Access control for non-admin users' do
+    before(:each) do
+      logout
+      login_as(regular_user)
     end
 
-    def login_as_regular_user
-      post '/login', { email: regular_user.email, password: 'password123' }
-      follow_redirect! while last_response.redirect?
-    end
-
-    it 'verweigert normalen Benutzern den Zugriff auf die Produktverwaltung' do
-      # Ausloggen und als normaler Benutzer einloggen
-      get '/logout'
-      login_as_regular_user
-      
-      # Versuche, auf die Produktverwaltung zuzugreifen
+    it 'denies regular users access to GET /product_management' do
       get '/product_management'
-      expect(last_response.status).to eq(403) # Forbidden
+      expect(response_status).to eq(403)
     end
 
-    it 'verweigert normalen Benutzern das Erstellen von Produkten' do
-      # Ausloggen und als normaler Benutzer einloggen
-      get '/logout'
-      login_as_regular_user
-      
-      # Versuche, ein Produkt zu erstellen
-      create_product('Regular User Product')
-      expect(last_response.status).to eq(403) # Forbidden
+    it 'denies regular users to POST /product_management' do
+      create_product_via_api('User Attempt Product')
+      expect(response_status).to eq(403)
     end
 
-    it 'verweigert normalen Benutzern das Aktualisieren von Produkten' do
-      # Als Admin ein Produkt erstellen
-      get '/logout'
-      login_as_admin
-      product = ProductDAO.create(product_name: 'Admin Product')
-      
-      # Ausloggen und als normaler Benutzer einloggen
-      get '/logout'
-      login_as_regular_user
-      
-      # Versuche, das Produkt zu aktualisieren
-      update_product(product.product_id, 'Updated by Regular User')
-      expect(last_response.status).to eq(403) # Forbidden
+    it 'denies regular users to PUT /product_management/:id' do
+      login_as(admin_user)
+
+      product_name_by_admin = "Product By Admin #{SecureRandom.hex(4)}"
+      create_product_via_api(product_name_by_admin)
+
+      unless response_status == 201
+        raise "Admin konnte Produkt '#{product_name_by_admin}' nicht erstellen. Status: #{response_status}, Body: #{response_body}"
+      end
+
+      created_product = Product.first(product_name: product_name_by_admin)
+      expect(created_product).not_to be_nil,
+                                     "Produkt '#{product_name_by_admin}' wurde nicht in der DB gefunden, nachdem Admin es erstellt hat."
+      admin_product_id = created_product.product_id
+
+      expect(admin_product_id).not_to be_nil, 'Keine Produkt-ID erhalten, nachdem Admin das Produkt erstellt hat.'
+
+      logout
+
+      login_as(regular_user)
+
+      update_product_via_api(admin_product_id, 'Updated by Regular User')
+
+      expect(response_status).to eq(403)
     end
   end
 end
-
