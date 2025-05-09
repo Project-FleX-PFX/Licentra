@@ -44,6 +44,10 @@ class LicenseAssignment < Sequel::Model(:license_assignments)
     user_id ? 'User' : 'Device'
   end
 
+  def is_active?
+    self.is_active
+  end
+
   # Validates license assignment rules, ensuring:
   # - Either user or device is assigned (but not both)
   # - The license has available seats
