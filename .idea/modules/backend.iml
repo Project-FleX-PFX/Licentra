@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module type="RUBY_MODULE" version="4">
+  <component name="ModuleRunConfigurationManager">
+    <shared />
+  </component>
   <component name="NewModuleRootManager">
     <content url="file://$MODULE_DIR$/../../backend">
       <sourceFolder url="file://$MODULE_DIR$/../../backend/features" isTestSource="true" />
@@ -12,7 +15,12 @@
     <orderEntry type="library" scope="PROVIDED" name="bcrypt (v3.1.20, Remote: ruby-3.4.2-p28) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="bigdecimal (v3.1.9, Remote: ruby-3.4.2-p28) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="bundler (v2.6.7, Remote: ruby-3.4.2-p28) [gem]" level="application" />
+    <orderEntry type="library" scope="PROVIDED" name="database_cleaner-core (v2.0.1, Remote: ruby-3.4.2-p28) [gem]" level="application" />
+    <orderEntry type="library" scope="PROVIDED" name="database_cleaner-sequel (v2.0.2, Remote: ruby-3.4.2-p28) [gem]" level="application" />
+    <orderEntry type="library" scope="PROVIDED" name="diff-lcs (v1.6.1, Remote: ruby-3.4.2-p28) [gem]" level="application" />
+    <orderEntry type="library" scope="PROVIDED" name="fabrication (v2.31.0, Remote: ruby-3.4.2-p28) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="logger (v1.7.0, Remote: ruby-3.4.2-p28) [gem]" level="application" />
+    <orderEntry type="library" scope="PROVIDED" name="mini_portile2 (v2.8.8, Remote: ruby-3.4.2-p28) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="mustermann (v3.0.3, Remote: ruby-3.4.2-p28) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="nio4r (v2.7.4, Remote: ruby-3.4.2-p28) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="pg (v1.5.9, Remote: ruby-3.4.2-p28) [gem]" level="application" />
@@ -20,11 +28,18 @@
     <orderEntry type="library" scope="PROVIDED" name="rack (v3.1.12, Remote: ruby-3.4.2-p28) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="rack-protection (v4.1.1, Remote: ruby-3.4.2-p28) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="rack-session (v2.1.0, Remote: ruby-3.4.2-p28) [gem]" level="application" />
+    <orderEntry type="library" scope="PROVIDED" name="rack-test (v2.2.0, Remote: ruby-3.4.2-p28) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="rackup (v2.2.1, Remote: ruby-3.4.2-p28) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="rake (v13.2.1, Remote: ruby-3.4.2-p28) [gem]" level="application" />
+    <orderEntry type="library" scope="PROVIDED" name="rspec (v3.13.0, Remote: ruby-3.4.2-p28) [gem]" level="application" />
+    <orderEntry type="library" scope="PROVIDED" name="rspec-core (v3.13.3, Remote: ruby-3.4.2-p28) [gem]" level="application" />
+    <orderEntry type="library" scope="PROVIDED" name="rspec-expectations (v3.13.3, Remote: ruby-3.4.2-p28) [gem]" level="application" />
+    <orderEntry type="library" scope="PROVIDED" name="rspec-mocks (v3.13.2, Remote: ruby-3.4.2-p28) [gem]" level="application" />
+    <orderEntry type="library" scope="PROVIDED" name="rspec-support (v3.13.2, Remote: ruby-3.4.2-p28) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="ruby2_keywords (v0.0.5, Remote: ruby-3.4.2-p28) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="sequel (v5.91.0, Remote: ruby-3.4.2-p28) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="sinatra (v4.1.1, Remote: ruby-3.4.2-p28) [gem]" level="application" />
+    <orderEntry type="library" scope="PROVIDED" name="sqlite3 (v1.7.3, Remote: ruby-3.4.2-p28) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="tilt (v2.6.0, Remote: ruby-3.4.2-p28) [gem]" level="application" />
   </component>
   <component name="RubyModuleProperties">
