@@ -3,6 +3,7 @@
 require 'sinatra'
 require 'sequel'
 require 'sinatra/base'
+require 'rack/flash'
 require_relative 'config/environment'
 
 # Load all files in order
@@ -18,6 +19,8 @@ class LicentraApp < Sinatra::Base
   set :views, File.join(File.dirname(__FILE__), 'frontend', 'views')
   set :public_folder, '/app/frontend/public'
 
+  use Rack::Flash, sweep: true
+
   configure :production, :development do
     set :host_authorization, { permitted_hosts: ['licensemanager.licentra.de', 'localhost', '127.0.0.1'] }
   end
@@ -28,6 +31,7 @@ class LicentraApp < Sinatra::Base
   end
 
   helpers AuthHelpers
+  helpers ApplicationHelpers
 
   get '/' do
     redirect logged_in? ? '/profile' : '/login'

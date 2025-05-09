@@ -1,0 +1,63 @@
+<h1>Available Licenses</h1>
+<p class="page-description">Select a license to assign it to yourself.</p>
+
+<% if @available_licenses && !@available_licenses.empty? %>
+  <div class="cards-container">
+    <% @available_licenses.each do |license| %>
+      <div class="card license-card-available">
+        <h2><%= Rack::Utils.escape_html(license.product.product_name || license.license_name || "Unnamed License") %></h2>
+
+        <p><strong>Seats Available:</strong> <%= license.available_seats %></p>
+
+        <% if license.notes && !license.notes.strip.empty? %>
+          <p class="license-notes"><strong>Notes:</strong> <%= Rack::Utils.escape_html(license.notes) %></p>
+        <% end %>
+
+        <button class="button-primary" onclick="showAssignPopup('<%= license.license_id %>', '<%= Rack::Utils.escape_html(license.product.product_name || license.license_name || "Unnamed License") %>')">
+          Assign to Me
+        </button>
+      </div>
+    <% end %>
+  </div>
+<% else %>
+  <p class="no-licenses-message">No licenses are currently available for self-assignment.</p>
+<% end %>
+
+<div class="popup" id="assignLicensePopup">
+  <div class="popup-content">
+    <h3 id="popupAssignTitle">Assign License</h3>
+    <p>Are you sure you want to assign the license for <strong id="popupAssignProductName">Product Name Here</strong> to yourself?</p>
+    <form id="assignForm" method="post" action="">
+      <div class="button-group">
+        <button type="submit" class="button-primary">Yes, Assign</button>
+        <button type="button" class="button-secondary" onclick="hideAssignPopup()">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function showAssignPopup(licenseId, productName) {
+    const productNameElement = document.getElementById("popupAssignProductName");
+    if (productNameElement) {
+      productNameElement.textContent = productName;
+    }
+
+    const assignForm = document.getElementById("assignForm");
+    if (assignForm) {
+      assignForm.action = `/licenses/${licenseId}/assign`;
+    }
+
+    const assignPopup = document.getElementById("assignLicensePopup");
+    if (assignPopup) {
+      assignPopup.style.display = "flex";
+    }
+  }
+
+  function hideAssignPopup() {
+    const assignPopup = document.getElementById("assignLicensePopup");
+    if (assignPopup) {
+      assignPopup.style.display = "none";
+    }
+  }
+</script>

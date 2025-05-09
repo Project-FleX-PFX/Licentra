@@ -1,0 +1,86 @@
+.license-item {
+  background-color: #fff;
+  margin-bottom: 1.5rem;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  overflow: hidden;
+}
+
+.license-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  cursor: pointer;
+  background-color: #f9f9f9;
+  border-bottom: 1px solid #e0e0e0;
+  transition: background-color 0.2s;
+}
+.license-header:hover {
+  background-color: #f0f0f0;
+}
+
+.license-header span {
+  font-weight: bold;
+  font-size: 1.1em;
+  color: #333;
+}
+
+.license-detail {
+  padding: 15px 20px;
+  background-color: #fff;
+}
+.license-detail p {
+  margin-bottom: 10px;
+  font-size: 0.95em;
+  line-height: 1.5;
+  color: #444;
+}
+.license-detail strong {
+  color: #222;
+  font-weight: 600;
+}
+
+.license-key-value {
+  font-family: 'Courier New', Courier, monospace;
+  background-color: #e9ecef;
+  padding: 3px 6px;
+  border-radius: 4px;
+  word-break: break-all;
+  color: #c7254e;
+  font-size: 0.9em;
+  display: inline-block;
+}
+
+.license-header .toggle-button {
+  background-color: #5a6268;
+  color: white;
+  padding: 8px 14px;
+  font-size: 0.85em;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.license-header .toggle-button:hover {
+  background-color: #4a4f54;
+}
+
+.license-detail .button-danger {
+  margin-top: 15px;
+  padding: 8px 14px;
+  font-size: 0.9em;
+}
+
+@media (max-width: 500px) {
+  .license-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .license-header .toggle-button {
+    align-self: flex-start;
+  }
+  .license-detail {
+    padding: 15px;
+  }
+}
