@@ -7,23 +7,5 @@
     <content url="file://$MODULE_DIR$" />
     <orderEntry type="jdk" jdkName="Remote: ruby-3.4.2-p28" jdkType="RUBY_SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" scope="PROVIDED" name="base64 (v0.2.0, Remote: ruby-3.4.2-p28) [gem]" level="application" />
-    <orderEntry type="library" scope="PROVIDED" name="bcrypt (v3.1.20, Remote: ruby-3.4.2-p28) [gem]" level="application" />
-    <orderEntry type="library" scope="PROVIDED" name="bigdecimal (v3.1.9, Remote: ruby-3.4.2-p28) [gem]" level="application" />
-    <orderEntry type="library" scope="PROVIDED" name="bundler (v2.6.7, Remote: ruby-3.4.2-p28) [gem]" level="application" />
-    <orderEntry type="library" scope="PROVIDED" name="logger (v1.7.0, Remote: ruby-3.4.2-p28) [gem]" level="application" />
-    <orderEntry type="library" scope="PROVIDED" name="mustermann (v3.0.3, Remote: ruby-3.4.2-p28) [gem]" level="application" />
-    <orderEntry type="library" scope="PROVIDED" name="nio4r (v2.7.4, Remote: ruby-3.4.2-p28) [gem]" level="application" />
-    <orderEntry type="library" scope="PROVIDED" name="pg (v1.5.9, Remote: ruby-3.4.2-p28) [gem]" level="application" />
-    <orderEntry type="library" scope="PROVIDED" name="puma (v6.6.0, Remote: ruby-3.4.2-p28) [gem]" level="application" />
-    <orderEntry type="library" scope="PROVIDED" name="rack (v3.1.12, Remote: ruby-3.4.2-p28) [gem]" level="application" />
-    <orderEntry type="library" scope="PROVIDED" name="rack-protection (v4.1.1, Remote: ruby-3.4.2-p28) [gem]" level="application" />
-    <orderEntry type="library" scope="PROVIDED" name="rack-session (v2.1.0, Remote: ruby-3.4.2-p28) [gem]" level="application" />
-    <orderEntry type="library" scope="PROVIDED" name="rackup (v2.2.1, Remote: ruby-3.4.2-p28) [gem]" level="application" />
-    <orderEntry type="library" scope="PROVIDED" name="rake (v13.2.1, Remote: ruby-3.4.2-p28) [gem]" level="application" />
-    <orderEntry type="library" scope="PROVIDED" name="ruby2_keywords (v0.0.5, Remote: ruby-3.4.2-p28) [gem]" level="application" />
-    <orderEntry type="library" scope="PROVIDED" name="sequel (v5.91.0, Remote: ruby-3.4.2-p28) [gem]" level="application" />
-    <orderEntry type="library" scope="PROVIDED" name="sinatra (v4.1.1, Remote: ruby-3.4.2-p28) [gem]" level="application" />
-    <orderEntry type="library" scope="PROVIDED" name="tilt (v2.6.0, Remote: ruby-3.4.2-p28) [gem]" level="application" />
   </component>
 </module>
