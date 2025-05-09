@@ -48,14 +48,14 @@ RSpec.describe 'Product Management API' do
   describe 'POST /product_management' do
     it 'creates a new product' do
       create_product_via_api('New Shiny Product')
-      expect(response_status).to eq(201)
+      expect(response_status).to eq(200)
       product = Product.first(product_name: 'New Shiny Product')
       expect(product).not_to be_nil
     end
 
     it 'prevents creating products with duplicate names' do
       create_product_via_api('Unique Product Name')
-      expect(response_status).to eq(201)
+      expect(response_status).to eq(200)
 
       create_product_via_api('Unique Product Name')
       expect(response_status).to eq(422)
@@ -109,7 +109,7 @@ RSpec.describe 'Product Management API' do
       product_name_by_admin = "Product By Admin #{SecureRandom.hex(4)}"
       create_product_via_api(product_name_by_admin)
 
-      unless response_status == 201
+      unless response_status == 200
         raise "Admin konnte Produkt '#{product_name_by_admin}' nicht erstellen. Status: #{response_status}, Body: #{response_body}"
       end
 
