@@ -69,7 +69,7 @@ RSpec.describe 'Authentication, Authorization, and Session Handling' do
 
     it 'clears session on logout' do
       login_as(regular_user.email, 'password123')
-      get '/logout'
+      post '/logout'
       expect(last_response).to be_redirect
       follow_redirect!
       expect(session[:user_id]).to be_nil
@@ -98,7 +98,7 @@ RSpec.describe 'Authentication, Authorization, and Session Handling' do
         get '/profile'
         expect(last_response).to be_ok
 
-        get '/my_license'
+        get '/my-licenses'
         expect(last_response).to be_ok
       end
     end
@@ -110,7 +110,7 @@ RSpec.describe 'Authentication, Authorization, and Session Handling' do
         get '/profile'
         expect(last_response).to be_ok
 
-        get '/my_license'
+        get '/my-licenses'
         expect(last_response).to be_ok
       end
 

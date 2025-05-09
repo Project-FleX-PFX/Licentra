@@ -13,7 +13,12 @@ require_relative 'support/test_database'
 
 require_relative 'support/require_application'
 
+require_relative 'support/integration_helpers'
+
 RSpec.configure do |config|
+  config.include Rack::Test::Methods
+  config.include IntegrationHelpers
+
   config.expect_with :rspec do |expectations|
     expectations.include_chain_clauses_in_custom_matcher_descriptions = true
   end
@@ -36,5 +41,9 @@ RSpec.configure do |config|
 end
 
 def session
-  last_request.env['rack.session']
+  last_request.env['rack.session'] if last_request
+end
+
+def app
+  LicentraApp.new
 end
