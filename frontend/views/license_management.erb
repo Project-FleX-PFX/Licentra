@@ -13,13 +13,14 @@
   <ul class="license-list">
     <% @licenses.each do |license| %>
       <li class="license-item"
-          data-license_id="<%= license.id %>"
+          data-license_name="<%= license.license_name %>"
+          data-license_id="<%= license.license_id %>"
           data-license_key="<%= license.license_key %>"
           data-seat_count="<%= license.seat_count %>"
           data-product_name="<%= license.product&.product_name || 'Unknown' %>"
           data-license_type="<%= license.license_type&.type_name || 'Unknown' %>">
         <span class="license-name">
-          <%= license.product&.product_name || 'Unknown Product' %> – <%= license.license_key %>
+          <%= license.product&.product_name || 'Unknown Product' %> – <%= license.license_name %>
         </span>
       </li>
     <% end %>
@@ -32,17 +33,29 @@
     <span class="close-btn">&times;</span>
     <h2>License Details</h2>
     <form>
+      <label>License Name</label>
+      <input name="license_name" type="text">
+
       <label>License Key:</label>
-      <input type="text" name="license_key" readonly>
+      <input type="text" name="license_key">
 
       <label>Seat Count:</label>
-      <input type="number" name="seat_count" readonly>
+      <input type="number" name="seat_count" disabled>
 
       <label>Product:</label>
-      <input type="text" name="product_name" readonly>
+      <input type="text" name="product_name" disabled>
 
       <label>License Type:</label>
-      <input type="text" name="license_type" readonly>
+      <input type="text" name="license_type" disabled>
+
+      <label>Expire Date (YYYY-MM-DD):</label>
+      <input type="date" name="expire_date" required>
+
+      <label>Cost</label>
+      <input type="number" step="0.01" min="0" name="cost" required>
+
+      <label>Vendor:</label>
+      <input type="text" name="vendor" required>
     </form>
   </div>
 </div>
@@ -53,6 +66,9 @@
     <span class="close-add-btn" title="Close">&times;</span>
     <h2>Add New License</h2>
     <form id="add-license-form">
+      <label>License Name:</label>
+      <input type="text" name="license_name" required>
+
       <label>License Key:</label>
       <input type="text" name="license_key" required>
 
@@ -63,7 +79,7 @@
       <select name="product_id" required>
         <option value="" disabled selected>-- Select Product --</option>
         <% @products.each do |product| %>
-          <option value="<%= product.id %>"><%= product.product_name %></option>
+          <option value="<%= product.product_id %>"><%= product.product_name %></option>
         <% end %>
       </select>
 
@@ -71,15 +87,15 @@
       <select name="license_type_id" required>
         <option value="" disabled selected>-- Select Type --</option>
         <% @license_types.each do |type| %>
-          <option value="<%= type.id %>"><%= type.type_name %></option>
+          <option value="<%= type.license_type_id %>"><%= type.type_name %></option>
         <% end %>
       </select>
 
-      <label>Expire Date (YYYY-MM-DD):</label>
+      <label>Expire Date:</label>
       <input type="date" name="expire_date" required>
 
-      <label>Cost (e.g., 5.5 EUR):</label>
-      <input type="text" name="cost" required>
+      <label>Cost:</label>
+      <input type="number" step="0.01" min="0" name="cost" required>
 
       <label>Vendor:</label>
       <input type="text" name="vendor" required>
@@ -102,14 +118,16 @@ document.addEventListener("DOMContentLoaded", () => {
   const closeDetailBtn = detailModal.querySelector(".close-btn");
   const detailForm = detailModal.querySelector("form");
 
-  document.querySelectorAll(".license-item").forEach(item =>
-    item.addEventListener("click", () => {
-      detailForm.license_key.value = item.dataset.license_key;
-      detailForm.seat_count.value = item.dataset.seat_count;
-      detailForm.product_name.value = item.dataset.product_name;
-      detailForm.license_type.value = item.dataset.license_type;
-      detailModal.classList.remove("hidden");
-    })
+  document.querySelectorAll(".license-item").forEach(item => {
+          item.addEventListener("click", () => {
+              detailForm.license_name.value = item.dataset.license_name;
+              detailForm.license_key.value = item.dataset.license_key;
+              detailForm.seat_count.value = item.dataset.seat_count;
+              detailForm.product_name.value = item.dataset.product_name;
+              detailForm.license_type.value = item.dataset.license_type;
+              detailModal.classList.remove("hidden");
+          });
+      }
   );
 
   closeDetailBtn.addEventListener("click", () =>
