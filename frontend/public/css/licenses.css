@@ -1,0 +1,86 @@
+.license-card-available h2 {
+  font-size: 1.4em;
+  margin-bottom: 0.5em;
+}
+.license-card-available p {
+  font-size: 0.9em;
+  margin-bottom: 8px;
+  color: #555;
+}
+.license-card-available p strong {
+  color: #333;
+}
+.license-card-available .button-primary {
+  width: 100%;
+  margin-top: auto;
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+
+.popup {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.5);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.popup-content {
+  background-color: #fff;
+  padding: 25px 30px;
+  border-radius: 8px;
+  width: 100%;
+  max-width: 380px;
+  text-align: center;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+.popup-content h3 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  font-size: 1.5em;
+}
+
+.popup-content p {
+  margin-bottom: 25px;
+  font-size: 1em;
+  line-height: 1.4;
+}
+.popup-content p strong {
+  color: #615dfa;
+}
+
+.popup-content .button-group {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.popup-content .button-group button {
+  flex-grow: 1;
+}
+
+@media (max-width: 400px) {
+  .popup-content {
+    padding: 20px 15px;
+  }
+  .popup-content h3 {
+    font-size: 1.3em;
+  }
+  .popup-content p {
+    font-size: 0.95em;
+  }
+  .popup-content .button-group {
+    flex-direction: column;
+  }
+  .popup-content .button-group button {
+    width: 100%;
+  }
+}

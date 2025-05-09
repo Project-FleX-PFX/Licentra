@@ -16,6 +16,13 @@ class User < Sequel::Model
     credential&.authenticate(plain_password)
   end
 
+  def role?(role_name)
+    role_name_to_check = role_name.to_s
+    DB[:user_roles].join(:roles, role_id: :role_id)
+                   .where(user_id: pk, Sequel.qualify(:roles, :role_name) => role_name_to_check)
+                   .count.positive?
+  end
+
   def validate
     super
     validates_presence [:username]

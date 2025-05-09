@@ -54,5 +54,10 @@ class LicenseDAO < BaseDAO
         super(id)
       end
     end
+
+    def find_available_for_assignment
+      licenses_with_potential = model_class.where(status: 'Active').where { seat_count > 0 }.all
+      licenses_with_potential.select { |lic| lic.available_seats > 0 }
+    end
   end
 end

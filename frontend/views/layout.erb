@@ -1,70 +1,97 @@
-<%# views/layout.erb %>
 <!DOCTYPE html>
 <html lang="de">
 <head>
   <meta charset="UTF-8">
   <title><%= @title || "Licentra" %></title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" type="image/png" href="/css/icon.png">
-  <!-- Gemeinsame Styles -->
+  <!-- Haupt-Stylesheet -->
   <link rel="stylesheet" type="text/css" href="/css/layout.css">
+
   <!-- Seiten-spezifische Styles -->
-  <% if @css %>
+  <% if @css && !@css.empty? %>
     <link rel="stylesheet" type="text/css" href="/css/<%= @css %>.css">
   <% end %>
 </head>
 <body>
-  <button id="toggle-sidebar" class="toggle-sidebar">☰</button>
-  <div class="sidebar">
+  <button id="sidebarToggleBtn" class="sidebar-toggle-button">☰</button>
+
+  <aside class="sidebar" id="sidebar">
     <div class="sidebar-header">
       <h2>Licentra</h2>
     </div>
     <nav>
       <ul>
         <!-- Gemeinsame Links für alle Benutzer -->
-        <li><a href="/profile">Profile</a></li>
-        <li><a href="/license">License</a></li>
-        <li><a href="/my_license">My License</a></li>
-        
+        <li><a href="/profile" class="<%= 'active' if request.path_info == '/profile' %>">Profile</a></li>
+        <li><a href="/licenses" class="<%= 'active' if request.path_info == '/licenses' %>">Available Licenses</a></li>
+        <li><a href="/my-licenses" class="<%= 'active' if request.path_info == '/my-licenses' %>">My Licenses</a></li>
+
         <!-- Admin-spezifische Links -->
-        <% if admin? %>
-          <li><a href="/user_management">User Management</a></li>
-          <li><a href="/product_management">Product Management</a></li>
-          <li><a href="/license_management">License Management</a></li>
-          <li><a href="/data">Raw Data View</a></li>
+        <% if defined?(admin?) && admin? %>
+          <li><a href="/user_management" class="<%= 'active' if request.path_info == '/user_management' %>">User Management</a></li>
+          <li><a href="/product_management" class="<%= 'active' if request.path_info == '/product_management' %>">Product Management</a></li>
+          <li><a href="/license_management" class="<%= 'active' if request.path_info == '/license_management' %>">License Management</a></li>
+          <li><a href="/data" class="<%= 'active' if request.path_info == '/data' %>">Raw Data View</a></li>
         <% end %>
       </ul>
     </nav>
-    <!-- Logout Button mit korrektem Link zur Logout-Route -->
-    <div class="logout">
-      <a href="/logout" class="logout-button">Logout</a>
+    <div class="logout-section">
+      <form action="/logout" method="post" style="margin:0;">
+        <button type="submit" class="logout-button">Logout</button>
+      </form>
     </div>
-  </div>
-  
-  <!-- Hauptinhalt -->
-  <div class="main-content">
-    <%= yield %>
-  </div>
+  </aside>
 
-  <!-- JavaScript für das Toggle-Verhalten -->
+  <!-- Hauptinhalt -->
+  <main id="mainContent">
+    <div class="content-wrapper">
+      <% if defined?(flash) %>
+        <% if flash[:success] && !flash[:success].empty? %>
+          <div class="alert success"><%= flash[:success] %></div>
+        <% end %>
+        <% if flash[:error] && !flash[:error].empty? %>
+          <div class="alert error"><%= flash[:error] %></div>
+        <% end %>
+        <%# if flash[:info] && !flash[:info].empty? %>
+        <%#   <div class="alert info"><%= flash[:info] %></div>
+        <%# end %>
+      <% end %>
+      <%= yield %>
+    </div>
+  </main>
+
   <script>
     document.addEventListener("DOMContentLoaded", function() {
-      const toggleBtn = document.getElementById("toggle-sidebar");
-      const sidebar = document.querySelector(".sidebar");
-      const mainContent = document.querySelector(".main-content");
+      const sidebar = document.getElementById('sidebar');
+      const mobileToggleButton = document.getElementById('sidebarToggleBtn');
+      const mainContent = document.getElementById('mainContent');
 
-      toggleBtn.addEventListener("click", function() {
-        // Toggle der Klasse "collapsed" an der Sidebar
-        sidebar.classList.toggle("collapsed");
+      function toggleMobileSidebar() {
+        sidebar.classList.toggle('open');
+      }
 
-        // Passe den linken Rand des Hauptinhalts an
-        if (sidebar.classList.contains("collapsed")) {
-          mainContent.style.marginLeft = "50px";  // voller Bildschirm, wenn Sidebar ausgeblendet
+      if (mobileToggleButton) {
+        mobileToggleButton.addEventListener('click', toggleMobileSidebar);
+      }
+
+      document.addEventListener('click', function(event) {
+        const target = event.target;
+        if (sidebar.classList.contains('open') && !sidebar.contains(target) && target !== mobileToggleButton) {
+          sidebar.classList.remove('open');
+        }
+      });
+
+      const currentPath = window.location.pathname;
+      const navLinks = sidebar.querySelectorAll('nav ul li a');
+      navLinks.forEach(link => {
+        if (link.getAttribute('href') === currentPath) {
+          link.classList.add('active');
         } else {
-          mainContent.style.marginLeft = "220px";  // gleiche Breite wie die Sidebar
+          link.classList.remove('active');
         }
       });
     });
   </script>
 </body>
 </html>
-

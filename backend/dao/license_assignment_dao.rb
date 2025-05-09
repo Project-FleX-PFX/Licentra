@@ -89,5 +89,11 @@ class LicenseAssignmentDAO < BaseDAO
         assignment
       end
     end
+
+    def find_active_for_user_with_details(user_id)
+      model_class.where(user_id: user_id, is_active: true)
+                 .eager(license: :product)
+                 .all
+    end
   end
 end

@@ -49,8 +49,9 @@ module AuthRoutes
       end
     end
 
-    app.get '/logout' do
+    app.post '/logout' do
       session.clear
+      flash[:success] = 'You have been successfully logged out.'
       redirect '/login'
     end
 

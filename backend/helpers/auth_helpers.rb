@@ -10,14 +10,14 @@ module AuthHelpers
     !current_user.nil?
   end
 
-  def has_role?(role_name)
+  def role?(role_name)
     return false unless logged_in?
 
-    current_user.roles.any? { |role| role.role_name == role_name }
+    current_user.role?(role_name)
   end
 
   def admin?
-    has_role?('Admin')
+    role?('Admin')
   end
 
   def require_login
@@ -29,7 +29,7 @@ module AuthHelpers
 
   def require_role(role_name)
     require_login
-    return if has_role?(role_name)
+    return if role?(role_name)
 
     halt 403, erb(:forbidden, layout: true, locals: { message: "You don't have permission to access this page." })
   end
