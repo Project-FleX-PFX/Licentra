@@ -56,7 +56,9 @@ class LicenseDAO < BaseDAO
     end
 
     def find_available_for_assignment
-      licenses_with_potential = model_class.where(status: 'Active').where { seat_count > 0 }.all
+      licenses_with_potential = model_class.where(Sequel.lit('expire_date IS NULL OR expire_date >= ?', Date.today))
+                                           .where { seat_count > 0 }
+                                           .all
       licenses_with_potential.select { |lic| lic.available_seats > 0 }
     end
   end

@@ -84,7 +84,7 @@ DB.transaction(rollback: :reraise) do
     seat_count: 1,
     purchase_date: today - 180,
     expire_date: today + 185,
-    cost: 79.99, currency: 'EUR', vendor: 'EditorSoft', status: 'Active'
+    cost: 79.99, currency: 'EUR', vendor: 'EditorSoft'
   )
 
   lic_suite_volume = License.create(
@@ -95,7 +95,7 @@ DB.transaction(rollback: :reraise) do
     seat_count: 10,
     purchase_date: today - 30,
     expire_date: today + 335,
-    cost: 899.00, currency: 'EUR', vendor: 'Office Corp.', status: 'Active'
+    cost: 899.00, currency: 'EUR', vendor: 'Office Corp.'
   )
 
   lic_cad_device = License.create(
@@ -106,7 +106,7 @@ DB.transaction(rollback: :reraise) do
     seat_count: 1,
     purchase_date: today - 400,
     expire_date: today + 300,
-    cost: 2500.00, currency: 'USD', vendor: 'CAD Solutions', status: 'Active'
+    cost: 2500.00, currency: 'USD', vendor: 'CAD Solutions'
   )
 
   lic_db_perpetual = License.create(
@@ -117,7 +117,7 @@ DB.transaction(rollback: :reraise) do
     seat_count: 1,
     purchase_date: today - 730,
     expire_date: nil,
-    cost: 999.00, currency: 'USD', vendor: 'Data Inc.', status: 'Active'
+    cost: 999.00, currency: 'USD', vendor: 'Data Inc.'
   )
 
   lic_suite_expired = License.create(
@@ -128,7 +128,7 @@ DB.transaction(rollback: :reraise) do
     seat_count: 1,
     purchase_date: today - 400,
     expire_date: today - 35,
-    cost: 99.00, currency: 'EUR', vendor: 'Office Corp.', status: 'Expired'
+    cost: 99.00, currency: 'EUR', vendor: 'Office Corp.'
   )
 
   puts 'Creating License Assignments...'

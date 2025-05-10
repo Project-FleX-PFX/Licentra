@@ -19,7 +19,6 @@ Sequel.migration do
 
       index :license_key
       index :expire_date
-      index :status
     end
   end
 end

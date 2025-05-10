@@ -26,6 +26,7 @@
     <orderEntry type="library" scope="PROVIDED" name="pg (v1.5.9, Remote: ruby-3.4.2-p28) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="puma (v6.6.0, Remote: ruby-3.4.2-p28) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="rack (v3.1.12, Remote: ruby-3.4.2-p28) [gem]" level="application" />
+    <orderEntry type="library" scope="PROVIDED" name="rack-flash3 (v1.0.5, Remote: ruby-3.4.2-p28) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="rack-protection (v4.1.1, Remote: ruby-3.4.2-p28) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="rack-session (v2.1.0, Remote: ruby-3.4.2-p28) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="rack-test (v2.2.0, Remote: ruby-3.4.2-p28) [gem]" level="application" />

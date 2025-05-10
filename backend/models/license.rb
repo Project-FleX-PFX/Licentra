@@ -12,6 +12,11 @@ class License < Sequel::Model
     [0, seat_count - assigned_count].max
   end
 
+  def status
+    return "Active" if expire_date.nil? || expire_date >= Date.today
+    "Expired"
+  end
+
   def validate
     super
     validates_presence %i[product_id license_type_id seat_count]

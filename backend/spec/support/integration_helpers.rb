@@ -74,14 +74,14 @@ module IntegrationHelpers
   end
 
   def create_license_via_dao(product:, license_type:, key: "TESTKEY-#{SecureRandom.hex(4)}", name: 'Test License',
-                             seats: 5, status: 'Active')
+                             seats: 5, expire_date: nil)
     LicenseDAO.create(
       product_id: product.product_id,
       license_type_id: license_type.license_type_id,
       license_key: key,
       license_name: name,
       seat_count: seats,
-      status: status
+      expire_date: expire_date
     )
   end
 end
