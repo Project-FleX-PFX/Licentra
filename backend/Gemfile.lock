@@ -70,7 +70,7 @@ DEPENDENCIES
   fabrication
   pg
   puma
-  rack-flash3 (~> 1.0.5)
+  rack-flash3
   rack-test
   rackup
   rake

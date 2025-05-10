@@ -5,7 +5,7 @@
   <div class="cards-container">
     <% @available_licenses.each do |license| %>
       <div class="card license-card-available">
-        <h2><%= Rack::Utils.escape_html(license.product.product_name || license.license_name || "Unnamed License") %></h2>
+        <h2><%= Rack::Utils.escape_html("#{license.product.product_name}: #{license.license_name}") %></h2>
 
         <p><strong>Seats Available:</strong> <%= license.available_seats %></p>
 

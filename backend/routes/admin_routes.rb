@@ -34,15 +34,15 @@ module AdminRoutes
 
       begin
         ProductDAO.create(product_name: product_name)
+        flash[:success] = 'Product successfully created'
         status 200
-        body 'Product successfully created'
       rescue DAO::ValidationError => e
         status 422
         error_messages = e.respond_to?(:errors) ? e.errors.full_messages.join(',') : e.message
-        body error_messages
+        flash[:error] = error_messages
       rescue => e
         status 500
-        body "Error updating product: #{e.message}"
+        flash[:error] = "Error updating product: #{e.message}"
       end
     end
 
@@ -54,14 +54,32 @@ module AdminRoutes
       begin
         ProductDAO.update(product_id, product_name: product_name)
         status 200
-        body 'Product updated successfully'
+        flash[:success] = 'Product updated successfully'
       rescue DAO::ValidationError => e
         status 422
         error_messages = e.respond_to?(:errors) ? e.errors.full_messages.join(',') : e.message
-        body error_messages
+        flash[:error] = error_messages
       rescue => e
         status 500
-        body "Error updating product: #{e.message}"
+        flash[:error] = "Error updating product: #{e.message}"
+      end
+    end
+
+    app.delete '/product_management/:id' do
+      require_role('Admin')
+      product_id = params[:id]
+
+      begin
+        ProductDAO.delete(product_id)
+        status 200
+        flash[:success] = 'Product deleted successfully'
+      rescue DAO::ValidationError => e
+        status 422
+        error_messages = e.respond_to?(:errors) ? e.errors.full_message.join(',') : e.message
+        flash[:error] = error_messages
+      rescue => e
+        status 500
+        flash[:error] = "Error deleting product: #{e.message}"
       end
     end
 
@@ -93,14 +111,14 @@ module AdminRoutes
       begin
         LicenseDAO.create(license_data)
         status 200
-        body 'License successfully created'
+        flash[:success] = 'License successfully created'
       rescue DAO::ValidationError => e
         status 422
         error_messages = e.respond_to?(:errors) ? e.errors.full_messages.join(',') : e.message
-        body error_messages
+        flash[:error] = error_messages
       rescue => e
         status 500
-        body "Error creating license: #{e.message}"
+        flash[:error] = "Error creating license: #{e.message}"
       end
     end
 
@@ -125,14 +143,31 @@ module AdminRoutes
       begin
         LicenseDAO.update(license_id,license_data)
         status 200
-        body 'License successfully updated'
+        flash[:success] = 'License successfully updated'
       rescue DAO::ValidationError => e
         status 422
         error_messages = e.respond_to?(:errors) ? e.errors.full_messages.join(',') : e.message
-        body error_messages
+        flash[:error] = error_messages
       rescue => e
         status 500
-        body "Error updating license: #{e.message}"
+        flash[:error] = "Error updating license: #{e.message}"
+      end
+    end
+
+    app.delete '/license_management/:id' do
+      require_role('Admin')
+      license_id = params[:id]
+      begin
+        LicenseDAO.delete(license_id)
+        status 200
+        flash[:success] = 'License successfully deleted'
+      rescue DAO::ValidationError => e
+        status 422
+        error_messages = e.respond_to?(:errors) ? e.errors.full_messages.join(',') : e.message
+        flash[:error] = error_messages
+      rescue => e
+        status 500
+        flash[:error] = "Error deleting license: #{e.message}"
       end
     end
   end

@@ -17,8 +17,7 @@ RSpec.describe 'License Routes' do
       license_type: license_type_single,
       name: 'Word Pro License',
       key: 'WORD-PRO-123',
-      seats: 2,
-      status: 'Active'
+      seats: 2
     )
   end
 
@@ -28,8 +27,7 @@ RSpec.describe 'License Routes' do
       license_type: license_type_single,
       name: 'Word Basic (No Seats)',
       key: 'WORD-BASIC-SETUP-KEY',
-      seats: 1,
-      status: 'Active'
+      seats: 1
     )
     LicenseAssignmentDAO.create(license_id: lic.license_id, user_id: admin_user.user_id, is_active: true)
     lic.refresh
@@ -44,7 +42,7 @@ RSpec.describe 'License Routes' do
       name: 'PowerPoint Old',
       key: 'PPT-OLD-456',
       seats: 5,
-      status: 'Expired'
+      expire_date: Date.today - 1,
     )
   end
 
