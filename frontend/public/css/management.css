@@ -1,7 +1,7 @@
 /* public/css/minimal_management.css */
 
 /* "Add New" Karte mit großem Plus */
-.add-product-card, .add-license-card {
+.add-product-card, .add-license-card, .add-user-card {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -15,7 +15,7 @@
     height: 100%;
 }
 
-.add-product-card:hover, .add-license-card:hover {
+.add-product-card:hover, .add-license-card:hover, .add-user-card:hover {
     background: #f0f0f0;
     border-color: #ccc;
 }
@@ -188,4 +188,95 @@
 .btn-secondary {
     background: #d9d9d9;
     color: #333;
+}
+
+/* Deaktivierte Buttons */
+.modal-actions button:disabled {
+    background-color: #f5f5f5;
+    color: #bbb;
+    cursor: not-allowed;
+    border: 1px solid #ddd;
+    opacity: 0.7;
+    box-shadow: none;
+}
+
+/* Spezifische Stile für deaktivierte Buttons */
+#edit-btn:disabled {
+    background: #ffebc7;
+    color: #d9d9d9;
+}
+
+#save-btn:disabled {
+    background: #d9f7be;
+    color: #d9d9d9;
+}
+
+.delete-btn:disabled {
+    background: #ffccc7;
+    color: #d9d9d9;
+}
+
+/* Deaktivierte Formularelemente */
+.modal-content input:disabled,
+.modal-content select:disabled,
+.modal-content textarea:disabled {
+    background-color: #f9f9f9;
+    color: #999;
+    border-color: #eee;
+    cursor: not-allowed;
+}
+
+/* Visueller Indikator für deaktivierte Elemente */
+.modal-content input:disabled::placeholder,
+.modal-content textarea:disabled::placeholder {
+    color: #ccc;
+}
+
+/* Optionaler Hover-Effekt für deaktivierte Buttons */
+.modal-actions button:disabled:hover {
+    background-color: #f5f5f5;
+    color: #bbb;
+}
+
+/* Checkbox-Stile für deaktivierte Checkboxen */
+.role-checkbox input[type="checkbox"]:disabled + label {
+    color: #bbb;
+    cursor: not-allowed;
+}
+
+.role-checkbox input[type="checkbox"]:disabled {
+    opacity: 0.5;
+}
+
+.modal-actions button:disabled {
+    position: relative;
+}
+
+.modal-actions button:disabled:hover::after {
+    content: "Click on 'EDIT' to set changes";
+    position: absolute;
+    bottom: 120%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.8);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.license-management-section {
+    margin: 20px 0;
+    border-top: 1px solid #eee;
+    padding-top: 20px;
+}
+
+.full-width {
+    width: 100%;
+    display: block;
+    padding: 10px;
+    text-align: center;
 }
