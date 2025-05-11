@@ -1,0 +1,303 @@
+<%# views/user_management_assignments.erb %>
+<% @title = "License Assignments for #{@user.username}" %>
+<% @css   = "management" %>
+
+<h1>License Assignments for <%= Rack::Utils.escape_html(@user.username) %></h1>
+<p class="page-description">Manage license assignments for this user</p>
+
+<div class="cards-container">
+  <% @assignments.each do |assignment| %>
+    <div class="card assignment-card <%= assignment.is_active? ? 'active-assignment' : 'inactive-assignment' %>"
+         data-assignment-id="<%= assignment.assignment_id %>"
+         data-is-active="<%= assignment.is_active? %>">
+      <h3><%= assignment.license.product.product_name %></h3>
+      <p><strong>License Key:</strong> <%= assignment.license.license_key %></p>
+      <p><strong>Assigned:</strong> <%= assignment.assignment_date.strftime('%d.%m.%Y') %></p>
+      <% if assignment.assignment_expire_date %>
+        <p><strong>Expires:</strong> <%= assignment.assignment_expire_date.strftime('%d.%m.%Y') %></p>
+      <% end %>
+      <p><strong>Status:</strong> <span class="status-badge <%= assignment.is_active? ? 'active' : 'inactive' %>"><%= assignment.is_active? ? 'Active' : 'Inactive' %></span></p>
+
+      <div class="button-group">
+        <% if assignment.is_active? %>
+          <button class="toggle-status-btn btn delete-btn" data-action="deactivate">Deactivate Assignment</button>
+          <button class="delete-assignment-btn btn danger-btn" disabled title="Deactivate assignment first before deleting">Delete Assignment</button>
+        <% else %>
+          <button class="toggle-status-btn btn primary-btn" data-action="activate">Activate Assignment</button>
+          <button class="delete-assignment-btn btn danger-btn">Delete Assignment</button>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+
+  <div class="card add-assignment-card" id="add-assignment-btn">
+    <div class="add-icon">+</div>
+    <h2>Add New Assignment</h2>
+  </div>
+</div>
+
+
+<!-- Status-Änderungs-Bestätigungsmodal -->
+<div id="status-confirm-modal" class="modal hidden">
+  <div class="modal-content">
+    <span class="close-btn" title="Schließen">&times;</span>
+    <h2 id="status-modal-title">Change Assignment Status</h2>
+    <p id="status-modal-message">Are you sure you want to change the status of this license assignment?</p>
+    <div class="modal-actions">
+      <button type="button" id="cancel-status-btn">Cancel</button>
+      <button type="button" id="confirm-status-btn" class="action-btn">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal für neue Lizenzzuweisung -->
+<div id="add-assignment-modal" class="modal hidden">
+  <div class="modal-content">
+    <span class="close-btn" title="Schließen">&times;</span>
+    <h2>Add New License Assignment</h2>
+
+    <div id="license-loading">Loading available licenses...</div>
+
+    <div id="license-selection" class="hidden">
+      <p>Select a license to assign to <strong><%= @user.username %></strong>:</p>
+      <div class="license-list">
+        <!-- Wird dynamisch gefüllt -->
+      </div>
+    </div>
+
+    <div id="no-licenses" class="hidden">
+      <p>No licenses available for assignment.</p>
+    </div>
+
+    <div class="modal-actions">
+      <button type="button" id="cancel-add-btn">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Lösch-Bestätigungsmodal -->
+<div id="delete-confirm-modal" class="modal hidden">
+  <div class="modal-content">
+    <span class="close-btn" title="Schließen">&times;</span>
+    <h2>Delete Assignment</h2>
+    <p>Are you sure you want to delete this license assignment?</p>
+    <div class="modal-actions">
+      <button type="button" id="cancel-delete-btn">Cancel</button>
+      <button type="button" id="confirm-delete-btn">Delete</button>
+    </div>
+  </div>
+</div>
+
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        // Status-Änderungs-Bestätigungsmodal
+        const statusConfirmModal = document.getElementById("status-confirm-modal");
+        const statusConfirmCloseBtn = statusConfirmModal.querySelector(".close-btn");
+        const cancelStatusBtn = document.getElementById("cancel-status-btn");
+        const confirmStatusBtn = document.getElementById("confirm-status-btn");
+        const statusModalTitle = document.getElementById("status-modal-title");
+        const statusModalMessage = document.getElementById("status-modal-message");
+
+        let currentAssignmentId = null;
+        let currentAction = null;
+
+        // Event-Listener für Status-Toggle-Buttons
+        document.querySelectorAll(".toggle-status-btn").forEach(btn => {
+            btn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                const card = btn.closest(".assignment-card");
+                currentAssignmentId = card.dataset.assignmentId;
+                currentAction = btn.dataset.action;
+
+                // Modal-Texte anpassen
+                if (currentAction === "activate") {
+                    statusModalTitle.textContent = "Activate Assignment";
+                    statusModalMessage.textContent = "Are you sure you want to activate this license assignment?";
+                    confirmStatusBtn.textContent = "Activate";
+                    confirmStatusBtn.className = "action-btn primary-btn";
+                } else {
+                    statusModalTitle.textContent = "Deactivate Assignment";
+                    statusModalMessage.textContent = "Are you sure you want to deactivate this license assignment?";
+                    confirmStatusBtn.textContent = "Deactivate";
+                    confirmStatusBtn.className = "action-btn delete-btn";
+                }
+
+                statusConfirmModal.classList.remove("hidden");
+            });
+        });
+
+        // Modal schließen (X-Button und Abbrechen)
+        statusConfirmCloseBtn.addEventListener("click", () => {
+            statusConfirmModal.classList.add("hidden");
+        });
+
+        cancelStatusBtn.addEventListener("click", () => {
+            statusConfirmModal.classList.add("hidden");
+        });
+
+        // Status-Änderung bestätigen: PUT-Request an Backend senden
+        confirmStatusBtn.addEventListener("click", () => {
+            if (!currentAssignmentId || !currentAction) {
+                statusConfirmModal.classList.add("hidden");
+                return;
+            }
+
+            const formData = new URLSearchParams();
+            formData.append('is_active', currentAction === "activate" ? 'true' : 'false');
+
+            fetch(`/user_management/<%= @user.user_id %>/assignments/${currentAssignmentId}/toggle_status`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: formData
+            })
+                .then(response => {
+                    statusConfirmModal.classList.add("hidden");
+                    if (response.ok) {
+                        window.location.reload();
+                    } else {
+                        window.location.reload();
+                    }
+                })
+                .catch(() => {
+                    statusConfirmModal.classList.add("hidden");
+                    window.location.reload();
+                });
+        });
+
+        // Add Assignment Modal
+        const addModal = document.getElementById("add-assignment-modal");
+        const addModalCloseBtn = addModal.querySelector(".close-btn");
+        const cancelAddBtn = document.getElementById("cancel-add-btn");
+        const loadingDiv = document.getElementById("license-loading");
+        const selectionDiv = document.getElementById("license-selection");
+        const noLicensesDiv = document.getElementById("no-licenses");
+        const licenseList = document.querySelector(".license-list");
+
+        // "Add Assignment" Button
+        document.getElementById("add-assignment-btn").addEventListener("click", () => {
+            // Modal anzeigen und Lizenzen laden
+            addModal.classList.remove("hidden");
+            loadingDiv.classList.remove("hidden");
+            selectionDiv.classList.add("hidden");
+            noLicensesDiv.classList.add("hidden");
+
+            // Verfügbare Lizenzen abrufen
+            fetch(`/user_management/<%= @user.user_id %>/available_licenses`)
+                .then(response => response.json())
+                .then(licenses => {
+                    loadingDiv.classList.add("hidden");
+
+                    if (licenses.length === 0) {
+                        noLicensesDiv.classList.remove("hidden");
+                        return;
+                    }
+
+                    // Lizenzen anzeigen
+                    selectionDiv.classList.remove("hidden");
+                    licenseList.innerHTML = '';
+
+                    licenses.forEach(license => {
+                        const licenseCard = document.createElement("div");
+                        licenseCard.className = "license-option-card";
+                        licenseCard.innerHTML = `
+                            <h3>${license.product_name}</h3>
+                            <p><strong>License Key:</strong> ${license.license_key}</p>
+                            <p><strong>Available Seats:</strong> ${license.available_seats}</p>
+                            <button class="assign-license-btn" data-license-id="${license.license_id}">Assign</button>
+                        `;
+                        licenseList.appendChild(licenseCard);
+                    });
+
+                    // Event-Listener für Assign-Buttons
+                    document.querySelectorAll(".assign-license-btn").forEach(btn => {
+                        btn.addEventListener("click", e => {
+                            const licenseId = e.target.dataset.licenseId;
+                            assignLicense(licenseId);
+                        });
+                    });
+                })
+                .catch(error => {
+                    console.error("Error loading licenses:", error);
+                    loadingDiv.classList.add("hidden");
+                    noLicensesDiv.classList.remove("hidden");
+                    noLicensesDiv.innerHTML = "<p>Error loading available licenses.</p>";
+                });
+        });
+
+        // Lizenz zuweisen
+        function assignLicense(licenseId) {
+            const formData = new URLSearchParams();
+            formData.append('license_id', licenseId);
+
+            fetch(`/user_management/<%= @user.user_id %>/assignments`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: formData
+            })
+                .then(response => {
+                    if (response.ok) {
+                        addModal.classList.add("hidden");
+                        window.location.reload();
+                    } else {
+                        window.location.reload();
+                    }
+                })
+                .catch(() => {
+                    window.location.reload();
+                });
+        }
+
+        // Modal schließen
+        addModalCloseBtn.addEventListener("click", () => {
+            addModal.classList.add("hidden");
+        });
+
+        cancelAddBtn.addEventListener("click", () => {
+            addModal.classList.add("hidden");
+        });
+        // Event-Listener für Delete-Buttons
+        document.querySelectorAll(".delete-assignment-btn:not([disabled])").forEach(btn => {
+            btn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                const card = btn.closest(".assignment-card");
+                currentAssignmentId = card.dataset.assignmentId;
+
+                // Bestätigungsmodal anzeigen
+                deleteConfirmModal.classList.remove("hidden");
+            });
+        });
+
+        const deleteConfirmModal = document.getElementById("delete-confirm-modal");
+        const confirmDeleteBtn = document.getElementById("confirm-delete-btn");
+
+// Löschbestätigung: DELETE-Request an Backend senden
+        confirmDeleteBtn.addEventListener("click", () => {
+            if (!currentAssignmentId) {
+                deleteConfirmModal.classList.add("hidden");
+                return;
+            }
+
+            fetch(`/user_management/<%= @user.user_id %>/assignments/${currentAssignmentId}`, {
+                method: 'DELETE',
+            })
+                .then(response => {
+                    deleteConfirmModal.classList.add("hidden");
+                    if (response.ok) {
+                        window.location.reload();
+                    } else {
+                        window.location.reload();
+                    }
+                })
+                .catch(() => {
+                    deleteConfirmModal.classList.add("hidden");
+                    window.location.reload();
+                });
+        });
+
+    });
+</script>

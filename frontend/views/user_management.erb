@@ -1,35 +1,37 @@
 <%# views/admin/user_management.erb %>
 <% @title = "User Management" %>
-<% @css   = "user_management" %>
+<% @css   = "management" %>
 
-<div class="user-management-container">
-  <div class="toolbar">
-    <div class="search-box">
-      <input type="text" id="search-input" placeholder="Search User…">
-      <button id="search-btn" aria-label="Search">🔍</button>
-      <button id="add-user-btn" class="add-btn" title="Add new User">＋</button>
+<h1>User Management</h1>
+<p class="page-description">Manage users</p>
+
+<div class="cards-container">
+  <% @users.each do |user|%>
+    <div class="card user-card"
+         data-user-id="<%= user.user_id %>"
+         data-username="<%= user.username %>"
+         data-email="<%= user.email %>"
+         data-first-name="<%= user.first_name %>"
+         data-last-name="<%= user.last_name %>"
+         data-roles="<%= user.roles.map(&:role_name).join(',') %>"
+         data-role-ids="<%= user.roles.map(&:role_id).join(',') %>">
+      <h2><%= Rack::Utils.escape_html(user.username) %></h2>
+      <p><strong>E-Mail:</strong> <%= user.email %></p>
+      <p><strong>Roles:</strong>
+        <% if user.roles.any? %>
+          <%= user.roles.map(&:role_name).join(', ') %>
+        <% else %>
+          <em>No roles assigned</em>
+        <% end %>
+      </p>
+      <button class="button-primary user-edit-btn">Edit</button>
     </div>
-  </div>
+  <% end %>
 
-  <ul class="user-list">
-    <% 
-      users = [
-        { first_name: "Max",    last_name: "Mustermann", username: "mmuster", email: "max@beispiel.de",    role: "user"  },
-        { first_name: "Erika",  last_name: "Musterfrau", username: "emuster", email: "erika@beispiel.de",  role: "admin" },
-        { first_name: "Hans",   last_name: "Meier",      username: "hmeier",  email: "hans@beispiel.de",   role: "user"  }
-      ] 
-    %>
-    <% users.each do |u| %>
-      <li class="user-item"
-          data-first_name="<%= u[:first_name] %>"
-          data-last_name="<%= u[:last_name] %>"
-          data-username="<%= u[:username] %>"
-          data-email="<%= u[:email] %>"
-          data-role="<%= u[:role] %>">
-        <span class="user-name"><%= "#{u[:first_name]} #{u[:last_name]}" %></span>
-      </li>
-    <% end %>
-  </ul>
+  <div class="card add-user-card" id="add-user-btn">
+    <div class="add-icon">+</div>
+    <h2>Add New User</h2>
+  </div>
 </div>
 
 <!-- Modal für Add/Edit -->
@@ -38,6 +40,8 @@
     <span class="close-btn" title="Schließen">&times;</span>
     <h2 id="modal-title">User configuration</h2>
     <form id="user-form">
+      <input type="hidden" name="user_id">
+
       <label>First Name:</label>
       <input type="text" name="first_name" disabled>
 
@@ -53,11 +57,20 @@
       <label>Password:</label>
       <input type="password" name="password" disabled placeholder="••••••">
 
-      <label>Role:</label>
-      <select name="role" disabled>
-        <option value="user">User</option>
-        <option value="admin">Admin</option>
-      </select>
+      <label>Roles:</label>
+      <div class="roles-container" id="roles-container">
+        <% @roles.each do |role| %>
+          <div class="role-checkbox">
+            <input type="checkbox" name="roles[]" value="<%= role.role_id %>" id="role-<%= role.role_id %>"
+                   data-role-name="<%= role.role_name %>" disabled>
+            <label for="role-<%= role.role_id %>"><%= role.role_name %></label>
+          </div>
+        <% end %>
+      </div>
+
+      <div class="license-management-section">
+        <button type="button" id="manage-licenses-btn" class="btn primary-btn full-width">Manage Licenses</button>
+      </div>
 
       <div class="modal-actions">
         <button type="button" id="edit-btn">Edit</button>
@@ -68,72 +81,288 @@
   </div>
 </div>
 
+<!-- Lösch-Bestätigungsmodal -->
+<div id="delete-confirm-modal" class="modal hidden">
+  <div class="modal-content">
+    <span class="close-btn" title="Schließen">&times;</span>
+    <h2>Delete User</h2>
+    <p>Are you sure you want to delete the user <span id="delete-user-name"></span>?</p>
+    <div class="modal-actions">
+      <button type="button" id="cancel-delete-btn">Cancel</button>
+      <button type="button" id="confirm-delete-btn" class="delete-btn">Delete</button>
+    </div>
+  </div>
+</div>
+
 <script>
-document.addEventListener("DOMContentLoaded", () => {
-  const items    = document.querySelectorAll(".user-item");
-  const modal    = document.getElementById("user-modal");
-  const closeBtn = modal.querySelector(".close-btn");
-  const form     = document.getElementById("user-form");
-  const editBtn  = document.getElementById("edit-btn");
-  const saveBtn  = document.getElementById("save-btn");
-  const deleteBtn= document.getElementById("delete-btn");
-  const title    = document.getElementById("modal-title");
+    document.addEventListener("DOMContentLoaded", () => {
+        const userCards = document.querySelectorAll(".user-card");
+        const modal = document.getElementById("user-modal");
+        const closeBtn = modal.querySelector(".close-btn");
+        const form = document.getElementById("user-form");
+        const editBtn = document.getElementById("edit-btn");
+        const saveBtn = document.getElementById("save-btn");
+        const deleteBtn = document.getElementById("delete-btn");
+        const title = document.getElementById("modal-title");
 
-  function openModal(mode, data={}) {
-    title.textContent = mode === 'add' ? 'Add new User' : 'User configuration';
-    // Felder mit Daten befüllen oder leeren
-    form.first_name.value = data.first_name || '';
-    form.last_name.value  = data.last_name  || '';
-    form.username.value   = data.username   || '';
-    form.email.value      = data.email      || '';
-    form.password.value   = '';
-    form.role.value       = data.role       || 'user';
+        // Löschbestätigungsmodal
+        const deleteConfirmModal = document.getElementById("delete-confirm-modal");
+        const deleteConfirmCloseBtn = deleteConfirmModal.querySelector(".close-btn");
+        const cancelDeleteBtn = document.getElementById("cancel-delete-btn");
+        const confirmDeleteBtn = document.getElementById("confirm-delete-btn");
+        const deleteUserNameSpan = document.getElementById("delete-user-name");
 
-    // Felder sperren
-    [...form.elements].forEach(el => {
-      if (['edit-btn','save-btn','delete-btn'].includes(el.id)) return;
-      el.disabled = true;
+
+
+        function openModal(mode, data={}) {
+            title.textContent = mode === 'add'
+                ? 'Add new User'
+                : 'User configuration';
+
+            // Felder mit Daten befüllen (oder leer lassen beim "add")
+            form.user_id.value = data.userId || '';
+            form.first_name.value = data.firstName || '';
+            form.last_name.value = data.lastName || '';
+            form.username.value = data.username || '';
+            form.email.value = data.email || '';
+            form.password.value = '';
+
+            // Alle Checkboxen zurücksetzen
+            const roleCheckboxes = form.querySelectorAll('input[name="roles[]"]');
+            roleCheckboxes.forEach(checkbox => {
+                checkbox.checked = false;
+            });
+
+            // Rollen setzen, wenn vorhanden
+            if (data.roleIds) {
+                const userRoleIds = data.roleIds.split(',');
+                userRoleIds.forEach(roleId => {
+                    const roleCheckbox = document.querySelector(`input[name="roles[]"][value="${roleId}"]`);
+                    if (roleCheckbox) {
+                        roleCheckbox.checked = true;
+                    }
+                });
+            }
+
+            // Inputs sperren
+            [...form.elements].forEach(el => {
+                if (['edit-btn','save-btn','delete-btn'].includes(el.id)) return;
+                el.disabled = mode === 'edit'; // Felder nur im Edit-Modus sperren
+            });
+
+            saveBtn.disabled = mode === 'edit';
+            deleteBtn.style.display = mode === 'edit' ? 'inline-block' : 'none';
+            editBtn.style.display = mode === 'add' ? 'none' : 'inline-block';
+
+            // Aktives Element markieren
+            document.querySelectorAll('.user-card').forEach(card => {
+                card.classList.remove('active');
+            });
+
+            if (mode === 'edit') {
+                const clickedCard = document.querySelector(`.user-card[data-user-id="${data.userId}"]`);
+                if (clickedCard) clickedCard.classList.add('active');
+            }
+
+            modal.classList.remove("hidden");
+
+            const manageLicensesBtn = document.getElementById("manage-licenses-btn");
+            const licensesSection = document.querySelector(".license-management-section");
+
+            if (mode === 'edit' && data.userId) {
+                licensesSection.style.display = 'block';
+                manageLicensesBtn.addEventListener("click", () => {
+                    window.location.href = `/user_management/${data.userId}/assignments`;
+                });
+            } else {
+                licensesSection.style.display = 'none';
+            }
+        }
+
+
+        // Event-Listener für User-Karten
+        userCards.forEach(card => {
+            const editBtn = card.querySelector('.user-edit-btn');
+            editBtn.addEventListener("click", (e) => {
+                e.stopPropagation(); // Verhindert Bubbling zum Card-Click
+                openModal('edit', card.dataset);
+            });
+
+            // Optional: Auch die Karte selbst klickbar machen
+            card.addEventListener("click", () => {
+                openModal('edit', card.dataset);
+            });
+        });
+
+        // "Add User" Karte
+        document.getElementById("add-user-btn")
+            .addEventListener("click", () => openModal('add'));
+
+        let isEditMode = false;
+
+        closeBtn.addEventListener("click", () => {
+            modal.classList.add("hidden");
+            // Zustand zurücksetzen
+            isEditMode = false;
+            editBtn.textContent = "Edit";
+            editBtn.classList.remove("cancel-btn");
+        });
+
+        editBtn.addEventListener("click", () => {
+            isEditMode = !isEditMode;
+
+            if (isEditMode) {
+                // Wechsel zu Edit-Modus
+                editBtn.textContent = "Cancel";
+                editBtn.classList.add("cancel-btn");
+
+                // Felder entsperren
+                [...form.elements].forEach(el => {
+                    if (['edit-btn','delete-btn'].includes(el.id)) return;
+                    el.disabled = false;
+                });
+                saveBtn.disabled = false;
+            } else {
+                // Wechsel zurück zum Ansichtsmodus
+                editBtn.textContent = "Edit";
+                editBtn.classList.remove("cancel-btn");
+
+                // Felder wieder sperren
+                [...form.elements].forEach(el => {
+                    if (['edit-btn','delete-btn'].includes(el.id)) return;
+                    el.disabled = true;
+                });
+                saveBtn.disabled = true;
+            }
+        });
+
+        deleteBtn.disabled = false;
+        deleteBtn.title = "";
+
+        deleteBtn.addEventListener('click', () => {
+            // Username im Bestätigungsmodal anzeigen
+            const activeCard = document.querySelector('.user-card.active');
+            if (!activeCard) {
+                return;
+            }
+            const username = activeCard.dataset.username || 'unbekannter Benutzer';
+            deleteUserNameSpan.textContent = username;
+
+            // Bestätigungsmodal anzeigen
+            deleteConfirmModal.classList.remove('hidden');
+        });
+
+        // Modal schließen (X-Button und Abbrechen)
+        deleteConfirmCloseBtn.addEventListener('click', () => {
+            deleteConfirmModal.classList.add('hidden');
+        });
+
+        cancelDeleteBtn.addEventListener('click', () => {
+            deleteConfirmModal.classList.add('hidden');
+        });
+
+        // Löschbestätigung: DELETE-Request an Backend senden
+        confirmDeleteBtn.addEventListener('click', () => {
+            const activeCard = document.querySelector('.user-card.active');
+            if (!activeCard) {
+                deleteConfirmModal.classList.add('hidden');
+                return;
+            }
+            const userId = activeCard.dataset.userId;
+            if (!userId) {
+                deleteConfirmModal.classList.add('hidden');
+                return;
+            }
+
+            fetch(`/user_management/${userId}`, {
+                method: 'DELETE',
+            })
+                .then(response => {
+                    deleteConfirmModal.classList.add('hidden');
+                    if (response.ok) {
+                        modal.classList.add('hidden');
+                        window.location.reload();
+                    } else {
+                        // Bei Fehler lassen wir das Backend die Fehlermeldung via Flash anzeigen
+                        window.location.reload();
+                    }
+                })
+                .catch(() => {
+                    // Bei Netzwerkfehlern einfach neu laden, um Flash-Nachrichten zu sehen
+                    deleteConfirmModal.classList.add('hidden');
+                    window.location.reload();
+                });
+        });
+
+        form.addEventListener("submit", e => {
+            e.preventDefault(); // Verhindert das standardmäßige Absenden des Formulars
+
+            // Sammle ausgewählte Rollen-IDs
+            const selectedRoles = Array.from(
+                form.querySelectorAll('input[name="roles[]"]:checked')
+            ).map(checkbox => checkbox.value);
+
+            // Erstelle ein URLSearchParams-Objekt, um die Formulardaten korrekt zu kodieren
+            const formData = new URLSearchParams();
+            formData.append('first_name', form.first_name.value);
+            formData.append('last_name', form.last_name.value);
+            formData.append('username', form.username.value);
+            formData.append('email', form.email.value);
+
+            // Passwort nur hinzufügen, wenn es nicht leer ist
+            if (form.password.value && form.password.value.trim() !== '') {
+                formData.append('password', form.password.value);
+            }
+
+            // Füge jede ausgewählte Rolle einzeln hinzu, damit Sinatra sie als Array erkennt
+            selectedRoles.forEach(roleId => {
+                formData.append('roles[]', roleId); // Wichtig: 'roles[]' verwenden
+            });
+
+            // Ziel-URL und Methode bestimmen
+            let url = '/user_management';
+            let method = 'POST';
+
+            if (!title.textContent.includes('Add new User')) {
+                // Update-Fall
+                const userId = document.querySelector('.user-card.active')?.dataset.userId;
+                if (!userId || userId === 'undefined') {
+                    console.error("User ID not found for update.");
+                    return;
+                }
+                url = `/user_management/${userId}`;
+                method = 'PUT';
+            }
+
+            // Debugging-Ausgabe, um zu überprüfen, was gesendet wird
+            console.log(`Sending ${method} request to ${url} with body: ${formData.toString()}`);
+
+            // Fetch-Aufruf
+            fetch(url, {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: formData // Das korrekt formatierte URLSearchParams-Objekt verwenden
+            })
+                .then(response => {
+                    if (response.ok) {
+                        modal.classList.add("hidden");
+                        window.location.reload(); // Seite neu laden bei Erfolg
+                    } else {
+                        console.error("Server responded with an error:", response.status);
+                        response.text().then(text => console.error("Error details:", text)); // Zeigt die Antwort des Servers an
+                        window.location.reload(); // Lädt die Seite neu, um ggf. Flash-Nachrichten vom Server anzuzeigen
+                    }
+                })
+                .catch(error => {
+                    console.error("Network error or problem with fetch:", error);
+                    window.location.reload();
+                });
+        });
+
+
+
+
     });
-    saveBtn.disabled = true;
-    deleteBtn.style.display = mode === 'edit' ? 'inline-block' : 'none';
-
-    modal.classList.remove("hidden");
-  }
-
-  items.forEach(item => {
-    item.addEventListener("click", () => {
-      const data = item.dataset;
-      openModal('edit', data);
-    });
-  });
-
-  document.getElementById("add-user-btn").addEventListener("click", () => {
-    openModal('add');
-  });
-
-  closeBtn.addEventListener("click", () => {
-    modal.classList.add("hidden");
-  });
-
-  editBtn.addEventListener("click", () => {
-    [...form.elements].forEach(el => {
-      if (['edit-btn','delete-btn'].includes(el.id)) return;
-      el.disabled = false;
-    });
-    saveBtn.disabled = false;
-  });
-
-  deleteBtn.addEventListener("click", () => {
-    if (confirm("Soll dieser User wirklich gelöscht werden?")) {
-      // hier später Lösch-Request an Server
-      modal.classList.add("hidden");
-    }
-  });
-
-  form.addEventListener("submit", e => {
-    e.preventDefault();
-    // hier später Save-Request an Server
-    modal.classList.add("hidden");
-  });
-});
 </script>

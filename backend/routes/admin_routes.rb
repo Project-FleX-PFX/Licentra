@@ -19,8 +19,279 @@ module AdminRoutes
 
     app.get '/user_management' do
       require_role('Admin')
+      @users = UserDAO.all
+      @roles = RoleDAO.all
       erb :user_management
     end
+
+    app.post '/user_management' do
+      require_role('Admin')
+      user_data = {
+        username: params[:username],
+        email: params[:email],
+        first_name: params[:first_name],
+        last_name: params[:last_name],
+        is_active: true,
+        credential_attributes: {
+          password_plain: params[:password]
+        }
+      }
+
+      begin
+        # Benutzer erstellen
+        user = User.new(user_data)
+        user.save_changes
+
+        # Rollen zuweisen
+        if params[:roles] && params[:roles].is_a?(Array)
+          params[:roles].each do |role_id|
+            role = RoleDAO.find(role_id)
+            user.add_role(role) if role
+          end
+        end
+
+        flash[:success] = 'User successfully created'
+        status 200
+      rescue DAO::ValidationError => e
+        status 422
+        error_messages = e.respond_to?(:errors) ? e.errors.full_messages.join(',') : e.message
+        flash[:error] = error_messages
+      rescue => e
+        status 500
+        flash[:error] = "Error creating user: #{e.message}"
+      end
+    end
+
+    app.put '/user_management/:id' do
+      require_role('Admin')
+      user_id = params[:id]
+
+      begin
+        user = UserDAO.find(user_id)
+        return status 404 unless user
+
+        # Basisinformationen aktualisieren
+        user.username = params[:username] if params[:username]
+        user.email = params[:email] if params[:email]
+        user.first_name = params[:first_name] if params[:first_name]
+        user.last_name = params[:last_name] if params[:last_name]
+
+        # Passwort aktualisieren, wenn angegeben
+        if params[:password] && !params[:password].empty?
+          user.credential.password_plain = params[:password]
+          user.credential.save_changes
+        end
+
+        # Änderungen speichern
+        user.save_changes
+
+        # Rollen aktualisieren
+        if params[:roles] && params[:roles].is_a?(Array)
+          # Alle bestehenden Rollen entfernen
+          user.remove_all_roles
+
+          # Neue Rollen zuweisen
+          params[:roles].each do |role_id|
+            role = RoleDAO.find(role_id)
+            user.add_role(role) if role
+          end
+        end
+
+        flash[:success] = 'User successfully updated'
+        status 200
+      rescue DAO::ValidationError => e
+        status 422
+        error_messages = e.respond_to?(:errors) ? e.errors.full_messages.join(',') : e.message
+        flash[:error] = error_messages
+      rescue => e
+        status 500
+        flash[:error] = "Error updating user: #{e.message}"
+      end
+    end
+
+    app.delete '/user_management/:id' do
+      require_role('Admin')
+      user_id = params[:id]
+
+      begin
+        user = UserDAO.find(user_id)
+        return status 404 unless user
+
+        # Benutzer löschen
+        user.delete
+
+        flash[:success] = 'User successfully deleted'
+        status 200
+      rescue => e
+        status 500
+        flash[:error] = "Error deleting user: #{e.message}"
+      end
+    end
+
+    app.get '/user_management/:user_id/assignments' do
+      require_role('Admin')
+      user_id = params[:user_id]
+
+      @user = UserDAO.find(user_id)
+      halt 404, "User not found" unless @user
+
+      @assignments = LicenseAssignmentDAO.find_by_user(user_id)
+
+      erb :user_management_assignments
+    end
+
+    app.put '/user_management/:id/assignments/:assignment_id/toggle_status' do
+      require_role('Admin')
+      user_id = params[:id]
+      assignment_id = params[:assignment_id]
+      is_active = params[:is_active] == 'true'
+
+      begin
+        # Finde die notwendigen Objekte für das Logging
+        assignment = LicenseAssignmentDAO.find(assignment_id)
+        halt 404, "Assignment not found" unless assignment
+
+        admin_user = current_user
+        license = assignment.license
+
+        # Aktivieren oder Deaktivieren mit der DAO-Methode
+        if is_active
+          LicenseAssignmentDAO.activate(assignment_id)
+          action_type = 'ADMIN_ACTIVATED'
+        else
+          LicenseAssignmentDAO.deactivate(assignment_id)
+          action_type = 'ADMIN_DEACTIVATED'
+        end
+
+        # Verwende die Logging-Methode aus dem Service
+        details = "User '#{admin_user.username}' (ID: #{admin_user.user_id}) performed action '#{action_type}' " \
+          "for license '#{LicenseService._license_display_name(license)}' (License ID: #{license.license_id}). " \
+          "Assignment ID: #{assignment.assignment_id}."
+
+        AssignmentLogDAO.create(
+          assignment_id: assignment.assignment_id,
+          action: action_type,
+          details: details
+        )
+
+        flash[:success] = is_active ? 'License assignment successfully activated' : 'License assignment successfully deactivated'
+        status 200
+      rescue => e
+        status 500
+        flash[:error] = "Error changing assignment status: #{e.message}"
+      end
+    end
+
+    # Route zum Abrufen verfügbarer Lizenzen für einen Benutzer
+    app.get '/user_management/:user_id/available_licenses' do
+      require_role('Admin')
+      user_id = params[:user_id]
+
+      @user = UserDAO.find(user_id)
+      halt 404, "User not found" unless @user
+
+      # Alle verfügbaren Lizenzen finden
+      all_available = LicenseDAO.find_available_for_assignment
+
+      # Bereits zugewiesene Lizenzen für diesen Benutzer finden (unabhängig vom Status)
+      user_assigned_license_ids = LicenseAssignmentDAO.find_by_user(user_id).map(&:license_id)
+
+      # Nur Lizenzen zurückgeben, die dem Benutzer noch nicht zugewiesen wurden
+      @available_licenses = all_available.reject do |license|
+        user_assigned_license_ids.include?(license.license_id)
+      end
+
+      content_type :json
+      @available_licenses.map { |l| {
+        license_id: l.license_id,
+        product_name: l.product.product_name,
+        license_key: l.license_key,
+        available_seats: l.available_seats
+      }}.to_json
+    end
+
+
+    # Route zum Erstellen einer neuen Lizenzzuweisung
+    app.post '/user_management/:user_id/assignments' do
+      require_role('Admin')
+      user_id = params[:user_id]
+      license_id = params[:license_id]
+
+      begin
+        @user = UserDAO.find(user_id)
+        halt 404, "User not found" unless @user
+
+        # Neue Zuweisung erstellen, aber auf inaktiv setzen
+        assignment = LicenseAssignmentDAO.create({
+                                                   license_id: license_id,
+                                                   user_id: user_id,
+                                                   assignment_date: Time.now,
+                                                   is_active: false  # Standardmäßig inaktiv
+                                                 })
+
+        # Logging
+        license = assignment.license
+        admin_user = current_user
+
+        details = "User '#{admin_user.username}' (ID: #{admin_user.user_id}) performed action 'ADMIN_ASSIGNED' " \
+          "for license '#{LicenseService._license_display_name(license)}' (License ID: #{license.license_id}). " \
+          "Assignment ID: #{assignment.assignment_id}."
+
+        AssignmentLogDAO.create(
+          assignment_id: assignment.assignment_id,
+          action: 'ADMIN_ASSIGNED',
+          details: details
+        )
+
+        flash[:success] = 'License assignment successfully created (inactive)'
+        status 200
+      rescue => e
+        status 500
+        flash[:error] = "Error creating license assignment: #{e.message}"
+      end
+    end
+
+    app.delete '/user_management/:user_id/assignments/:assignment_id' do
+      require_role('Admin')
+      user_id = params[:user_id]
+      assignment_id = params[:assignment_id]
+
+      begin
+        # Zuweisung finden
+        assignment = LicenseAssignmentDAO.find(assignment_id)
+        halt 404, "Assignment not found" unless assignment
+
+        # Überprüfen, ob die Zuweisung inaktiv ist
+        halt 400, "Cannot delete active assignment" if assignment.is_active?
+
+        # Logging
+        admin_user = current_user
+        license = assignment.license
+
+        details = "User '#{admin_user.username}' (ID: #{admin_user.user_id}) performed action 'ADMIN_DELETED' " \
+          "for license '#{LicenseService._license_display_name(license)}' (License ID: #{license.license_id}). " \
+          "Assignment ID: #{assignment.assignment_id}."
+
+        AssignmentLogDAO.create(
+          assignment_id: assignment_id,
+          action: 'ADMIN_DELETED',
+          details: details
+        )
+
+        # Zuweisung löschen
+        LicenseAssignmentDAO.delete(assignment_id)
+
+
+        flash[:success] = 'License assignment successfully deleted'
+        status 200
+      rescue => e
+        status 500
+        flash[:error] = "Error deleting license assignment: #{e.message}"
+      end
+    end
+
+
+
 
     app.get '/product_management' do
       require_role('Admin')

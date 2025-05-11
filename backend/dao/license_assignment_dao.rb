@@ -75,11 +75,25 @@ class LicenseAssignmentDAO < BaseDAO
     def activate(id)
       context = "activating license assignment ID #{id}"
       with_error_handling(context) do
+        # Zuweisung finden
+        assignment = find(id)
+        return nil unless assignment
+
+        # Lizenz abrufen
+        license = assignment.license
+
+        # Prüfen, ob die Lizenz genügend freie Plätze hat
+        if license.available_seats <= 0
+          raise StandardError, "Cannot activate assignment: License has no available seats"
+        end
+
+        # Zuweisung aktivieren
         assignment = update(id, is_active: true)
         log_assignment_activated(assignment)
         assignment
       end
     end
+
 
     def deactivate(id)
       context = "deactivating license assignment ID #{id}"
