@@ -23,6 +23,10 @@ class User < Sequel::Model
                    .count.positive?
   end
 
+  def admin?
+    role?('Admin')
+  end
+
   def validate
     super
     validates_presence [:username]

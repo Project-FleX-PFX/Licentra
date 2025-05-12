@@ -30,7 +30,6 @@ class AssignmentLogDAO < BaseDAO
     end
 
     # READ
-
     def find!(id)
       with_error_handling("finding assignment log with ID #{id}") do
         log_entry = AssignmentLog[id]
@@ -125,6 +124,91 @@ class AssignmentLogDAO < BaseDAO
         log_logs_deleted_for_assignment(assignment_id, count)
         count
       end
+    end
+
+    DEFAULT_PER_PAGE = 25
+
+    def find_with_details(filters = {}, options = {})
+      context = "finding assignment logs with details and filters: #{filters}"
+      with_error_handling(context) do
+        dataset = AssignmentLog.dataset
+                               .eager(license_assignment: [{ user: [] }, { license: :product }])
+                               .order(Sequel.desc(:log_timestamp))
+
+        dataset = _apply_user_filter(dataset, filters[:user_id])
+        dataset = _apply_action_filter(dataset, filters[:action])
+        dataset = _apply_date_from_filter(dataset, filters[:date_from])
+        dataset = _apply_date_to_filter(dataset, filters[:date_to])
+
+        page = options.fetch(:page, 1).to_i
+        per_page = options.fetch(:per_page, DEFAULT_PER_PAGE).to_i
+        paginated_dataset = dataset.paginate(page, per_page)
+
+        logs = paginated_dataset.all
+        log_info("Fetched #{logs.size} assignment logs. Page: #{page}, PerPage: #{per_page}, TotalRecords: #{paginated_dataset.pagination_record_count}")
+
+        {
+          logs: logs,
+          current_page: paginated_dataset.current_page,
+          total_pages: paginated_dataset.page_count,
+          total_entries: paginated_dataset.pagination_record_count
+        }
+      end
+    end
+
+    private
+
+    def _apply_user_filter(dataset, user_id_param)
+      user_id = user_id_param.to_i
+      return dataset unless user_id.positive?
+
+      relevant_assignment_ids = LicenseAssignment.where(user_id: user_id).select_map(:assignment_id)
+
+      if relevant_assignment_ids.empty?
+        dataset.where(1 => 0)
+      else
+        dataset.where(assignment_id: relevant_assignment_ids)
+      end
+    end
+
+    def _apply_action_filter(dataset, action_param)
+      action = action_param&.strip
+      return dataset if action.nil? || action.empty?
+
+      dataset.where(Sequel.ilike(:action, "%#{action}%"))
+    end
+
+    def _apply_date_from_filter(dataset, date_from_param)
+      parsed_date = _parse_date(date_from_param)
+      return dataset unless parsed_date
+
+      dataset.where { log_timestamp >= parsed_date.to_time }
+    end
+
+    def _apply_date_to_filter(dataset, date_to_param)
+      parsed_date = _parse_date(date_to_param)
+      return dataset unless parsed_date
+
+      end_of_day_timestamp = parsed_date.next_day.to_time - 1
+      dataset.where { log_timestamp <= end_of_day_timestamp }
+    end
+
+    def _parse_date(date_param)
+      return nil if date_param.nil? || (date_param.is_a?(String) && date_param.strip.empty?)
+
+      return date_param.to_date if date_param.is_a?(Date) || date_param.is_a?(Time) || date_param.is_a?(DateTime)
+
+      if date_param.is_a?(String)
+        begin
+          return Date.parse(date_param)
+        rescue ArgumentError, TypeError
+          log_warn("Invalid date string received for filter: '#{date_param}'")
+          return nil
+        end
+      end
+
+      log_warn("Unsupported date type received for filter: #{date_param.class}")
+      nil
     end
   end
 end

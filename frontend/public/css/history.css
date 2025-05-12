@@ -1,0 +1,157 @@
+.filter-form {
+  background-color: #f9f9f9;
+  padding: 15px;
+  border-radius: 5px;
+  margin-bottom: 20px;
+  border: 1px solid #e0e0e0;
+}
+
+.filter-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  align-items: flex-end;
+}
+
+.filter-controls .field {
+  margin-bottom: 0;
+  flex-grow: 1;
+}
+.filter-controls .field select,
+.filter-controls .field input[type="text"],
+.filter-controls .field input[type="date"] {
+  min-width: 180px;
+}
+
+.filter-controls button,
+.filter-controls a.button-secondary {
+  padding: 8px 12px;
+  font-size: 0.9em;
+}
+
+.current-filter-info {
+  background-color: #eef;
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+  border: 1px solid #ccf;
+  font-size: 0.95em;
+}
+
+.history-table-container {
+  overflow-x: auto;
+}
+
+.history-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  font-size: 0.9em;
+}
+
+.history-table th,
+.history-table td {
+  border: 1px solid #ddd;
+  padding: 10px 12px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.history-table th {
+  background-color: #f2f2f2;
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+.history-table tbody tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+.history-table tbody tr:hover {
+  background-color: #f1f1f1;
+}
+
+.details-column {
+  max-width: 350px;
+  word-break: break-word;
+  font-size: 0.85em;
+  color: #555;
+}
+
+.action-badge {
+  padding: 3px 7px;
+  border-radius: 10px;
+  font-size: 0.8em;
+  color: white;
+  white-space: nowrap;
+}
+.action-assigned-self, .action-assigned { background-color: #28a745; }
+.action-returned-self, .action-revoked { background-color: #dc3545; }
+.action-activated { background-color: #007bff; }
+.action-deactivated { background-color: #6c757d; }
+
+.pagination {
+  margin-top: 20px;
+  text-align: center;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  font-size: 0.9em;
+}
+.pagination a, .pagination span {
+  margin: 0 5px;
+}
+.pagination a {
+  padding: 8px 12px;
+}
+
+@media (max-width: 767px) {
+  .history-table thead {
+    display: none;
+  }
+  .history-table tr {
+    display: block;
+    margin-bottom: 15px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+  .history-table td {
+    display: block;
+    text-align: right;
+    padding-left: 50%;
+    position: relative;
+    border: none;
+    border-bottom: 1px solid #eee;
+  }
+  .history-table td:last-child {
+    border-bottom: none;
+  }
+  .history-table td::before {
+    content: attr(data-label);
+    position: absolute;
+    left: 10px;
+    font-weight: bold;
+    text-align: left;
+    white-space: nowrap;
+  }
+  .details-column {
+    max-width: none;
+  }
+
+  .filter-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .filter-controls .field,
+  .filter-controls button,
+  .filter-controls a.button-secondary {
+    width: 100%;
+  }
+
+  .pagination {
+    flex-direction: column;
+    gap: 10px;
+  }
+}

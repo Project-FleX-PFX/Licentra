@@ -45,6 +45,7 @@ class LicentraApp < Sinatra::Base
   register ProfileRoutes
   register LicenseRoutes
   register AdminRoutes
+  register HistoryRoutes
 end
 
 run LicentraApp if __FILE__ == $PROGRAM_NAME
