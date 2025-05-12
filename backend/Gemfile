@@ -12,6 +12,7 @@ gem 'sinatra'
 
 gem 'database_cleaner-sequel'
 gem 'fabrication'
+gem 'faker'
 gem 'rack-flash3'
 gem 'rack-test'
 gem 'rspec'
