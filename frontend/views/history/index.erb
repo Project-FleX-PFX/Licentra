@@ -1,0 +1,77 @@
+<% if current_user.admin? %>
+<form method="get" action="/history" class="filter-form">
+    <div class="filter-controls">
+    <div class="field">
+        <label for="user_id_filter">Filter by User:</label>
+        <select name="user_id_filter" id="user_id_filter" onchange="this.form.submit()">
+        <option value="">-- All Users --</option>
+        <% @all_users.each do |u| %>
+            <option value="<%= u.user_id %>" <%= 'selected' if @filter_user_id == u.user_id %>>
+            <%= u.username %> (<%= u.email %>)
+            </option>
+        <% end %>
+        </select>
+    </div>
+    <div class="field">
+        <label for="action_filter">Filter by Action:</label>
+        <input type="text" name="action_filter" id="action_filter" value="<%= params[:action_filter] %>">
+    </div>
+    <button type="submit" class="button-secondary">Filter</button>
+    <a href="/history" class="button-secondary">Reset Filters</a>
+    </div>
+</form>
+<% elsif @filter_user_id %>
+<p class="current-filter-info">Showing history for: <strong><%= current_user.username %></strong></p>
+<% end %>
+
+<% if @assignment_logs && !@assignment_logs.empty? %>
+<div class="history-table-container">
+    <table class="history-table">
+    <thead>
+        <tr>
+        <th>Timestamp</th>
+        <th>User</th>
+        <th>Action</th>
+        <th>License/Product</th>
+        <th>Details</th>
+        </tr>
+    </thead>
+    <tbody>
+        <% @assignment_logs.each do |log| %>
+        <tr>
+            <td data-label="Timestamp"><%= log.log_timestamp.strftime('%Y-%m-%d %H:%M:%S') %></td>
+            <td data-label="User">
+            <%= log.license_assignment&.user&.username || 'N/A (User deleted or no assignment)' %>
+            </td>
+            <td data-label="Action"><span class="action-badge action-<%= log.action.downcase.gsub('_', '-') %>"><%= log.action %></span></td>
+            <td data-label="License/Product">
+            <% if log.license_assignment&.license %>
+                <%= log.license_assignment.license.license_name || log.license_assignment.license.product&.name || "License ID: #{log.license_assignment.license_id}" %>
+            <% else %>
+                N/A
+            <% end %>
+            </td>
+            <td data-label="Details" class="details-column"><%= log.details %></td>
+        </tr>
+        <% end %>
+    </tbody>
+    </table>
+</div>
+
+<% if @total_pages && @total_pages > 1 %>
+    <div class="pagination">
+    <% if @current_page > 1 %>
+        <a href="<%= request.path %>?<%= Rack::Utils.build_query(params.merge(page: @current_page - 1)) %>" class="button-secondary">« Previous</a>
+    <% end %>
+
+    <span>Page <%= @current_page %> of <%= @total_pages %> (<%= @total_entries %> total entries)</span>
+
+    <% if @current_page < @total_pages %>
+        <a href="<%= request.path %>?<%= Rack::Utils.build_query(params.merge(page: @current_page + 1)) %>" class="button-secondary">Next »</a>
+    <% end %>
+    </div>
+<% end %>
+
+<% else %>
+<p>No assignment history found for the selected criteria.</p>
+<% end %>

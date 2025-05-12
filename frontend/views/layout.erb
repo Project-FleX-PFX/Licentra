@@ -26,6 +26,7 @@
         <li><a href="/profile" class="<%= 'active' if request.path_info == '/profile' %>">Profile</a></li>
         <li><a href="/licenses" class="<%= 'active' if request.path_info == '/licenses' %>">Available Licenses</a></li>
         <li><a href="/my-licenses" class="<%= 'active' if request.path_info == '/my-licenses' %>">My Licenses</a></li>
+        <li><a href="/history" class="<%= 'active' if request.path_info == '/history' %>">History</a></li>
 
         <!-- Admin-spezifische Links -->
         <% if defined?(admin?) && admin? %>
