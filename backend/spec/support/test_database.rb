@@ -3,6 +3,8 @@
 DB = Sequel.connect('sqlite:///:memory:')
 puts "Running tests with database: #{DB.adapter_scheme} (In-Memory)"
 
+DB.extension :pagination
+
 Sequel.extension :migration
 Sequel::Model.plugin :validation_helpers
 Sequel::Model.plugin :association_proxies

@@ -1,48 +1,50 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <title>Licentra - Login</title>
-    <link rel="icon" type="image/png" href="/css/icon.png">
-    <meta charset="utf-8" />
-    <link rel="stylesheet" type="text/css" href="/css/login.css">
-  </head>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Login – Licentra</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/png" href="/css/icon.png">
+  <link rel="stylesheet" type="text/css" href="/css/auth-forms.css">
+</head>
+<body class="auth-page-background">
 
-  <body>
-    <div class="login-container">
+  <div class="auth-container">
 
-      <div class="logo">
-        <img src="/css/LizentraLogo.png" alt="Licentra Logo">
-      </div>
-
-      <h2>Licentra</h2>
-
-      <div id="form-error" class="error" style="<%= @error ? 'display:block; color: #d8000c; background-color: #ffcdcd; border: 1px solid #d8000c; padding: 10px; margin-bottom: 15px; border-radius: 4px;' : 'display:none' %>">
-      <%= @error %>
-      </div>
-
-      <form id="login-form" action="/login" method="post">
-        <div class="field">
-          <label for="email">E-Mail</label>
-          <input type="email" id="email" name="email" required>
-        </div>
-
-        <div class="field">
-          <label for="password">Passwort</label>
-          <input type="password" id="password" name="password" required>
-        </div>
-
-        <div class="actions">
-          <input
-            type="submit"
-            id="login-button"
-            value="Login"
-            class="login-button">
-        </div>
-      </form>
-
-      <div class="footer">
-        <p>Noch kein Konto? <a href="/register">Hier registrieren</a></p>
-      </div>
+    <div class="logo">
+      <img src="/css/LizentraLogo.png" alt="Licentra Logo">
     </div>
-  </body>
+
+    <h2>Licentra Login</h2>
+
+    <div class="form-error-message" style="<%= @error ? 'display:block;' : '' %>">
+      <%= @error %>
+    </div>
+
+    <form id="login-form" action="/login" method="post">
+      <div class="form-group">
+        <label for="email">E-Mail</label>
+        <input type="email" id="email" name="email" required>
+      </div>
+
+      <div class="form-group">
+        <label for="password">Passwort</label>
+        <input type="password" id="password" name="password" required>
+      </div>
+
+      <div class="actions">
+        <input
+          type="submit"
+          id="login-button"
+          value="Login"
+          class="auth-button">
+      </div>
+    </form>
+
+    <div class="footer">
+      <p>Noch kein Konto? <a href="/register">Hier registrieren</a></p>
+    </div>
+  </div>
+
+</body>
 </html>

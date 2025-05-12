@@ -526,18 +526,25 @@ RSpec.describe UserDAO do
     end
 
     context 'when a generic StandardError occurs during update' do
-      let(:generic_error_message) { 'Something unexpected happened' }
-      let(:generic_error) { StandardError.new(generic_error_message) }
+      let(:generic_error_message) { 'Something truly unexpected happened in DB!' }
+      let(:original_standard_error) { StandardError.new(generic_error_message) }
+
       before do
-        allow(UserDAO.model_class).to receive_message_chain(:where, :update).and_raise(generic_error)
+        allow(UserDAO.model_class).to receive_message_chain(:where, :update).and_raise(original_standard_error)
         allow(DaoLogger).to receive(:log_error)
       end
 
-      it 'logs the unknown error via DaoLogger' do
-        expect(DaoLogger).to receive(:log_error).with("Unknown error while #{context_string}: #{generic_error_message}")
+      it 'raises a DAO::DAOError and logs the original error via DaoLogger' do
         expect do
           UserDAO.send(:_perform_atomic_user_update, user, update_payload, action_description)
-        end.to raise_error(generic_error)
+        end.to raise_error(DAO::DAOError) do |dao_error|
+          # Erwarte jetzt die kombinierte Nachricht
+          expect(dao_error.message).to eq("An unexpected error occurred while Perform a test update for user ID #{user.pk}: #{generic_error_message}")
+        end
+
+        expect(DaoLogger).to have_received(:log_error).with(
+          a_string_matching(/An unexpected standard error occurred while Perform a test update for user ID #{user.pk}: StandardError - #{Regexp.escape(generic_error_message)}/m)
+        )
       end
     end
   end

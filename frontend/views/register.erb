@@ -1,60 +1,55 @@
-<!-- views/register.erb -->
 <!DOCTYPE html>
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <link rel="icon" type="image/png" href="/css/icon.png">
   <title>Registrieren – Licentra</title>
-  <link rel="stylesheet" href="/css/register.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/png" href="/css/icon.png">
+  <link rel="stylesheet" type="text/css" href="/css/auth-forms.css">
 </head>
-<body>
-  <div class="container">
+<body class="auth-page-background">
+
+  <div class="auth-container">
     <div class="logo">
-      <img src="/css/LizentraLogo.png" alt="Schlüssel-Icon" class="logo-icon">
+      <img src="/css/LizentraLogo.png" alt="Licentra Logo">
     </div>
     <h2>Registrieren</h2>
 
-    <!-- Fehlermeldungen vom Server -->
-    <% if @error %>
-    <div class="error" style="text-align:center; margin-bottom:15px;">
+    <div class="form-error-message" style="<%= @error ? 'display:block;' : '' %>">
       <%= @error %>
-    </div>
-    <% end %>
-
-    <!-- allgemeiner Fehler (leere Felder) -->
-    <div id="form-error" class="error" style="display:none; text-align:center; margin-bottom:15px;">
-      Bitte füllen Sie alle Felder aus.
     </div>
 
     <form id="register-form" action="/register" method="post">
       <div class="form-group">
         <label for="username">Benutzername</label>
-        <input type="text" id="username" name="username" value="<%= params[:username] %>">
+        <input type="text" id="username" name="username" value="<%= params[:username] %>" required>
       </div>
       <div class="form-group">
         <label for="first_name">Vorname</label>
-        <input type="text" id="first_name" name="first_name" value="<%= params[:first_name] %>">
+        <input type="text" id="first_name" name="first_name" value="<%= params[:first_name] %>" required>
       </div>
       <div class="form-group">
         <label for="last_name">Nachname</label>
-        <input type="text" id="last_name" name="last_name" value="<%= params[:last_name] %>">
+        <input type="text" id="last_name" name="last_name" value="<%= params[:last_name] %>" required>
       </div>
       <div class="form-group">
         <label for="email">E‑Mail</label>
-        <input type="email" id="email" name="email" value="<%= params[:email] %>">
+        <input type="email" id="email" name="email" value="<%= params[:email] %>" required>
       </div>
       <div class="form-group">
         <label for="password">Passwort</label>
-        <input type="password" id="password" name="password">
+        <input type="password" id="password" name="password" required>
       </div>
       <div class="form-group">
         <label for="password_confirmation">Passwort bestätigen</label>
-        <input type="password" id="password_confirmation" name="password_confirmation">
-        <span id="password-error" class="error" style="display:none;">
+        <input type="password" id="password_confirmation" name="password_confirmation" required>
+        <span id="password-error" class="inline-error">
           Die Passwörter stimmen nicht überein.
         </span>
       </div>
-      <button type="submit" class="btn">Registrieren</button>
+      <div class="actions">
+        <button type="submit" class="auth-button">Registrieren</button>
+      </div>
     </form>
 
     <div class="footer">
@@ -65,33 +60,17 @@
   <script>
     document.getElementById('register-form')
       .addEventListener('submit', function(e) {
-        // Fehlermeldungen zurücksetzen
-        document.getElementById('form-error').style.display = 'none';
-        document.getElementById('password-error').style.display = 'none';
-
-        // 1. alle Felder prüfen
-        var fields = ['username', 'first_name','last_name','email','password','password_confirmation'];
-        var emptyFound = fields.some(function(id) {
-          return !document.getElementById(id).value.trim();
-        });
-        if (emptyFound) {
-          e.preventDefault();
-          document.getElementById('form-error').style.display = 'block';
-          return;
-        }
-
-        // 2. Passwörter matching
-        var pw  = document.getElementById('password').value;
+        var pw = document.getElementById('password').value;
         var pwc = document.getElementById('password_confirmation').value;
-        if (pw !== pwc) {
-          e.preventDefault();
-          document.getElementById('password-error').style.display = 'block';
-          return;
-        }
+        var passwordErrorSpan = document.getElementById('password-error');
 
-        // Bei erfolgreicher Client-Validierung wird das Formular normal abgesendet
+        passwordErrorSpan.style.display = 'none';
+
+        if (pw !== pwc && pwc !== '') {
+          e.preventDefault();
+          passwordErrorSpan.style.display = 'block';
+        }
       });
   </script>
 </body>
 </html>
-

@@ -133,7 +133,7 @@ class AssignmentLogDAO < BaseDAO
       with_error_handling(context) do
         dataset = AssignmentLog.dataset
                                .eager(license_assignment: [{ user: [] }, { license: :product }])
-                               .order(Sequel.desc(:log_timestamp))
+                               .order(Sequel.desc(:log_timestamp), Sequel.desc(:log_id))
 
         dataset = _apply_user_filter(dataset, filters[:user_id])
         dataset = _apply_action_filter(dataset, filters[:action])
