@@ -184,12 +184,6 @@ DB.transaction(rollback: :reraise) do
     notes: 'Assignment related to an expired license'
   )
 
-  AssignmentLog.create(
-    assignment_id: ass_alice_suite_expired.assignment_id,
-    action: 'DEACTIVATED',
-    details: 'Assignment deactivated manually or due to license expiry.',
-    log_timestamp: (lic_suite_expired.expire_date + 1).to_time
-  )
 
   temp_ass = LicenseAssignment.create(
     license: lic_suite_volume,
