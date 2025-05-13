@@ -12,7 +12,12 @@
       <button class="edit-button" onclick="toggleEdit('username')">
         <span class="edit-icon">✎</span>
       </button>
-      <button class="save-button" id="username-save" onclick="saveEdit('username')" style="display:none;">Save</button>
+      <button class="save-button" id="username-save" onclick="saveEdit('username')" style="display:none;">
+        <span class="save-icon">✓</span>
+      </button>
+      <button class="cancel-button" id="username-cancel" onclick="cancelEdit('username')" style="display:none;">
+        <span class="cancel-icon">✕</span>
+      </button>
     </div>
 
     <!-- EMAIL-Block -->
@@ -24,7 +29,12 @@
       <button class="edit-button" onclick="toggleEdit('email')">
         <span class="edit-icon">✎</span>
       </button>
-      <button class="save-button" id="email-save" onclick="saveEdit('email')" style="display:none;">Save</button>
+      <button class="save-button" id="email-save" onclick="saveEdit('email')" style="display:none;">
+        <span class="save-icon">✓</span>
+      </button>
+      <button class="cancel-button" id="email-cancel" onclick="cancelEdit('email')" style="display:none;">
+        <span class="cancel-icon">✕</span>
+      </button>
     </div>
 
     <!-- PASSWORD-Block -->
@@ -36,7 +46,12 @@
       <button class="edit-button" onclick="toggleEdit('password')">
         <span class="edit-icon">✎</span>
       </button>
-      <button class="save-button" id="password-save" onclick="saveEdit('password')" style="display:none;">Save</button>
+      <button class="save-button" id="password-save" onclick="saveEdit('password')" style="display:none;">
+        <span class="save-icon">✓</span>
+      </button>
+      <button class="cancel-button" id="password-cancel" onclick="cancelEdit('password')" style="display:none;">
+        <span class="cancel-icon">✕</span>
+      </button>
     </div>
 
     <!-- ROLE-Block (nur Anzeige) -->
@@ -51,79 +66,102 @@
 </div>
 
 <script>
-  function toggleEdit(field) {
-    const displayElem = document.getElementById(field + '-display');
-    const inputElem   = document.getElementById(field + '-input');
-    const editButton  = document.querySelector('#' + field + '-item .edit-button');
-    const saveButton  = document.getElementById(field + '-save');
+    function toggleEdit(field) {
+        const displayElem = document.getElementById(field + '-display');
+        const inputElem   = document.getElementById(field + '-input');
+        const editButton  = document.querySelector('#' + field + '-item .edit-button');
+        const saveButton  = document.getElementById(field + '-save');
+        const cancelButton = document.getElementById(field + '-cancel');
 
-    // In den Editiermodus wechseln
-    if (inputElem.style.display === 'none' || inputElem.style.display === '') {
-      displayElem.style.display  = 'none';
-      inputElem.style.display    = 'inline-block';
-      editButton.style.display   = 'none';
-      saveButton.style.display   = 'inline-block';
-    }
-    // Zurück in den Anzeigemodus
-    else {
-      inputElem.style.display    = 'none';
-      displayElem.style.display  = 'inline-block';
-      editButton.style.display   = 'inline-block';
-      saveButton.style.display   = 'none';
-    }
-  }
+        // Originalwert speichern für möglichen Abbruch
+        inputElem.setAttribute('data-original', inputElem.value);
 
-  function saveEdit(field) {
-    const displayElem = document.getElementById(field + '-display');
-    const inputElem   = document.getElementById(field + '-input');
-    const newValue    = inputElem.value.trim();
-
-    // Nicht-leere Eingabe erzwingen
-    if (newValue === '') {
-      alert("Feld darf nicht leer sein.");
-      return;
-    }
-
-    if (field === 'email') {
-      const emailRegExp = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
-      if (!emailRegExp.test(newValue)) {
-        alert("Bitte geben Sie eine gültige E-Mail-Adresse ein.");
-        return;
-      }
-    }
-
-    // AJAX-Request zum Speichern der Änderungen
-    fetch('/update_profile', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: `field=${field}&value=${encodeURIComponent(newValue)}`
-    })
-    .then(response => {
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
-      }
-      return response.json();
-    })
-    .then(data => {
-      if (data.success) {
-        // Beim Speichern des Passworts -> Anzeige wieder auf ******** setzen
-        if (field === 'password') {
-          displayElem.textContent = '********';
-        } else {
-          displayElem.textContent = newValue;
+        // In den Editiermodus wechseln
+        if (inputElem.style.display === 'none' || inputElem.style.display === '') {
+            displayElem.style.display  = 'none';
+            inputElem.style.display    = 'inline-block';
+            editButton.style.display   = 'none';
+            saveButton.style.display   = 'inline-block';
+            cancelButton.style.display = 'inline-block';
         }
-        // Modus zurückschalten
-        toggleEdit(field);
-      } else {
-        alert(data.message || "Error updating profile");
-      }
-    })
-    .catch(error => {
-      console.error('Error:', error);
-      alert('Failed to update profile. Please try again.');
-    });
-  }
-</script>
+        // Zurück in den Anzeigemodus
+        else {
+            inputElem.style.display    = 'none';
+            displayElem.style.display  = 'inline-block';
+            editButton.style.display   = 'inline-block';
+            saveButton.style.display   = 'none';
+            cancelButton.style.display = 'none';
+        }
+    }
 
+    function cancelEdit(field) {
+        const displayElem = document.getElementById(field + '-display');
+        const inputElem   = document.getElementById(field + '-input');
+        const editButton  = document.querySelector('#' + field + '-item .edit-button');
+        const saveButton  = document.getElementById(field + '-save');
+        const cancelButton = document.getElementById(field + '-cancel');
+
+        // Originalwert wiederherstellen
+        inputElem.value = inputElem.getAttribute('data-original');
+
+        // Zurück in den Anzeigemodus
+        inputElem.style.display    = 'none';
+        displayElem.style.display  = 'inline-block';
+        editButton.style.display   = 'inline-block';
+        saveButton.style.display   = 'none';
+        cancelButton.style.display = 'none';
+    }
+
+    function saveEdit(field) {
+        const displayElem = document.getElementById(field + '-display');
+        const inputElem   = document.getElementById(field + '-input');
+        const newValue    = inputElem.value.trim();
+
+        // Nicht-leere Eingabe erzwingen
+        if (newValue === '') {
+            alert("Feld darf nicht leer sein.");
+            return;
+        }
+
+        if (field === 'email') {
+            const emailRegExp = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
+            if (!emailRegExp.test(newValue)) {
+                alert("Bitte geben Sie eine gültige E-Mail-Adresse ein.");
+                return;
+            }
+        }
+
+        // AJAX-Request zum Speichern der Änderungen
+        fetch('/update_profile', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `field=${field}&value=${encodeURIComponent(newValue)}`
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    // Beim Speichern des Passworts -> Anzeige wieder auf ******** setzen
+                    if (field === 'password') {
+                        displayElem.textContent = '********';
+                    } else {
+                        displayElem.textContent = newValue;
+                    }
+                    // Modus zurückschalten
+                    toggleEdit(field);
+                } else {
+                    alert(data.message || "Error updating profile");
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to update profile. Please try again.');
+            });
+    }
+</script>
