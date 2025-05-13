@@ -85,10 +85,10 @@
   color: white;
   white-space: nowrap;
 }
-.action-assigned-self, .action-assigned { background-color: #28a745; }
-.action-returned-self, .action-revoked { background-color: #dc3545; }
-.action-activated { background-color: #007bff; }
-.action-deactivated { background-color: #6c757d; }
+.action-user-activated, .action-admin-activated { background-color: #28a745; }
+.action-user-deactivated, .action-admin-deactivated { background-color: #dc3545; }
+.action-admin-assigned { background-color: #007bff; }
+.action-admin-deleted { background-color: #6c757d; }
 
 .pagination {
   margin-top: 20px;
