@@ -32,28 +32,57 @@
         <th>Timestamp</th>
         <th>User</th>
         <th>Action</th>
-        <th>License/Product</th>
+        <th>License</th>
+          <th>Assignment-ID</th>
         <th>Details</th>
         </tr>
     </thead>
     <tbody>
-        <% @assignment_logs.each do |log| %>
-        <tr>
-            <td data-label="Timestamp"><%= log.log_timestamp.strftime('%Y-%m-%d %H:%M:%S') %></td>
-            <td data-label="User">
-            <%= log.license_assignment&.user&.username || 'N/A (User deleted or no assignment)' %>
-            </td>
-            <td data-label="Action"><span class="action-badge action-<%= log.action.downcase.gsub('_', '-') %>"><%= log.action %></span></td>
-            <td data-label="License/Product">
-            <% if log.license_assignment&.license %>
-                <%= log.license_assignment.license.license_name || log.license_assignment.license.product&.name || "License ID: #{log.license_assignment.license_id}" %>
-            <% else %>
-                N/A
-            <% end %>
-            </td>
-            <td data-label="Details" class="details-column"><%= log.details %></td>
-        </tr>
-        <% end %>
+    <% @assignment_logs.each do |log| %>
+      <tr>
+        <td data-label="Timestamp"><%= log.log_timestamp.strftime('%Y-%m-%d %H:%M:%S') %></td>
+        <td data-label="User">
+          <%
+            username_match = log.details.match(/User '([^']+)' \(ID: (\d+)\)/)
+            if username_match
+              username = username_match[1]
+              user_id = username_match[2]
+          %>
+            <%= username %> (ID: <%= user_id %>)
+          <% else %>
+            N/A
+          <% end %>
+        </td>
+        <td data-label="Action">
+          <%
+            action_match = log.details.match(/performed action '([^']+)'/)
+            action = action_match ? action_match[1] : log.action
+          %>
+          <span class="action-badge action-<%= action.downcase.gsub('_', '-') %>"><%= action %></span>
+        </td>
+        <td data-label="License/Product">
+          <%
+            license_match = log.details.match(/for license '([^']+)' \(License ID: (\d+)\)/)
+            if license_match
+              license_name = license_match[1]
+              license_id = license_match[2]
+          %>
+            <%= license_name %> (ID: <%= license_id %>)
+          <% else %>
+            N/A
+          <% end %>
+        </td>
+        <td data-label="Assignment ID">
+          <%
+            assignment_id_match = log.details.match(/Assignment ID: (\d+)/)
+            assignment_id = assignment_id_match ? assignment_id_match[1] : "N/A"
+          %>
+          <%= assignment_id %>
+        </td>
+        <td data-label="Details" class="details-column"><%= log.details %></td>
+      </tr>
+    <% end %>
+
     </tbody>
     </table>
 </div>
