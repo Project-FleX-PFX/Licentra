@@ -25,9 +25,20 @@ module LicenseRoutes
       user = current_user
 
       begin
+        # Prüfe zuerst, ob das Assignment dem aktuellen Benutzer gehört
+        assignment = LicenseAssignmentDAO.find(license_assignment_id)
+
+        # Überprüfe, ob die Zuweisung dem aktuellen Benutzer gehört
+        raise ArgumentError, "This license assignment does not belong to you" unless assignment.user_id == user.user_id
+
+        # Überprüfe, ob die Zuweisung bereits aktiv ist
+        raise DAO::ValidationError, "This license assignment is already active" if assignment.is_active?
+
+        raise DAO::ValidationError, "No available seats" if assignment.license.available_seats <= 0
+
         LicenseAssignmentDAO.activate(license_assignment_id)
 
-        # Hier holst du das Assignment nach der Aktivierung
+        # Hole das aktualisierte Assignment nach der Aktivierung
         assignment = LicenseAssignmentDAO.find(license_assignment_id)
 
         # Korrigierte Details mit den richtigen Attributen
@@ -38,12 +49,15 @@ module LicenseRoutes
         # Korrigierte Parameter für das Log
         AssignmentLogDAO.create(
           assignment_id: license_assignment_id,
-          action: 'USER_ACTIVATE', # Hier war 'ADMIN_DELETED', was nicht zum Kontext passt
+          action: 'USER_ACTIVATE',
           details: details
         )
 
         flash[:success] = 'License successfully activated.'
         redirect '/my-licenses'
+      rescue ArgumentError => e
+        flash[:error] = e.message
+        redirect '/licenses'
       rescue DAO::ValidationError => e
         flash[:error] = e.message
         redirect '/licenses'
@@ -53,6 +67,7 @@ module LicenseRoutes
         redirect '/licenses'
       end
     end
+
 
 
     app.get '/my-licenses' do
@@ -75,12 +90,19 @@ module LicenseRoutes
       user = current_user
 
       begin
-        LicenseAssignmentDAO.deactivate(license_assignment_id)
-
-        # Hier holst du das Assignment nach der Deaktivierung
         assignment = LicenseAssignmentDAO.find(license_assignment_id)
 
-        # Korrigierte Details mit den richtigen Attributen
+        # Überprüfe, ob die Zuweisung dem aktuellen Benutzer gehört
+        raise ArgumentError unless assignment.user_id == user.user_id
+
+        # Überprüfe, ob die Zuweisung aktiv ist
+        raise DAO::ValidationError, "This license assignment is already inactive" unless assignment.is_active?
+
+        LicenseAssignmentDAO.deactivate(license_assignment_id)
+
+        # Hole das aktualisierte Assignment nach der Deaktivierung
+        assignment = LicenseAssignmentDAO.find(license_assignment_id)
+
         details = "User '#{user.username}' (ID: #{user.user_id}) performed action 'USER_DEACTIVATE' " \
           "for license '#{assignment.license.license_name}' (License ID: #{assignment.license.license_id}). " \
           "Assignment ID: #{license_assignment_id}."
@@ -94,6 +116,9 @@ module LicenseRoutes
 
         flash[:success] = 'License successfully deactivated.'
         redirect '/my-licenses'
+      rescue ArgumentError
+        flash[:error] = 'This license assignment does not belong to you'
+        redirect '/my-licenses'
       rescue DAO::ValidationError => e
         flash[:error] = e.message
         redirect '/my-licenses'
@@ -103,6 +128,7 @@ module LicenseRoutes
         redirect '/my-licenses'
       end
     end
+
 
   end
 end
