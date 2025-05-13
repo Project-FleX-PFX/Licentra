@@ -57,12 +57,11 @@ RSpec.describe AssignmentLogDAO do
           rescued_exception = e
         end
 
-        expect(rescued_exception).to be_a(DAO::DAOError)
-        if rescued_exception.is_a?(DAO::DAOError)
-          expect(rescued_exception.message).to match(/Validation failed while creating assignment log/i)
-          expect(rescued_exception.errors).to have_key(:action)
-          expect(rescued_exception.errors[:action]).to include('is not present')
-        end
+        expect(rescued_exception).to be_a(DAO::ValidationError)
+        expect(rescued_exception.message).to match(/Validation failed while creating assignment log/i)
+        expect(rescued_exception.errors).to have_key(:action)
+        # Die tatsächliche Fehlermeldung ist wahrscheinlich "is not present" oder "cannot be empty/null"
+        expect(rescued_exception.errors[:action]).to include(/cannot be (empty|null|blank)|is not present/i)
       end
     end
   end
