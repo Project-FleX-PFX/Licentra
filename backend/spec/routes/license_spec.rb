@@ -42,8 +42,8 @@ RSpec.describe 'License Routes' do
       name: 'PowerPoint Old',
       key: 'PPT-OLD-456',
       seats: 5,
-      expire_date: Date.today - 1,
-      )
+      expire_date: Date.today - 1
+    )
   end
 
   # Erstelle inaktive Zuweisungen für den regulären Benutzer
@@ -96,7 +96,7 @@ RSpec.describe 'License Routes' do
         log = AssignmentLog.last
         expect(log).not_to be_nil
         expect(log.assignment_id).to eq(inactive_assignment_word.assignment_id)
-        expect(log.action).to eq('USER_ACTIVATE')
+        expect(log.action).to eq('USER_ACTIVATED')
         expect(log.details).to include(regular_user.username)
         expect(log.details).to include(word_license_available.license_name)
       end
@@ -125,7 +125,8 @@ RSpec.describe 'License Routes' do
 
         expect(response_status).to be(200)
         expect(response_body).to include('No available seats')
-        expect(LicenseAssignment.where(assignment_id: no_seats_assignment.assignment_id, is_active: true).count).to eq(0)
+        expect(LicenseAssignment.where(assignment_id: no_seats_assignment.assignment_id,
+                                       is_active: true).count).to eq(0)
       end
     end
 
@@ -201,7 +202,7 @@ RSpec.describe 'License Routes' do
         log = AssignmentLog.last
         expect(log).not_to be_nil
         expect(log.assignment_id).to eq(active_assignment.assignment_id)
-        expect(log.action).to eq('USER_DEACTIVATE')
+        expect(log.action).to eq('USER_DEACTIVATED')
       end
 
       it 'makes a seat available again (implicitly)' do
