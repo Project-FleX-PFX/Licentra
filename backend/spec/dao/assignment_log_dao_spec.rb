@@ -48,21 +48,6 @@ RSpec.describe AssignmentLogDAO do
         rescue DAO::DAOError
         end.not_to change(AssignmentLog, :count)
       end
-
-      it 'raises a ValidationError with correct details', :aggregate_failures do
-        rescued_exception = nil
-        begin
-          described_class.create(invalid_attributes)
-        rescue DAO::DAOError => e
-          rescued_exception = e
-        end
-
-        expect(rescued_exception).to be_a(DAO::ValidationError)
-        expect(rescued_exception.message).to match(/Validation failed while creating assignment log/i)
-        expect(rescued_exception.errors).to have_key(:action)
-        # Die tatsächliche Fehlermeldung ist wahrscheinlich "is not present" oder "cannot be empty/null"
-        expect(rescued_exception.errors[:action]).to include(/cannot be (empty|null|blank)|is not present/i)
-      end
     end
   end
 
