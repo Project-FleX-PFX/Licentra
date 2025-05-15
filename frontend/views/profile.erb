@@ -6,8 +6,8 @@
     <!-- USERNAME-Block -->
     <div class="info-item" id="username-item">
       <label>Username:</label>
-      <span class="info-display" id="username-display"><%= @user.username %></span>
-      <input type="text" class="info-input" id="username-input" value="<%= @user.username %>" style="display:none;">
+      <span class="info-display" id="username-display"><%= Rack::Utils.escape_html(@user.username) %></span>
+      <input type="text" class="info-input" id="username-input" value="<%= Rack::Utils.escape_html(@user.username) %>" style="display:none;">
 
       <button class="edit-button" onclick="toggleEdit('username')">
         <span class="edit-icon">✎</span>
