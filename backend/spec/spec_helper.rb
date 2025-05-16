@@ -40,6 +40,8 @@ RSpec.configure do |config|
   require_relative 'support/database_cleaner_config'
 end
 
+DEFAULT_PASSWORD = 'asdfghjK#2'
+
 def session
   last_request.env['rack.session'] if last_request
 end

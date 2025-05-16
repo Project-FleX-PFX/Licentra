@@ -16,7 +16,7 @@ RSpec.describe 'User Management Assignments API' do
                      first_name: 'Test',
                      last_name: 'User',
                      is_active: true)
-    Fabricate(:user_credential, user: user, password: 'password123')
+    Fabricate(:user_credential, user: user, password: DEFAULT_PASSWORD)
     user.add_role(test_role)
     user.refresh
     user
