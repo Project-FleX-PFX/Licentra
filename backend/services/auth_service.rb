@@ -28,7 +28,7 @@ class AuthService
       first_name: params[:first_name],
       last_name: params[:last_name],
       is_active: true,
-      credential_attributes: { password_plain: params[:password] }
+      credential_attributes: { password: params[:password] }
     )
 
     user.save_changes

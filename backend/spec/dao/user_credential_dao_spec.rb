@@ -9,7 +9,7 @@ RSpec.describe UserCredentialDAO do
   describe '.update' do
     it 'raises NotImplementedError' do
       expect do
-        described_class.update(user.user_id, password: 'newpassword')
+        described_class.update(user.user_id, password: 'newpa$$worD1!')
       end.to raise_error(NotImplementedError, /use update_password/i)
     end
   end
@@ -18,7 +18,7 @@ RSpec.describe UserCredentialDAO do
     context 'with valid new password' do
       it 'updates the password hash' do
         old_hash = credential.password_hash
-        new_password = 'new_secure_password123'
+        new_password = 'new_secure_pass#worD123!'
 
         updated_credential = described_class.update_password(user.user_id, new_password)
 
@@ -30,7 +30,7 @@ RSpec.describe UserCredentialDAO do
 
       it 'logs the password update' do
         allow(described_class).to receive(:log_password_updated)
-        described_class.update_password(user.user_id, 'another_password')
+        described_class.update_password(user.user_id, 'new_secure_pass#worD123!')
         expect(described_class).to have_received(:log_password_updated).with(an_instance_of(UserCredential))
       end
     end
@@ -76,7 +76,7 @@ RSpec.describe UserCredentialDAO do
     let(:valid_attributes) do
       {
         user_id: new_user.user_id,
-        password_hash: BCrypt::Password.create('password123')
+        password_hash: BCrypt::Password.create(DEFAULT_PASSWORD)
       }
     end
 

@@ -7,11 +7,7 @@ require_relative '../app'
 RSpec.describe 'User Registration' do
   include Rack::Test::Methods
 
-  def app
-    LicentraApp.new
-  end
-
-  def register_user(username, email, first_name: 'Test', last_name: 'User', password: 'password123')
+  def register_user(username, email, first_name: 'Test', last_name: 'User', password: DEFAULT_PASSWORD)
     post '/register', {
       username: username,
       email: email,
@@ -88,8 +84,8 @@ RSpec.describe 'User Registration' do
         email: 'new@example.com',
         first_name: 'New',
         last_name: 'User',
-        password: 'password123',
-        password_confirmation: 'different123'
+        password: DEFAULT_PASSWORD,
+        password_confirmation: 'differenT123!'
       }
 
       expect(last_response).to be_ok

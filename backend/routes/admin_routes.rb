@@ -33,7 +33,7 @@ module AdminRoutes
         last_name: params[:last_name],
         is_active: true,
         credential_attributes: {
-          password_plain: params[:password]
+          password: params[:password]
         }
       }
 
@@ -56,7 +56,7 @@ module AdminRoutes
         status 422
         error_messages = e.respond_to?(:errors) ? e.errors.full_messages.join(',') : e.message
         flash[:error] = error_messages
-      rescue => e
+      rescue StandardError => e
         status 500
         flash[:error] = "Error creating user: #{e.message}"
       end
@@ -78,7 +78,7 @@ module AdminRoutes
 
         # Passwort aktualisieren, wenn angegeben
         if params[:password] && !params[:password].empty?
-          user.credential.password_plain = params[:password]
+          user.credential.password = params[:password]
           user.credential.save_changes
         end
 
@@ -86,7 +86,7 @@ module AdminRoutes
         user.save_changes
 
         # Rollen aktualisieren
-        if params[:roles] && params[:roles].is_a?(Array)
+        if params[:roles].is_a?(Array)
           # Alle bestehenden Rollen entfernen
           user.remove_all_roles
 
@@ -103,7 +103,7 @@ module AdminRoutes
         status 422
         error_messages = e.respond_to?(:errors) ? e.errors.full_messages.join(',') : e.message
         flash[:error] = error_messages
-      rescue => e
+      rescue StandardError => e
         status 500
         flash[:error] = "Error updating user: #{e.message}"
       end
@@ -122,7 +122,7 @@ module AdminRoutes
 
         flash[:success] = 'User successfully deleted'
         status 200
-      rescue => e
+      rescue StandardError => e
         status 500
         flash[:error] = "Error deleting user: #{e.message}"
       end
@@ -133,7 +133,7 @@ module AdminRoutes
       user_id = params[:user_id]
 
       @user = UserDAO.find(user_id)
-      halt 404, "User not found" unless @user
+      halt 404, 'User not found' unless @user
 
       @assignments = LicenseAssignmentDAO.find_by_user(user_id)
 
@@ -149,7 +149,7 @@ module AdminRoutes
       begin
         # Finde die notwendigen Objekte für das Logging
         assignment = LicenseAssignmentDAO.find(assignment_id)
-        halt 404, "Assignment not found" unless assignment
+        halt 404, 'Assignment not found' unless assignment
 
         admin_user = current_user
         license = assignment.license
@@ -174,9 +174,10 @@ module AdminRoutes
           details: details
         )
 
-        flash[:success] = is_active ? 'License assignment successfully activated' : 'License assignment successfully deactivated'
+        flash[:success] =
+          is_active ? 'License assignment successfully activated' : 'License assignment successfully deactivated'
         status 200
-      rescue => e
+      rescue StandardError => e
         status 500
         flash[:error] = "Error changing assignment status: #{e.message}"
       end
@@ -188,7 +189,7 @@ module AdminRoutes
       user_id = params[:user_id]
 
       @user = UserDAO.find(user_id)
-      halt 404, "User not found" unless @user
+      halt 404, 'User not found' unless @user
 
       # Alle verfügbaren Lizenzen finden
       all_available = LicenseDAO.find_available_for_assignment
@@ -202,14 +203,15 @@ module AdminRoutes
       end
 
       content_type :json
-      @available_licenses.map { |l| {
-        license_id: l.license_id,
-        product_name: l.product.product_name,
-        license_key: l.license_key,
-        available_seats: l.available_seats
-      }}.to_json
+      @available_licenses.map do |l|
+        {
+          license_id: l.license_id,
+          product_name: l.product.product_name,
+          license_key: l.license_key,
+          available_seats: l.available_seats
+        }
+      end.to_json
     end
-
 
     # Route zum Erstellen einer neuen Lizenzzuweisung
     app.post '/user_management/:user_id/assignments' do
@@ -219,14 +221,14 @@ module AdminRoutes
 
       begin
         @user = UserDAO.find(user_id)
-        halt 404, "User not found" unless @user
+        halt 404, 'User not found' unless @user
 
         # Neue Zuweisung erstellen, aber auf inaktiv setzen
         assignment = LicenseAssignmentDAO.create({
                                                    license_id: license_id,
                                                    user_id: user_id,
                                                    assignment_date: Time.now,
-                                                   is_active: false  # Standardmäßig inaktiv
+                                                   is_active: false # Standardmäßig inaktiv
                                                  })
 
         # Logging
@@ -245,7 +247,7 @@ module AdminRoutes
 
         flash[:success] = 'License assignment successfully created (inactive)'
         status 200
-      rescue => e
+      rescue StandardError => e
         status 500
         flash[:error] = "Error creating license assignment: #{e.message}"
       end
@@ -259,10 +261,10 @@ module AdminRoutes
       begin
         # Zuweisung finden
         assignment = LicenseAssignmentDAO.find(assignment_id)
-        halt 404, "Assignment not found" unless assignment
+        halt 404, 'Assignment not found' unless assignment
 
         # Überprüfen, ob die Zuweisung inaktiv ist
-        halt 400, "Cannot delete active assignment" if assignment.is_active?
+        halt 400, 'Cannot delete active assignment' if assignment.is_active?
 
         # Logging
         admin_user = current_user
@@ -281,17 +283,13 @@ module AdminRoutes
         # Zuweisung löschen
         LicenseAssignmentDAO.delete(assignment_id)
 
-
         flash[:success] = 'License assignment successfully deleted'
         status 200
-      rescue => e
+      rescue StandardError => e
         status 500
         flash[:error] = "Error deleting license assignment: #{e.message}"
       end
     end
-
-
-
 
     app.get '/product_management' do
       require_role('Admin')
@@ -311,7 +309,7 @@ module AdminRoutes
         status 422
         error_messages = e.respond_to?(:errors) ? e.errors.full_messages.join(',') : e.message
         flash[:error] = error_messages
-      rescue => e
+      rescue StandardError => e
         status 500
         flash[:error] = "Error updating product: #{e.message}"
       end
@@ -330,7 +328,7 @@ module AdminRoutes
         status 422
         error_messages = e.respond_to?(:errors) ? e.errors.full_messages.join(',') : e.message
         flash[:error] = error_messages
-      rescue => e
+      rescue StandardError => e
         status 500
         flash[:error] = "Error updating product: #{e.message}"
       end
@@ -348,7 +346,7 @@ module AdminRoutes
         status 422
         error_messages = e.respond_to?(:errors) ? e.errors.full_message.join(',') : e.message
         flash[:error] = error_messages
-      rescue => e
+      rescue StandardError => e
         status 500
         flash[:error] = "Error deleting product: #{e.message}"
       end
@@ -387,7 +385,7 @@ module AdminRoutes
         status 422
         error_messages = e.respond_to?(:errors) ? e.errors.full_messages.join(',') : e.message
         flash[:error] = error_messages
-      rescue => e
+      rescue StandardError => e
         status 500
         flash[:error] = "Error creating license: #{e.message}"
       end
@@ -412,14 +410,14 @@ module AdminRoutes
       }
 
       begin
-        LicenseDAO.update(license_id,license_data)
+        LicenseDAO.update(license_id, license_data)
         status 200
         flash[:success] = 'License successfully updated'
       rescue DAO::ValidationError => e
         status 422
         error_messages = e.respond_to?(:errors) ? e.errors.full_messages.join(',') : e.message
         flash[:error] = error_messages
-      rescue => e
+      rescue StandardError => e
         status 500
         flash[:error] = "Error updating license: #{e.message}"
       end
@@ -436,7 +434,7 @@ module AdminRoutes
         status 422
         error_messages = e.respond_to?(:errors) ? e.errors.full_messages.join(',') : e.message
         flash[:error] = error_messages
-      rescue => e
+      rescue StandardError => e
         status 500
         flash[:error] = "Error deleting license: #{e.message}"
       end

@@ -46,23 +46,23 @@ DB.transaction(rollback: :reraise) do
 
   puts 'Creating Users & Credentials...'
   admin = User.new(username: 'admin', email: 'admin@company.local', first_name: 'Admin', last_name: 'Istrator',
-                   is_active: true, credential_attributes: { password_plain: 'secureAdminPass123!' })
+                   is_active: true, credential_attributes: { password: 'secureAdminPass123!' })
   admin.save_changes
 
   manager = User.new(username: 'lic_manager', email: 'manager@company.local', first_name: 'Lisa', last_name: 'Manager',
-                     is_active: true, credential_attributes: { password_plain: 'manageMyLicenses!' })
+                     is_active: true, credential_attributes: { password: 'manageMyLicenses!2' })
   manager.save_changes
 
   alice = User.new(username: 'alice', email: 'alice@company.local', first_name: 'Alice', last_name: 'Dev',
-                   is_active: true, credential_attributes: { password_plain: 'alicePassw0rd' })
+                   is_active: true, credential_attributes: { password: 'alicePassw0rd*' })
   alice.save_changes
 
   bob = User.new(username: 'bob', email: 'bob@company.local', first_name: 'Bob', last_name: 'Sales', is_active: true,
-                 credential_attributes: { password_plain: 'bobLikesSales1' })
+                 credential_attributes: { password: 'bobLikesSales1!' })
   bob.save_changes
 
   inactive_user = User.new(username: 'inactive', email: 'inactive@company.local', first_name: 'Inactive',
-                           last_name: 'User', is_active: false, credential_attributes: { password_plain: 'tempPass' })
+                           last_name: 'User', is_active: false, credential_attributes: { password: 'tempPassW0#' })
   inactive_user.save_changes
 
   puts 'Assigning Roles...'
@@ -183,7 +183,6 @@ DB.transaction(rollback: :reraise) do
     is_active: false,
     notes: 'Assignment related to an expired license'
   )
-
 
   temp_ass = LicenseAssignment.create(
     license: lic_suite_volume,

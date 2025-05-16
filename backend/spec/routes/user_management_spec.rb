@@ -57,7 +57,7 @@ RSpec.describe 'User Management API' do
         email: 'newuser@example.com',
         first_name: 'New',
         last_name: 'User',
-        password: 'password123',
+        password: DEFAULT_PASSWORD,
         'roles[]' => [test_role.role_id.to_s]
       }
 
@@ -78,7 +78,7 @@ RSpec.describe 'User Management API' do
         email: 'unique@example.com',
         first_name: 'Unique',
         last_name: 'User',
-        password: 'password123',
+        password: DEFAULT_PASSWORD,
         'roles[]' => [test_role.role_id.to_s]
       }
 
@@ -99,7 +99,7 @@ RSpec.describe 'User Management API' do
                        first_name: 'Test',
                        last_name: 'User',
                        is_active: true)
-      Fabricate(:user_credential, user: user, password: 'password123')
+      Fabricate(:user_credential, user: user, password: DEFAULT_PASSWORD)
       user.add_role(test_role)
       user.refresh
       user
@@ -130,7 +130,7 @@ RSpec.describe 'User Management API' do
         email: test_user.email,
         first_name: test_user.first_name,
         last_name: test_user.last_name,
-        password: 'newpassword123',
+        password: 'newpa$$worD123!',
         'roles[]' => [test_role.role_id.to_s]
       }
 
@@ -193,7 +193,7 @@ RSpec.describe 'User Management API' do
                        first_name: 'Delete',
                        last_name: 'User',
                        is_active: true)
-      Fabricate(:user_credential, user: user, password: 'password123')
+      Fabricate(:user_credential, user: user, password: DEFAULT_PASSWORD)
       user.add_role(test_role)
       user.refresh
       user
@@ -230,7 +230,7 @@ RSpec.describe 'User Management API' do
         email: 'attempt@example.com',
         first_name: 'Regular',
         last_name: 'Attempt',
-        password: 'password123',
+        password: DEFAULT_PASSWORD,
         'roles[]' => [test_role.role_id.to_s]
       }
 
@@ -248,7 +248,7 @@ RSpec.describe 'User Management API' do
         email: 'adminuser@example.com',
         first_name: 'Admin',
         last_name: 'Created',
-        password: 'password123',
+        password: DEFAULT_PASSWORD,
         'roles[]' => [test_role.role_id.to_s]
       }
 
@@ -284,7 +284,7 @@ RSpec.describe 'User Management API' do
         email: 'deletetest@example.com',
         first_name: 'Delete',
         last_name: 'Test',
-        password: 'password123',
+        password: DEFAULT_PASSWORD,
         'roles[]' => [test_role.role_id.to_s]
       }
 

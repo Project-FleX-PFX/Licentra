@@ -2,14 +2,16 @@
 
 require 'fabrication'
 
+# Contains some helper methods that help with integration testing
 module IntegrationHelpers
   # --- User & Role Setup ---
+
   def setup_roles
     @admin_role ||= Fabricate(:role, role_name: 'Admin')
     @user_role  ||= Fabricate(:role, role_name: 'User')
   end
 
-  def create_admin_user(username: 'admin_test_user', email: 'admin_test@example.com', password: 'password123')
+  def create_admin_user(username: 'admin_test_user', email: 'admin_test@example.com', password: DEFAULT_PASSWORD)
     setup_roles
     user = Fabricate(:user,
                      username: username,
@@ -24,7 +26,7 @@ module IntegrationHelpers
     user
   end
 
-  def create_regular_user(username: 'regular_test_user', email: 'regular_test@example.com', password: 'password123')
+  def create_regular_user(username: 'regular_test_user', email: 'regular_test@example.com', password: DEFAULT_PASSWORD)
     setup_roles
     user = Fabricate(:user,
                      username: username,
@@ -39,7 +41,7 @@ module IntegrationHelpers
   end
 
   # --- Authentication Helpers ---
-  def login_as(user, password = 'password123')
+  def login_as(user, password = DEFAULT_PASSWORD)
     post '/login', { email: user.email, password: password }
     follow_redirect! while last_response.redirect?
     expect(session[:user_id]).to eq(user.user_id)

@@ -34,12 +34,12 @@ class UserCredentialDAO < BaseDAO
         credential = find!(user_id)
 
         begin
-          credential.password_plain = new_plain_password
+          credential.password = new_plain_password
           credential.save_changes
           log_password_updated(credential)
           credential
-        rescue ArgumentError => e
-          handle_validation_error(credential, "#{context} - invalid input: #{e.message}")
+        rescue UserCredential::PasswordPolicyError => e
+          handle_validation_error(credential, "#{context} - Password policy violation: #{e.message}")
         rescue Sequel::ValidationFailed => e
           handle_validation_error(e.model, context)
         end

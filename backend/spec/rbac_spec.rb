@@ -7,14 +7,6 @@ require_relative '../app'
 RSpec.describe 'Authentication, Authorization, and Session Handling' do
   include Rack::Test::Methods
 
-  def session
-    last_request.env['rack.session']
-  end
-
-  def app
-    LicentraApp.new
-  end
-
   # --- Test Data Setup using Fabricators ---
 
   let!(:admin_role) { Fabricate(:role, role_name: 'Admin') }
@@ -27,7 +19,7 @@ RSpec.describe 'Authentication, Authorization, and Session Handling' do
                      first_name: 'Admin',
                      last_name: 'Test',
                      is_active: true)
-    Fabricate(:user_credential, user: user, password: 'password123')
+    Fabricate(:user_credential, user: user, password: DEFAULT_PASSWORD)
     user.add_role(admin_role)
     user.add_role(user_role)
     user.refresh
@@ -41,7 +33,7 @@ RSpec.describe 'Authentication, Authorization, and Session Handling' do
                      first_name: 'User',
                      last_name: 'Test',
                      is_active: true)
-    Fabricate(:user_credential, user: user, password: 'password123')
+    Fabricate(:user_credential, user: user, password: DEFAULT_PASSWORD)
     user.add_role(user_role)
     user.refresh
     user
@@ -57,7 +49,7 @@ RSpec.describe 'Authentication, Authorization, and Session Handling' do
 
   describe 'Login and Session Management' do
     it 'sets a session after successful login' do
-      login_as(regular_user.email, 'password123')
+      login_as(regular_user.email, DEFAULT_PASSWORD)
       expect(session[:user_id]).to eq(regular_user.user_id)
     end
 
@@ -68,7 +60,7 @@ RSpec.describe 'Authentication, Authorization, and Session Handling' do
     end
 
     it 'clears session on logout' do
-      login_as(regular_user.email, 'password123')
+      login_as(regular_user.email, DEFAULT_PASSWORD)
       post '/logout'
       expect(last_response).to be_redirect
       follow_redirect!
@@ -78,7 +70,7 @@ RSpec.describe 'Authentication, Authorization, and Session Handling' do
 
   describe 'Access Control (Authorization)' do
     context 'when user is an Admin' do
-      before { login_as(admin_user.email, 'password123') }
+      before { login_as(admin_user.email, DEFAULT_PASSWORD) }
 
       it 'can access admin-specific pages' do
         get '/user_management'
@@ -104,7 +96,7 @@ RSpec.describe 'Authentication, Authorization, and Session Handling' do
     end
 
     context 'when user is a Regular User' do
-      before { login_as(regular_user.email, 'password123') }
+      before { login_as(regular_user.email, DEFAULT_PASSWORD) }
 
       it 'can access regular user pages' do
         get '/profile'
