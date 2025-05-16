@@ -25,4 +25,20 @@ module ApplicationHelpers
   def current_page?(path)
     request.path_info == path
   end
+
+  def display_value(value, placeholder = 'N/A')
+    if value.nil? || (value.respond_to?(:empty?) && value.empty?)
+      "<span class='text-muted fst-italic'>#{Rack::Utils.escape_html(placeholder)}</span>"
+    else
+      Rack::Utils.escape_html(value.to_s)
+    end
+  end
+
+  def display_boolean(value)
+    if value
+      "<span class='badge bg-success'>Yes</span>"
+    else
+      "<span class='badge bg-danger'>No</span>"
+    end
+  end
 end

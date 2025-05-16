@@ -1,0 +1,7 @@
+body.bg-with-image { /* Eine spezifische Klasse, um das Bild nur bei Bedarf zu laden */
+    background-image: url('/images/background.png'); /* Pfad zu deinem Bild */
+    background-size: cover; /* Stellt sicher, dass das Bild den gesamten Bereich bedeckt */
+    background-repeat: no-repeat; /* Verhindert Kachelung */
+    background-attachment: fixed; /* Bild bleibt beim Scrollen fixiert (Parallax-Effekt) */
+    background-position: center center; /* Zentriert das Bild */
+}

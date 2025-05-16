@@ -1,0 +1,325 @@
+<%# views/admin/data_view/index.erb %>
+<% @title = "Raw Data Overview" %>
+
+<h1 class="text-start">Raw Data Overview</h1>
+<p class="page-description text-start">A raw view of all data tables in the system.</p>
+
+
+<%# --- Produkte --- %>
+<div class="card mt-4">
+  <div class="card-header">
+    <h2 class="h5 mb-0">Products (<%= @products.count %>)</h2>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-striped table-hover table-sm mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>ID</th>
+            <th>Product Name</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @products.each do |p| %>
+            <tr>
+              <td><%= p.product_id %></td>
+              <td><%= display_value(p.product_name) %></td>
+            </tr>
+          <% end %>
+          <% if @products.empty? %>
+            <tr><td colspan="2" class="text-center text-muted">No products found.</td></tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<%# --- Lizenztypen --- %>
+<div class="card mt-4">
+  <div class="card-header">
+    <h2 class="h5 mb-0">License Types (<%= @license_types.count %>)</h2>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-striped table-hover table-sm mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>ID</th>
+            <th>Type Name</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @license_types.each do |lt| %>
+            <tr>
+              <td><%= lt.license_type_id %></td>
+              <td><%= display_value(lt.type_name) %></td>
+              <td><%= display_value(lt.description) %></td>
+            </tr>
+          <% end %>
+          <% if @license_types.empty? %>
+            <tr><td colspan="3" class="text-center text-muted">No license types found.</td></tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<%# --- Rollen --- %>
+<div class="card mt-4">
+  <div class="card-header">
+    <h2 class="h5 mb-0">Roles (<%= @roles.count %>)</h2>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-striped table-hover table-sm mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>ID</th>
+            <th>Role Name</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @roles.each do |r| %>
+            <tr>
+              <td><%= r.role_id %></td>
+              <td><%= display_value(r.role_name) %></td>
+            </tr>
+          <% end %>
+          <% if @roles.empty? %>
+            <tr><td colspan="2" class="text-center text-muted">No roles found.</td></tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<%# --- Benutzer --- %>
+<div class="card mt-4">
+  <div class="card-header">
+    <h2 class="h5 mb-0">Users (<%= @users.count %>)</h2>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-striped table-hover table-sm mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>ID</th>
+            <th>Username</th>
+            <th>E-Mail</th>
+            <th>Name</th>
+            <th>Active?</th>
+            <th>Password Set?</th>
+            <th>Roles</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @users.each do |u| %>
+            <tr>
+              <td><%= u.user_id %></td>
+              <td><%= display_value(u.username) %></td>
+              <td><%= display_value(u.email) %></td>
+              <td><%= display_value([u.first_name, u.last_name].compact.join(' ')) %></td>
+              <td><%= display_boolean(u.is_active) %></td>
+              <td><%= display_boolean(u.credential) %></td>
+              <td>
+                <% if u.roles.any? %>
+                  <%= u.roles.map { |r| Rack::Utils.escape_html(r.role_name) }.join(', ') %>
+                <% else %>
+                  <span class='text-muted fst-italic'>None</span>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+          <% if @users.empty? %>
+            <tr><td colspan="7" class="text-center text-muted">No users found.</td></tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<%# --- Geräte --- %>
+<div class="card mt-4">
+  <div class="card-header">
+    <h2 class="h5 mb-0">Devices (<%= @devices.count %>)</h2>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-striped table-hover table-sm mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>ID</th>
+            <th>Device Name</th>
+            <th>Serial Number</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @devices.each do |d| %>
+            <tr>
+              <td><%= d.device_id %></td>
+              <td><%= display_value(d.device_name) %></td>
+              <td><%= display_value(d.serial_number) %></td>
+              <td><%= display_value(d.notes) %></td>
+            </tr>
+          <% end %>
+          <% if @devices.empty? %>
+            <tr><td colspan="4" class="text-center text-muted">No devices found.</td></tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<%# --- Lizenzen --- %>
+<div class="card mt-4">
+  <div class="card-header">
+    <h2 class="h5 mb-0">Licenses (<%= @licenses.count %>)</h2>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-striped table-hover table-sm mb-0" style="min-width: 800px;"> {/* Min-width für breitere Tabellen */}
+        <thead class="table-light">
+          <tr>
+            <th>ID</th>
+            <th>Name / Key</th>
+            <th>Product</th>
+            <th>Type</th>
+            <th>Seats</th>
+            <th>Available</th>
+            <th>Purchase Dt.</th>
+            <th>Expire Dt.</th>
+            <th>Cost</th>
+            <th>Vendor</th>
+            <th>Status</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @licenses.each do |l| %>
+            <tr>
+              <td><%= l.license_id %></td>
+              <td>
+                <strong><%= display_value(l.license_name, 'No Name') %></strong><br>
+                <small>Key: <code><%= display_value(l.license_key) %></code></small>
+              </td>
+              <td><%= display_value(l.product&.product_name, 'Deleted?') %></td>
+              <td><%= display_value(l.license_type&.type_name, 'Deleted?') %></td>
+              <td><%= l.seat_count %></td>
+              <td><%= l.available_seats %></td>
+              <td><%= display_value(l.purchase_date ? l.purchase_date.strftime('%Y-%m-%d') : nil) %></td>
+              <td><%= display_value(l.expire_date ? l.expire_date.strftime('%Y-%m-%d') : nil, 'Unlimited') %></td>
+              <td>
+                <% if l.cost %>
+                  <%= "#{l.cost.to_f.round(2)} #{l.currency || ''}" %> <%# to_f.round(2) gegen wissenschaftliche Notation %>
+                <% else %>
+                  <span class='text-muted fst-italic'>N/A</span>
+                <% end %>
+              </td>
+              <td><%= display_value(l.vendor) %></td>
+              <td><span class="badge bg-<%= (l.status || 'unknown').downcase == 'active' ? 'success' : ((l.status || 'unknown').downcase == 'expired' ? 'warning text-dark' : 'secondary') %>"><%= display_value(l.status, 'Unknown') %></span></td>
+              <td><%= display_value(l.notes) %></td>
+            </tr>
+          <% end %>
+          <% if @licenses.empty? %>
+            <tr><td colspan="12" class="text-center text-muted">No licenses found.</td></tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<%# --- Lizenzzuweisungen --- %>
+<div class="card mt-4">
+  <div class="card-header">
+    <h2 class="h5 mb-0">License Assignments (<%= @assignments.count %>)</h2>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-striped table-hover table-sm mb-0" style="min-width: 700px;">
+        <thead class="table-light">
+          <tr>
+            <th>ID</th>
+            <th>License</th>
+            <th>Assigned To</th>
+            <th>Assignment Dt.</th>
+            <th>Expire Dt.</th>
+            <th>Active?</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @assignments.each do |a| %>
+            <tr>
+              <td><%= a.assignment_id %></td>
+              <td>
+                <%= display_value(a.license&.license_name, 'License Deleted?') %><br>
+                <small class="text-muted">(ID: <%= a.license_id %>)</small>
+              </td>
+              <td>
+                <% if a.user %>
+                  User: <%= display_value(a.user.username) %> <small class="text-muted">(ID: <%= a.user_id %>)</small>
+                <% elsif a.device %>
+                  Device: <%= display_value(a.device.device_name) %> <small class="text-muted">(ID: <%= a.device_id %>)</small>
+                <% else %>
+                  <span class='text-muted fst-italic'>Orphaned?</span>
+                <% end %>
+              </td>
+              <td><%= display_value(a.assignment_date ? a.assignment_date.strftime('%Y-%m-%d %H:%M') : nil) %></td>
+              <td><%= display_value(a.assignment_expire_date ? a.assignment_expire_date.strftime('%Y-%m-%d %H:%M') : nil, 'Unlimited') %></td>
+              <td><%= display_boolean(a.is_active) %></td>
+              <td><%= display_value(a.notes) %></td>
+            </tr>
+          <% end %>
+          <% if @assignments.empty? %>
+            <tr><td colspan="7" class="text-center text-muted">No assignments found.</td></tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<%# --- Zuweisungs-Logs --- %>
+<div class="card mt-4">
+  <div class="card-header">
+    <h2 class="h5 mb-0">Assignment Logs (<%= @logs.count %>)</h2>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-striped table-hover table-sm mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Log ID</th>
+            <th>Assignment ID</th>
+            <th>Timestamp</th>
+            <th>Action</th>
+            <th>Details</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @logs.each do |log| %>
+            <tr>
+              <td><%= log.log_id %></td>
+              <td><%= display_value(log.assignment_id, 'Assignment Deleted?') %></td>
+              <td><%= display_value(log.log_timestamp ? log.log_timestamp.strftime('%Y-%m-%d %H:%M:%S') : nil) %></td>
+              <td><code><%= display_value(log.action) %></code></td>
+              <td class="small"><%= display_value(log.details) %></td>
+            </tr>
+          <% end %>
+          <% if @logs.empty? %>
+            <tr><td colspan="5" class="text-center text-muted">No logs found.</td></tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+

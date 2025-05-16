@@ -8,7 +8,7 @@ module ProfileRoutes
       @title = 'Profile'
       @css   = 'profile'
       @user = current_user
-      erb :profile
+      erb :'profile/show', :layout => :'layouts/application'
     end
 
     app.post '/update_profile' do

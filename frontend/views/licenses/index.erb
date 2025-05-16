@@ -1,0 +1,49 @@
+<h1 class="text-start">My Licenses</h1>
+
+<% if @my_assignments.empty? %>
+  <div class="alert alert-info mt-3" role="alert">
+    You do not have any licenses assigned to you currently.
+  </div>
+<% else %>
+  <%# Jede Karte ist jetzt implizit in ihrer eigenen "Zeile" innerhalb des äußeren .container-fluid (aus dem Layout) %>
+  <%# Wir verwenden mb-3 (margin-bottom) auf den Karten für den vertikalen Abstand, anstatt g-4 auf einer .row %>
+  <% @my_assignments.each_with_index do |assignment, index| %>
+    <div class="card mb-3 mt-3">
+      <div class="card-header d-flex justify-content-between align-items-center" id="headingMyLicense<%= index %>">
+        <h2 class="card-title mb-0 h5">
+          <%= Rack::Utils.escape_html(assignment.license&.product.product_name || assignment.license&.license_name || "Unnamed License") %>
+        </h2>
+        <button class="btn btn-outline-primary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#collapseMyLicense<%= index %>" aria-expanded="false" aria-controls="collapseMyLicense<%= index %>">
+          <span class="show-text">Show Details</span>
+          <span class="hide-text d-none">Hide Details</span>
+        </button>
+      </div>
+      <div id="collapseMyLicense<%= index %>" class="collapse" aria-labelledby="headingMyLicense<%= index %>">
+        <div class="card-body d-flex flex-column">
+          <p class="card-text"><strong>Assigned on:</strong> <%= assignment.assignment_date.strftime('%Y-%m-%d %H:%M') %></p>
+          <p class="card-text">
+            <strong>License Key:</strong>
+            <span class="license-key-value"><%= assignment.license&.license_key || "N/A" %></span>
+          </p>
+          <% if assignment.license&.notes && !assignment.license.notes.empty? %>
+            <p class="card-text"><strong>License Notes:</strong> <%= Rack::Utils.escape_html(assignment.license.notes) %></p>
+          <% end %>
+          <% if assignment.notes && !assignment.notes.empty? %>
+            <p class="card-text flex-grow-1"><strong>Assignment Notes:</strong> <%= Rack::Utils.escape_html(assignment.notes) %></p>
+          <% else %>
+            <div class="flex-grow-1"></div>
+          <% end %>
+          <form class="mt-auto" method="post" action="/my-licenses/<%= assignment.assignment_id %>/return" onsubmit="return confirmReturn('<%= Rack::Utils.escape_html(assignment.license&.product.product_name || assignment.license&.license_name || "Unnamed License") %>')">
+            <button type="submit" class="btn btn-danger btn-sm">Return License</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  <% end %>
+<% end %>
+
+<script type="module">
+  import { initMyLicensesPage } from '/js/features/licenses/myLicensesHandler.js';
+  document.addEventListener('DOMContentLoaded', initMyLicensesPage);
+</script>
+

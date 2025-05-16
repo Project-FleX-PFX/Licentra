@@ -14,7 +14,7 @@ module LicenseRoutes
 
       @available_assignments = LicenseAssignmentDAO.find_inactive_for_user_with_details(user.user_id)
 
-      erb :'licenses/available'
+      erb :'licenses/available', layout: :'layouts/application'
     end
 
     app.post '/licenses/:license_assignment_id/activate' do
@@ -38,8 +38,8 @@ module LicenseRoutes
         assignment = LicenseAssignmentDAO.find(license_assignment_id)
 
         details = "User '#{user.username}' (ID: #{user.user_id}) performed action 'USER_ACTIVATED' " \
-          "for license '#{assignment.license.license_name}' (License ID: #{assignment.license.license_id}). " \
-          "Assignment ID: #{license_assignment_id}."
+                  "for license '#{assignment.license.license_name}' (License ID: #{assignment.license.license_id}). " \
+                  "Assignment ID: #{license_assignment_id}."
 
         AssignmentLogDAO.create(
           assignment_id: license_assignment_id,
@@ -71,7 +71,7 @@ module LicenseRoutes
 
       @my_assignments = LicenseAssignmentDAO.find_active_for_user_with_details(user.user_id)
 
-      erb :'licenses/my_licenses'
+      erb :'licenses/index', :layout => :'layouts/application'
     end
 
     app.post '/my-licenses/:license_assignment_id/return' do
@@ -93,8 +93,8 @@ module LicenseRoutes
         assignment = LicenseAssignmentDAO.find(license_assignment_id)
 
         details = "User '#{user.username}' (ID: #{user.user_id}) performed action 'USER_DEACTIVATED' " \
-          "for license '#{assignment.license.license_name}' (License ID: #{assignment.license.license_id}). " \
-          "Assignment ID: #{license_assignment_id}."
+                  "for license '#{assignment.license.license_name}' (License ID: #{assignment.license.license_id}). " \
+                  "Assignment ID: #{license_assignment_id}."
 
         AssignmentLogDAO.create(
           assignment_id: license_assignment_id,

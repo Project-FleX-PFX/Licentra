@@ -1,0 +1,187 @@
+<%# Überschrift wird wahrscheinlich im Layout oder einer übergeordneten View gesetzt, ansonsten hier ein <h1>History</h1> einfügen %>
+
+<% if current_user.admin? %>
+  <div class="card mb-4">
+    <div class="card-header">
+      <i class="fas fa-filter me-1"></i> Filter History
+    </div>
+    <div class="card-body">
+      <form method="get" action="/history" class="row g-3 align-items-end">
+        <div class="col-md-4">
+          <label for="user_id_filter" class="form-label">Filter by User:</label>
+          <select name="user_id_filter" id="user_id_filter" class="form-select" onchange="this.form.submit()">
+            <option value="">-- All Users --</option>
+            <% @all_users.each do |u| %>
+              <option value="<%= u.user_id %>" <%= 'selected' if @filter_user_id == u.user_id %>>
+                <%= u.username %> (<%= u.email %>)
+              </option>
+            <% end %>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label for="action_filter" class="form-label">Filter by Action:</label>
+          <input type="text" name="action_filter" id="action_filter" value="<%= Rack::Utils.escape_html(params[:action_filter]) %>" class="form-control">
+        </div>
+        <div class="col-md-auto">
+          <button type="submit" class="btn btn-primary w-100">Filter</button>
+        </div>
+        <div class="col-md-auto">
+          <a href="/history" class="btn btn-outline-secondary w-100">Reset</a>
+        </div>
+      </form>
+    </div>
+  </div>
+<% elsif @filter_user_id %>
+  <div class="alert alert-info" role="alert">
+    Showing history for: <strong><%= Rack::Utils.escape_html(current_user.username) %></strong>
+  </div>
+<% end %>
+
+<% if @assignment_logs && !@assignment_logs.empty? %>
+  <div class="card">
+    <div class="card-header">
+      <i class="fas fa-history me-1"></i> Assignment Log
+    </div>
+    <div class="card-body p-0"> 
+      <div class="table-responsive">
+        <table class="table table-striped table-hover mb-0"> 
+            <thead class="table-light"> 
+            <tr>
+              <th>Timestamp</th>
+              <th>User</th>
+              <th>Action</th>
+              <th>License</th>
+              <th>Assignment-ID</th>
+              <th style="min-width: 300px;">Details</th> 
+            </tr>
+          </thead>
+          <tbody>
+            <% @assignment_logs.each do |log| %>
+              <tr>
+                <td data-label="Timestamp">
+                  <%# Gebe den UTC-Timestamp im ISO 8601 Format aus, damit JS ihn leicht parsen kann %>
+                  <%# Und einen Platzhalter für die lokale Zeit, die JS füllt %>
+                  <span class="local-timestamp" data-utc-timestamp="<%= log.log_timestamp.getutc.iso8601 %>">
+                    <%= log.log_timestamp.strftime('%Y-%m-%d %H:%M:%S') %> UTC <%# Fallback-Anzeige oder Ladeindikator %>
+                  </span>
+                </td>
+                <td data-label="User">
+                  <%
+                    username_match = log.details.match(/User '([^']+)' \(ID: (\d+)\)/)
+                    if username_match
+                      username = username_match[1]
+                      user_id = username_match[2]
+                  %>
+                    <%= Rack::Utils.escape_html(username) %> (ID: <%= user_id %>)
+                  <% else %>
+                    N/A
+                  <% end %>
+                </td>
+                <td data-label="Action">
+                  <%
+                    action_match = log.details.match(/performed action '([^']+)'/)
+                    action = action_match ? action_match[1] : log.action # Der eigentliche Action-String
+                    
+                    # Normalisiere den Action-String für einfachere Vergleiche (Kleinschreibung, Unterstriche durch Bindestriche)
+                    normalized_action = action.downcase.gsub('_', '-')
+
+                    # Bestimme die Badge-Farbe basierend auf der Aktion
+                    badge_bg_class = case normalized_action
+                                     when 'admin-assigned', 'assigned-by-admin' # Klare Admin-Zuweisung
+                                       'bg-success'
+                                     when 'admin-unassigned', 'revoked-by-admin', 'unassigned-by-admin' # Klare Admin-Entfernung
+                                       'bg-danger'
+                                     when 'self-assigned', 'user-activated' # Selbstzuweisung oder Aktivierung
+                                       'bg-primary' # Oder bg-success, je nach Präferenz
+                                     when 'user-deactived', 'self-returned' # Rückgabe durch Nutzer
+                                       'bg-warning' # Zeigt an, dass etwas passiert ist, das Aufmerksamkeit erfordert
+                                     when 'created' # Z.B. Lizenz erstellt
+                                       'bg-info'
+                                     when 'updated' # Z.B. Lizenzdetails aktualisiert
+                                       'bg-secondary'
+                                     else # Fallback für unbekannte oder generische Aktionen
+                                       'bg-secondary'
+                                     end
+                  %>
+                  <span class="badge <%= badge_bg_class %>">
+                    <%= Rack::Utils.escape_html(action.gsub('_', ' ').capitalize) %> <%# Formatiere den Action-Text für bessere Lesbarkeit %>
+                  </span>
+                </td>
+
+                <td data-label="License/Product">
+                  <%
+                    # Erster Versuch: Nach Lizenzdetails suchen
+                    license_match = log.details.match(/for license '([^']+)' \(License ID: (\d+)\)/)
+                    
+                    # Zweiter Versuch (Fallback): Nach Produktdetails suchen, WENN der erste Versuch fehlgeschlagen ist
+                    license_match ||= log.details.match(/for product '([^']+)' \(Product ID: (\d+)\)/)
+
+                    if license_match
+                      name = license_match[1] # Das erste gefangene Gruppe (Name)
+                      id_val = license_match[2] # Die zweite gefangene Gruppe (ID)
+                  %>
+                    <%= Rack::Utils.escape_html(name) %> (ID: <%= id_val %>)
+                  <% else %>
+                    N/A
+                  <% end %>
+                </td>
+
+                <td data-label="Assignment ID">
+                  <%
+                    assignment_id_match = log.details.match(/Assignment ID: (\d+)/)
+                    assignment_id = assignment_id_match ? assignment_id_match[1] : "N/A"
+                  %>
+                  <%= assignment_id %>
+                </td>
+                <td data-label="Details" class="details-column small"><%= Rack::Utils.escape_html(log.details) %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <% if @total_pages && @total_pages > 1 %>
+    <nav aria-label="History navigation" class="mt-4 d-flex justify-content-center">
+      <ul class="pagination">
+        <% if @current_page > 1 %>
+          <li class="page-item">
+            <a class="page-link" href="<%= request.path %>?<%= Rack::Utils.build_query(params.merge(page: @current_page - 1)) %>" aria-label="Previous">
+              <span aria-hidden="true">&laquo;</span> Previous
+            </a>
+          </li>
+        <% else %>
+          <li class="page-item disabled">
+            <span class="page-link">&laquo; Previous</span>
+          </li>
+        <% end %>
+
+        <li class="page-item disabled"><span class="page-link text-muted">Page <%= @current_page %> of <%= @total_pages %></span></li>
+        
+        <% if @current_page < @total_pages %>
+          <li class="page-item">
+            <a class="page-link" href="<%= request.path %>?<%= Rack::Utils.build_query(params.merge(page: @current_page + 1)) %>" aria-label="Next">
+              Next <span aria-hidden="true">&raquo;</span>
+            </a>
+          </li>
+        <% else %>
+          <li class="page-item disabled">
+            <span class="page-link">Next &raquo;</span>
+          </li>
+        <% end %>
+      </ul>
+    </nav>
+    <p class="text-center text-muted small">(<%= @total_entries %> total entries)</p>
+  <% end %>
+
+<% else %>
+  <div class="alert alert-warning mt-3" role="alert">
+    No assignment history found for the selected criteria.
+  </div>
+<% end %>
+
+<script type="module">
+  import { initLicenseHistoryPage } from '/js/features/licenses/licenseHistoryHandler.js'; // Pfad angepasst
+  document.addEventListener('DOMContentLoaded', initLicenseHistoryPage);
+</script>
