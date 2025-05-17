@@ -36,14 +36,16 @@ module LicenseRoutes
         LicenseAssignmentDAO.activate(license_assignment_id)
 
         assignment = LicenseAssignmentDAO.find(license_assignment_id)
+        action = AssignmentLogDAO::Actions::USER_ACTIVATED
 
-        details = "User '#{user.username}' (ID: #{user.user_id}) performed action 'USER_ACTIVATED' " \
-          "for license '#{assignment.license.license_name}' (License ID: #{assignment.license.license_id}). " \
+        details = "User '#{user.username}' (ID: #{user.user_id}) performed action '#{action}' " \
+          "for license '#{LicenseService._license_display_name(assignment.license)}' (License ID: #{assignment.license.license_id}). " \
           "Assignment ID: #{license_assignment_id}."
 
-        AssignmentLogDAO.create(
-          assignment_id: license_assignment_id,
-          action: 'USER_ACTIVATED',
+        AssignmentLogDAO.create_log(
+          assignment: assignment,
+          action: action,
+          object: LicenseService._license_display_name(assignment.license),
           details: details
         )
 
@@ -91,14 +93,16 @@ module LicenseRoutes
         LicenseAssignmentDAO.deactivate(license_assignment_id)
 
         assignment = LicenseAssignmentDAO.find(license_assignment_id)
+        action = AssignmentLogDAO::Actions::USER_DEACTIVATED
 
-        details = "User '#{user.username}' (ID: #{user.user_id}) performed action 'USER_DEACTIVATED' " \
-          "for license '#{assignment.license.license_name}' (License ID: #{assignment.license.license_id}). " \
+        details = "User '#{user.username}' (ID: #{user.user_id}) performed action '#{action}' " \
+          "for license '#{LicenseService._license_display_name(assignment.license)}' (License ID: #{assignment.license.license_id}). " \
           "Assignment ID: #{license_assignment_id}."
 
-        AssignmentLogDAO.create(
-          assignment_id: license_assignment_id,
-          action: 'USER_DEACTIVATED',
+        AssignmentLogDAO.create_log(
+          assignment: assignment,
+          action: action,
+          object: LicenseService._license_display_name(assignment.license),
           details: details
         )
 

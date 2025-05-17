@@ -10,6 +10,7 @@ class User < Sequel::Model
   plugin :association_dependencies, credential: :delete
   nested_attributes :credential, destroy: true
   one_to_many :license_assignments, key: :user_id
+  one_to_many :security_logs, key: :user_id
   many_to_many :roles, join_table: :user_roles, left_key: :user_id, right_key: :role_id
 
   def authenticate(plain_password)

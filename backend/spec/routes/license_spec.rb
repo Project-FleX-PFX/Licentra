@@ -96,7 +96,7 @@ RSpec.describe 'License Routes' do
         log = AssignmentLog.last
         expect(log).not_to be_nil
         expect(log.assignment_id).to eq(inactive_assignment_word.assignment_id)
-        expect(log.action).to eq('USER_ACTIVATED')
+        expect(log.action).to eq(AssignmentLogDAO::Actions::USER_ACTIVATED)
         expect(log.details).to include(regular_user.username)
         expect(log.details).to include(word_license_available.license_name)
       end
@@ -202,7 +202,7 @@ RSpec.describe 'License Routes' do
         log = AssignmentLog.last
         expect(log).not_to be_nil
         expect(log.assignment_id).to eq(active_assignment.assignment_id)
-        expect(log.action).to eq('USER_DEACTIVATED')
+        expect(log.action).to eq(AssignmentLogDAO::Actions::USER_DEACTIVATED)
       end
 
       it 'makes a seat available again (implicitly)' do
