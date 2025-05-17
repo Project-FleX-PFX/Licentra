@@ -72,12 +72,21 @@ export function setFormFieldsDisabled(formElement, disabled, except = []) {
  * @param {object} data Ein Objekt mit Daten (oft aus dataset).
  * @param {object} fieldMappings Ein optionales Mapping von Formularfeldnamen zu Daten-Keys.
  */
+// frontend/public/js/features/admin/adminUtils.js
+// ... (Anfang der Datei bleibt gleich) ...
+
+/**
+ * Befüllt Formularfelder mit Daten.
+ * Konvertiert Kebab-Case data-* Attribute zu CamelCase für den Abgleich mit Feldnamen.
+ * @param {HTMLFormElement} formElement Das Formular-Element.
+ * @param {object} data Ein Objekt mit Daten (oft aus dataset).
+ * @param {object} fieldMappings Ein optionales Mapping von Formularfeldnamen zu Daten-Keys.
+ */
 export function populateForm(formElement, data = {}, fieldMappings = {}) {
   if (!formElement) return;
-  formElement.reset(); 
-
-  console.log("Populating form with data:", data); // Behalte dieses Log
-  console.log("Using field mappings:", fieldMappings); // Behalte dieses Log
+  formElement.reset(); // Setzt Felder auf ihren initialen HTML-Wert zurück (wichtig!)
+  // console.log("Populating form with data:", data); 
+  // console.log("Using field mappings:", fieldMappings);
 
   for (const key in formElement.elements) {
     if (formElement.elements.hasOwnProperty(key)) {
@@ -85,55 +94,45 @@ export function populateForm(formElement, data = {}, fieldMappings = {}) {
       const elementName = element.name || element.id;
       if (!elementName) continue;
 
-      // --- SPEZIFISCHE LOGIK FÜR roles[] GANZ NACH OBEN ---
+      // Spezifische Logik für 'roles[]' (unverändert lassen)
       if (elementName === 'roles[]' && element.type === 'checkbox') {
-        const userRoleIdsString = data['role-ids'] || data['roleIds'] || data['data-role-ids'] /* explizit für rohes HTML-Attribut */ || '';
-        console.log(`[roles[] handler] For checkbox group 'roles[]', found role IDs string: '${userRoleIdsString}' from data object:`, data);
+        const userRoleIdsString = data['role-ids'] || data['roleIds'] || data['data-role-ids'] || '';
+        // console.log(`[roles[] handler] For checkbox group 'roles[]', found role IDs string: '${userRoleIdsString}' from data object:`, data);
         const userRoleIds = userRoleIdsString ? String(userRoleIdsString).split(',') : [];
         
-        // Checkbox-spezifische Logik
-        if (userRoleIds.includes(element.value)) {
-            element.checked = true;
-            console.log(`[roles[] handler] Checked role checkbox with value '${element.value}'.`);
-        } else {
-            element.checked = false;
-             // console.log(`[roles[] handler] Unchecked role checkbox with value '${element.value}'.`);
-        }
-        continue; // WICHTIG: Gehe zur nächsten Iteration im äußeren Loop
+        element.checked = userRoleIds.includes(element.value);
+        // if (element.checked) {
+        //     console.log(`[roles[] handler] Checked role checkbox with value '${element.value}'.`);
+        // }
+        continue; 
       }
-      // --- ENDE SPEZIFISCHE LOGIK FÜR roles[] ---
-
 
       let valueToSet;
-      // Schlüsselvarianten ausprobieren (Mappings, direkter Name, CamelCase aus Kebab-Case)
       const dataKeyFromMapping = fieldMappings[elementName];
       const keyVariationsToTry = [
-          dataKeyFromMapping, // Von Mapping
-          elementName,        // Direkter Name
-          elementName.replace(/-([a-z])/g, g => g[1].toUpperCase()), // kebab-case zu camelCase
-          elementName.replace(/_([a-z])/g, g => g[1].toUpperCase())   // snake_case zu camelCase
-      ].filter(k => k); // Entferne undefined/null Kandidaten
+          dataKeyFromMapping, 
+          elementName,        
+          elementName.replace(/-([a-z])/g, g => g[1].toUpperCase()), 
+          elementName.replace(/_([a-z])/g, g => g[1].toUpperCase())  
+      ].filter(k => k); 
 
       for (const dataKey of keyVariationsToTry) {
           if (data[dataKey] !== undefined) {
               valueToSet = data[dataKey];
-              // console.log(`[Generic handler] Found value for '${elementName}' using dataKey '${dataKey}':`, valueToSet);
               break;
           }
       }
-      // Zusätzlicher Check für das direkte dataset-Attribut (kebab-case)
+      
       if (valueToSet === undefined) {
           const kebabKey = elementName.replace(/([A-Z])/g, (match, p1, offset) => (offset > 0 ? '-' : '') + p1.toLowerCase());
           if (data[kebabKey] !== undefined) {
               valueToSet = data[kebabKey];
-              // console.log(`[Generic handler] Found value for '${elementName}' using direct kebabKey '${kebabKey}':`, valueToSet);
           }
       }
 
-
       if (valueToSet !== undefined && valueToSet !== null) {
-        if (element.type === 'checkbox' && !element.name.endsWith('[]')) { // Einzelne Checkbox
-          element.checked = valueToSet === true || String(valueToSet).toLowerCase() === 'true' || String(valueToSet) === element.value;
+        if (element.type === 'checkbox' && !element.name.endsWith('[]')) { 
+           element.checked = valueToSet === true || String(valueToSet).toLowerCase() === 'true' || String(valueToSet) === element.value;
         } else if (element.tagName === 'SELECT') {
           element.value = String(valueToSet);
         } else if (element.type === 'date' && valueToSet) {
@@ -145,17 +144,25 @@ export function populateForm(formElement, data = {}, fieldMappings = {}) {
         } else if (element.type === 'number' && element.step === '0.01' && String(valueToSet).trim() !== '') {
           const numValue = parseFloat(valueToSet);
           element.value = isNaN(numValue) ? '' : numValue.toFixed(2);
-        } else if (element.type !== 'checkbox') { // Stelle sicher, dass wir nicht erneut Checkboxen behandeln
+        } else if (element.type !== 'checkbox') { 
           element.value = String(valueToSet);
         }
-        // console.log(`[Generic handler] Set value for '${elementName}' to:`, element.value, `(checked: ${element.checked})`);
-      } else if (element.type !== 'hidden' && element.tagName !== 'BUTTON' && element.type !== 'checkbox' && !element.name.endsWith('[]')) {
-        element.value = ''; // Nur leeren, wenn kein Wert gefunden UND es keine Checkbox ist
-        // console.log(`[Generic handler] No value found for '${elementName}', reset to empty.`);
+      } else {
+        // Kein valueToSet gefunden (z.B. beim Reset mit leerem 'data'-Objekt)
+        // Explizit Felder leeren, AUCH VERSTECKTE FELDER wie userIdField.
+        if (element.tagName === 'BUTTON' || (element.type === 'checkbox' && element.name.endsWith('[]'))) {
+          // Buttons und Checkbox-Gruppen (wie roles[]) werden hier nicht geleert.
+          // Checkbox-Gruppen werden durch ihre spezifische Logik oben gehandhabt.
+        } else if (element.type === 'checkbox' || element.type === 'radio') {
+          element.checked = false; // Einzelne Checkboxen/Radios abwählen
+        } else {
+          element.value = ''; // Alle anderen Input-Typen (text, hidden, email, etc.) leeren
+        }
       }
     }
   }
 }
+
 /**
  * Setzt ein Formular zurück und deaktiviert optional Felder.
  * @param {HTMLFormElement} formElement
