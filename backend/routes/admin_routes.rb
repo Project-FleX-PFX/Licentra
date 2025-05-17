@@ -157,10 +157,10 @@ module AdminRoutes
         # Aktivieren oder Deaktivieren mit der DAO-Methode
         if is_active
           LicenseAssignmentDAO.activate(assignment_id)
-          action_type = 'ADMIN_ACTIVATED'
+          action_type = AssignmentLogDAO::Actions::ADMIN_ACTIVATED
         else
           LicenseAssignmentDAO.deactivate(assignment_id)
-          action_type = 'ADMIN_DEACTIVATED'
+          action_type = AssignmentLogDAO::Actions::ADMIN_DEACTIVATED
         end
 
         # Verwende die Logging-Methode aus dem Service
@@ -168,9 +168,10 @@ module AdminRoutes
           "for license '#{LicenseService._license_display_name(license)}' (License ID: #{license.license_id}). " \
           "Assignment ID: #{assignment.assignment_id}."
 
-        AssignmentLogDAO.create(
-          assignment_id: assignment.assignment_id,
+        AssignmentLogDAO.create_log(
+          assignment: assignment,
           action: action_type,
+          object: LicenseService._license_display_name(license),
           details: details
         )
 
@@ -234,14 +235,16 @@ module AdminRoutes
         # Logging
         license = assignment.license
         admin_user = current_user
+        action = AssignmentLogDAO::Actions::ADMIN_APPROVED
 
-        details = "User '#{admin_user.username}' (ID: #{admin_user.user_id}) performed action 'ADMIN_ASSIGNED' " \
+        details = "User '#{admin_user.username}' (ID: #{admin_user.user_id}) performed action '#{action}' " \
           "for license '#{LicenseService._license_display_name(license)}' (License ID: #{license.license_id}). " \
           "Assignment ID: #{assignment.assignment_id}."
 
-        AssignmentLogDAO.create(
-          assignment_id: assignment.assignment_id,
-          action: 'ADMIN_ASSIGNED',
+        AssignmentLogDAO.create_log(
+          assignment: assignment,
+          action: action,
+          object: LicenseService._license_display_name(license),
           details: details
         )
 
@@ -269,14 +272,16 @@ module AdminRoutes
         # Logging
         admin_user = current_user
         license = assignment.license
+        action = AssignmentLogDAO::Actions::ADMIN_CANCELED
 
-        details = "User '#{admin_user.username}' (ID: #{admin_user.user_id}) performed action 'ADMIN_DELETED' " \
+        details = "User '#{admin_user.username}' (ID: #{admin_user.user_id}) performed action '#{action}' " \
           "for license '#{LicenseService._license_display_name(license)}' (License ID: #{license.license_id}). " \
           "Assignment ID: #{assignment.assignment_id}."
 
-        AssignmentLogDAO.create(
-          assignment_id: assignment_id,
-          action: 'ADMIN_DELETED',
+        AssignmentLogDAO.create_log(
+          assignment: assignment,
+          action: action,
+          object: LicenseService._license_display_name(license),
           details: details
         )
 

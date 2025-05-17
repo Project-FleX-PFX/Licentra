@@ -128,7 +128,7 @@ RSpec.describe 'User Management Assignments API' do
 
       log = AssignmentLog.first(assignment_id: assignment.assignment_id)
       expect(log).not_to be_nil
-      expect(log.action).to eq('ADMIN_ASSIGNED')
+      expect(log.action).to eq(AssignmentLogDAO::Actions::ADMIN_APPROVED)
     end
 
     it 'returns 404 for a non-existing user' do
@@ -170,7 +170,8 @@ RSpec.describe 'User Management Assignments API' do
       updated_assignment = LicenseAssignment.first(assignment_id: assignment.assignment_id)
       expect(updated_assignment.is_active).to be true
 
-      log = AssignmentLog.first(assignment_id: assignment.assignment_id, action: 'ADMIN_ACTIVATED')
+      log = AssignmentLog.first(assignment_id: assignment.assignment_id,
+                                action: AssignmentLogDAO::Actions::ADMIN_ACTIVATED)
       expect(log).not_to be_nil
     end
 
@@ -184,7 +185,8 @@ RSpec.describe 'User Management Assignments API' do
       updated_assignment = LicenseAssignment.first(assignment_id: assignment.assignment_id)
       expect(updated_assignment.is_active).to be false
 
-      log = AssignmentLog.first(assignment_id: assignment.assignment_id, action: 'ADMIN_DEACTIVATED')
+      log = AssignmentLog.first(assignment_id: assignment.assignment_id,
+                                action: AssignmentLogDAO::Actions::ADMIN_DEACTIVATED)
       expect(log).not_to be_nil
     end
 
@@ -231,7 +233,7 @@ RSpec.describe 'User Management Assignments API' do
       deleted_assignment = LicenseAssignment.first(assignment_id: assignment_id)
       expect(deleted_assignment).to be_nil
 
-      log = AssignmentLog.first(action: 'ADMIN_DELETED')
+      log = AssignmentLog.first(action: AssignmentLogDAO::Actions::ADMIN_CANCELED)
       expect(log).not_to be_nil
     end
 

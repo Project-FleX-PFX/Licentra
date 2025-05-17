@@ -5,42 +5,79 @@ require_relative 'base_dao'
 require_relative 'assignment_log_logging'
 require_relative 'assignment_log_error_handling'
 
-# Basic DAO of the Assignment Log
+# Data Access Object for AssignmentLog records.
+# Provides an interface for all CRUD operations and custom queries related to assignment logs.
 class AssignmentLogDAO < BaseDAO
+  module Actions
+    USER_ACTIVATED = 'user activated license'
+    ADMIN_ACTIVATED = 'admin activated license'
+    USER_DEACTIVATED = 'user deactivated license'
+    ADMIN_DEACTIVATED = 'admin deactivated license'
+    ADMIN_APPROVED = 'admin approved assignment'
+    ADMIN_CANCELED = 'admin canceled assignment'
+  end
+
   class << self
     include AssignmentLogLogging
     include AssignmentLogErrorHandling
 
-    MODEL_PK = :id
+    MODEL_PK = :log_id
+
+    # --- CRUD Methoden ---
 
     # CREATE
-    def create(attributes)
-      context = 'creating assignment log'
+    def create_log(action:, object:, assignment: nil, details: nil)
+      context = "creating assignment log for action '#{action}' on '#{object}'"
       with_error_handling(context) do
-        attributes[:log_timestamp] ||= Time.now
+        attributes = {
+          action: action,
+          object: object,
+          assignment_id: assignment&.assignment_id,
+          details: details,
+          log_timestamp: Time.now
+        }
+
         log_entry = AssignmentLog.new(attributes)
         if log_entry.valid?
           log_entry.save_changes
           log_log_created(log_entry)
           log_entry
         else
-          handle_validation_error(log_entry, context)
+          handle_validation_error(log_entry, context, log_entry.errors.full_messages.join('; '))
+        end
+      end
+    end
+
+    def create(attributes)
+      context = 'creating assignment log with generic attributes'
+      with_error_handling(context) do
+        attributes[:log_timestamp] ||= Time.now
+
+        log_entry = AssignmentLog.new(attributes)
+        if log_entry.valid?
+          log_entry.save_changes
+          log_log_created(log_entry)
+          log_entry
+        else
+          handle_validation_error(log_entry, context, log_entry.errors.full_messages.join('; '))
         end
       end
     end
 
     # READ
     def find!(id)
-      with_error_handling("finding assignment log with ID #{id}") do
+      context = "finding assignment log with ID #{id}"
+      with_error_handling(context) do
         log_entry = AssignmentLog[id]
-        handle_record_not_found(id) unless log_entry
+        handle_record_not_found(id, 'AssignmentLog') unless log_entry
         log_log_found(log_entry)
         log_entry
       end
     end
 
     def find(id)
-      with_error_handling("finding assignment log with ID #{id}") do
+      context = "finding assignment log with ID #{id}"
+      with_error_handling(context) do
         log_entry = AssignmentLog[id]
         log_log_found(log_entry) if log_entry
         log_entry
@@ -48,7 +85,8 @@ class AssignmentLogDAO < BaseDAO
     end
 
     def find_one_by(criteria)
-      with_error_handling('finding assignment log by criteria') do
+      context = "finding one assignment log by criteria: #{criteria}"
+      with_error_handling(context) do
         log_entry = AssignmentLog.first(criteria)
         log_log_found_by_criteria(criteria, log_entry) if log_entry
         log_entry
@@ -56,18 +94,24 @@ class AssignmentLogDAO < BaseDAO
     end
 
     def find_one_by!(criteria)
-      with_error_handling('finding assignment log by criteria') do
+      context = "finding one assignment log by criteria: #{criteria} (expecting one)"
+      with_error_handling(context) do
         log_entry = find_one_by(criteria)
-        handle_record_not_found_by_criteria(criteria) unless log_entry
+        handle_record_not_found_by_criteria(criteria, 'AssignmentLog') unless log_entry
         log_entry
       end
     end
 
     def all(options = {})
-      with_error_handling('fetching all assignment logs') do
+      context = 'fetching all assignment logs'
+      with_error_handling(context) do
         dataset = AssignmentLog.dataset
         dataset = dataset.where(options[:where]) if options[:where]
-        dataset = dataset.order(options[:order] || Sequel.desc(:log_timestamp))
+
+        order_criteria = options.fetch(:order, [Sequel.desc(:log_timestamp), Sequel.desc(:log_id)])
+        order_criteria = Array(order_criteria)
+        dataset = dataset.order(*order_criteria) unless order_criteria.empty?
+
         logs = dataset.all
         log_logs_fetched(logs.size)
         logs
@@ -75,8 +119,9 @@ class AssignmentLogDAO < BaseDAO
     end
 
     def where(criteria)
-      with_error_handling('filtering assignment logs by criteria') do
-        logs = AssignmentLog.where(criteria).order(Sequel.desc(:log_timestamp)).all
+      context = "filtering assignment logs by criteria: #{criteria}"
+      with_error_handling(context) do
+        logs = AssignmentLog.where(criteria).order(Sequel.desc(:log_timestamp), Sequel.desc(:log_id)).all
         log_logs_fetched_with_criteria(logs.size, criteria)
         logs
       end
@@ -88,18 +133,27 @@ class AssignmentLogDAO < BaseDAO
       with_error_handling(context) do
         attributes.delete(:assignment_id)
         attributes.delete(:log_timestamp)
+        attributes.delete(:log_id)
+
         log_entry = find!(id)
-        log_entry.update(attributes)
-        log_log_updated(log_entry)
-        log_entry
+        log_entry.set(attributes)
+
+        if log_entry.valid?
+          log_entry.save_changes
+          log_log_updated(log_entry)
+          log_entry
+        else
+          handle_validation_error(log_entry, context, log_entry.errors.full_messages.join('; '))
+        end
       rescue Sequel::ValidationFailed => e
-        handle_validation_error(e.model, context)
+        handle_validation_error(e.model, context, e.errors.full_messages.join('; '))
       end
     end
 
     # DELETE
     def delete(id)
-      with_error_handling("deleting assignment log with ID #{id}") do
+      context = "deleting assignment log with ID #{id}"
+      with_error_handling(context) do
         log_entry = find!(id)
         log_entry.destroy
         log_log_deleted(log_entry)
@@ -108,10 +162,11 @@ class AssignmentLogDAO < BaseDAO
     end
 
     # --- SPECIAL QUERIES ---
+
     def find_by_assignment(assignment_id, options = {})
       context = "finding logs for assignment ID #{assignment_id}"
       with_error_handling(context) do
-        logs = all(options.merge(where: { assignment_id: assignment_id }))
+        logs = all(options.merge(where: { assignment_id: assignment_id }.merge(options[:where] || {})))
         log_logs_for_assignment_fetched(assignment_id, logs.size)
         logs
       end
@@ -137,6 +192,7 @@ class AssignmentLogDAO < BaseDAO
 
         dataset = _apply_user_filter(dataset, filters[:user_id])
         dataset = _apply_action_filter(dataset, filters[:action])
+        dataset = _apply_object_filter(dataset, filters[:object])
         dataset = _apply_date_from_filter(dataset, filters[:date_from])
         dataset = _apply_date_to_filter(dataset, filters[:date_to])
 
@@ -178,37 +234,42 @@ class AssignmentLogDAO < BaseDAO
       dataset.where(Sequel.ilike(:action, "%#{action}%"))
     end
 
+    def _apply_object_filter(dataset, object_param)
+      object = object_param&.strip
+      return dataset if object.nil? || object.empty?
+
+      dataset.where(Sequel.ilike(:object, "%#{object}%"))
+    end
+
     def _apply_date_from_filter(dataset, date_from_param)
       parsed_date = _parse_date(date_from_param)
       return dataset unless parsed_date
 
-      dataset.where { log_timestamp >= parsed_date.to_time }
+      dataset.where { log_timestamp >= parsed_date.to_time.utc }
     end
 
     def _apply_date_to_filter(dataset, date_to_param)
       parsed_date = _parse_date(date_to_param)
       return dataset unless parsed_date
 
-      end_of_day_timestamp = parsed_date.next_day.to_time - 1
+      end_of_day_timestamp = (parsed_date.to_time + (24 * 60 * 60) - 1).utc
       dataset.where { log_timestamp <= end_of_day_timestamp }
     end
 
-    def _parse_date(date_param)
-      return nil if date_param.nil? || (date_param.is_a?(String) && date_param.strip.empty?)
-
-      return date_param.to_date if date_param.is_a?(Date) || date_param.is_a?(Time) || date_param.is_a?(DateTime)
-
-      if date_param.is_a?(String)
-        begin
-          return Date.parse(date_param)
-        rescue ArgumentError, TypeError
-          log_warn("Invalid date string received for filter: '#{date_param}'")
-          return nil
-        end
-      end
-
-      log_warn("Unsupported date type received for filter: #{date_param.class}")
+    def handle_validation_error(model, context, messages = nil)
+      error_details = messages || model&.errors&.full_messages&.join('; ') || 'Unknown validation error'
+      log_error("#{context} - Validation failed: #{error_details}")
       nil
+    end
+
+    def handle_record_not_found(id, model_name = 'Record')
+      log_error("#{model_name} with ID #{id} not found.")
+      raise Sequel::NoMatchingRow, "#{model_name} with ID #{id} not found."
+    end
+
+    def handle_record_not_found_by_criteria(criteria, model_name = 'Record')
+      log_error("#{model_name} not found for criteria: #{criteria}.")
+      raise Sequel::NoMatchingRow, "#{model_name} not found for criteria: #{criteria}."
     end
   end
 end

@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'faker'
+
 Fabricator(:assignment_log) do
   # Use an existing LicenseAssignment or create a new one
   transient license_assignment: nil
@@ -13,6 +15,7 @@ Fabricator(:assignment_log) do
   end
 
   log_timestamp { Time.now }
-  action { %w[ASSIGNED ACTIVATED DEACTIVATED].sample }
-  details { 'Test log entry' }
+  action { %w[APPROVED CANCELED ACTIVATED DEACTIVATED].sample }
+  object { 'License 42' }
+  details { Faker::Lorem.sentence }
 end

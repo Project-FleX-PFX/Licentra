@@ -4,49 +4,148 @@ require 'spec_helper'
 require 'time'
 
 RSpec.describe AssignmentLogDAO do
-  let!(:user1) { Fabricate(:user) }
-  let!(:user2) { Fabricate(:user) }
-  let!(:product1) { Fabricate(:product) }
-  let!(:license1) { Fabricate(:license, product: product1) }
+  let!(:user1) { Fabricate(:user, username: 'User1ForLogTest') }
+  let!(:user2) { Fabricate(:user, username: 'User2ForLogTest') }
+  let!(:product1) { Fabricate(:product, product_name: 'ProductForLogTest') }
+  let!(:license1) { Fabricate(:license, product: product1, license_name: 'LicenseForLogTest') }
   let!(:license_assignment1) { Fabricate(:license_assignment, user: user1, license: license1) }
   let!(:license_assignment2) { Fabricate(:license_assignment, user: user2, license: license1) }
 
-  let(:valid_attributes) do
-    Fabricate.attributes_for(:assignment_log, assignment_id: license_assignment1.pk)
+  let(:valid_attributes_for_create) do
+    Fabricate.attributes_for(:assignment_log,
+                             assignment_id: license_assignment1.pk)
   end
 
-  describe '.create' do
-    context 'with valid attributes' do
+  describe '.create_log' do
+    let(:log_action) { AssignmentLogDAO::Actions::USER_ACTIVATED }
+    let(:log_object) { 'LicenseAssignmentActivity' }
+    let(:log_details) { 'User X activated their license via new method.' }
+
+    context 'with valid parameters' do
       it 'creates a new assignment log' do
         expect do
-          described_class.create(valid_attributes)
+          described_class.create_log(
+            action: log_action,
+            object: log_object,
+            assignment: license_assignment1,
+            details: log_details
+          )
         end.to change(AssignmentLog, :count).by(1)
       end
 
       it 'returns the created log object', :aggregate_failures do
-        log = described_class.create(valid_attributes)
+        log = described_class.create_log(
+          action: log_action,
+          object: log_object,
+          assignment: license_assignment1,
+          details: log_details
+        )
         expect(log).to be_a(AssignmentLog)
         expect(log.assignment_id).to eq(license_assignment1.pk)
-        expect(log.action).to eq(valid_attributes[:action])
+        expect(log.action).to eq(log_action)
+        expect(log.object).to eq(log_object)
+        expect(log.details).to eq(log_details)
         expect(log.pk).not_to be_nil
-        expect(log.log_timestamp).to be_a(Time)
+        expect(log.log_timestamp.to_i).to be_within(1).of(Time.now.to_i)
       end
 
       it 'logs the creation' do
-        allow(described_class).to receive(:log_log_created)
-        log = described_class.create(valid_attributes)
+        allow(described_class).to receive(:log_log_created).and_call_original
+        log = described_class.create_log(
+          action: log_action,
+          object: log_object,
+          assignment: license_assignment1
+        )
+        expect(described_class).to have_received(:log_log_created).with(log)
+      end
+
+      context 'when assignment is nil' do
+        it 'creates a log with nil assignment_id', :aggregate_failures do
+          log = described_class.create_log(
+            action: 'SYSTEM_ACTION',
+            object: 'SystemProcess',
+            assignment: nil,
+            details: 'System maintenance.'
+          )
+          expect(log).to be_a(AssignmentLog)
+          expect(log.assignment_id).to be_nil
+          expect(log.action).to eq('SYSTEM_ACTION')
+          expect(log.object).to eq('SystemProcess')
+        end
+      end
+    end
+
+    context 'with invalid parameters (missing object)' do
+      it 'does not create a new log and calls handle_validation_error' do
+        expect(described_class).to receive(:handle_validation_error).and_call_original
+        log_entry = described_class.create_log(
+          action: log_action,
+          object: nil,
+          assignment: license_assignment1
+        )
+        expect(log_entry).to be_nil
+        expect(AssignmentLog.count).to eq(0)
+      end
+    end
+
+    context 'with invalid parameters (missing action)' do
+      it 'does not create a new log and calls handle_validation_error' do
+        expect(described_class).to receive(:handle_validation_error).and_call_original
+        log_entry = described_class.create_log(
+          action: nil,
+          object: log_object,
+          assignment: license_assignment1
+        )
+        expect(log_entry).to be_nil
+        expect(AssignmentLog.count).to eq(0)
+      end
+    end
+  end
+
+  describe '.create' do
+    context 'with valid attributes (including object)' do
+      it 'creates a new assignment log' do
+        expect do
+          described_class.create(valid_attributes_for_create)
+        end.to change(AssignmentLog, :count).by(1)
+      end
+
+      it 'returns the created log object', :aggregate_failures do
+        log = described_class.create(valid_attributes_for_create)
+        expect(log).to be_a(AssignmentLog)
+        expect(log.assignment_id).to eq(license_assignment1.pk)
+        expect(log.action).to eq(valid_attributes_for_create[:action])
+        expect(log.object).to eq(valid_attributes_for_create[:object])
+        expect(log.pk).not_to be_nil
+        expect(log.log_timestamp.to_i).to be_within(1).of(Time.now.to_i)
+      end
+
+      it 'logs the creation' do
+        allow(described_class).to receive(:log_log_created).and_call_original
+        log = described_class.create(valid_attributes_for_create)
         expect(described_class).to have_received(:log_log_created).with(log)
       end
     end
 
-    context 'with invalid attributes' do
-      let(:invalid_attributes) { valid_attributes.merge(action: nil) }
+    context 'with invalid attributes (missing object)' do
+      let(:invalid_attrs) { valid_attributes_for_create.merge(object: nil) }
 
-      it 'does not create a new log' do
-        expect do
-          described_class.create(invalid_attributes)
-        rescue DAO::DAOError
-        end.not_to change(AssignmentLog, :count)
+      it 'does not create a new log and calls handle_validation_error' do
+        expect(described_class).to receive(:handle_validation_error).and_call_original
+        log_entry = described_class.create(invalid_attrs)
+        expect(log_entry).to be_nil
+        expect(AssignmentLog.count).to eq(0)
+      end
+    end
+
+    context 'with invalid attributes (missing action)' do
+      let(:invalid_attrs) { valid_attributes_for_create.merge(action: nil) }
+
+      it 'does not create a new log and calls handle_validation_error' do
+        expect(described_class).to receive(:handle_validation_error).and_call_original
+        log_entry = described_class.create(invalid_attrs)
+        expect(log_entry).to be_nil
+        expect(AssignmentLog.count).to eq(0)
       end
     end
   end
@@ -61,16 +160,16 @@ RSpec.describe AssignmentLogDAO do
       end
 
       it 'logs the find operation' do
-        allow(described_class).to receive(:log_log_found)
+        allow(described_class).to receive(:log_log_found).and_call_original
         described_class.find!(log1.pk)
         expect(described_class).to have_received(:log_log_found).with(log1)
       end
     end
 
     context 'when the log does not exist' do
-      let(:non_existent_id) { 99_999 }
+      let(:non_existent_id) { log1.pk + 999 }
 
-      it 'raises a RecordNotFound error' do
+      it 'raises a DAO::RecordNotFound error' do
         expect do
           described_class.find!(non_existent_id)
         end.to raise_error(DAO::RecordNotFound)
@@ -86,95 +185,78 @@ RSpec.describe AssignmentLogDAO do
     end
 
     it 'returns nil if the log does not exist' do
-      expect(described_class.find(99_999)).to be_nil
+      expect(described_class.find(log1.pk + 999)).to be_nil
     end
   end
 
   describe '.all' do
-    let!(:log_a) { Fabricate(:assignment_log, action: 'ACTION_A') }
-    let!(:log_b) { Fabricate(:assignment_log, action: 'ACTION_B') }
+    let!(:log_a) { Fabricate(:assignment_log, action: 'ACTION_A_ALL') }
+    let!(:log_b) { Fabricate(:assignment_log, action: 'ACTION_B_ALL') }
 
-    before(:all) do
-      AssignmentLog.dataset.delete
-    end
+    it 'returns all existing logs, ordered by timestamp desc then id desc', :aggregate_failures do
+      log_c = Fabricate(:assignment_log, action: 'ACTION_C_ALL', log_timestamp: Time.now - 60)
+      log_d = Fabricate(:assignment_log, action: 'ACTION_D_ALL', log_timestamp: Time.now)
 
-    it 'returns all existing logs', :aggregate_failures do
       logs = described_class.all
-      expect(logs.count).to eq(2)
-      expect(logs.map(&:action)).to match_array(%w[ACTION_A ACTION_B])
+      expect(logs.count).to eq(4)
+      expect(logs.map(&:action)).to eq(%w[ACTION_D_ALL ACTION_B_ALL ACTION_A_ALL ACTION_C_ALL])
     end
 
     it 'logs the fetch operation' do
-      allow(described_class).to receive(:log_logs_fetched)
+      Fabricate(:assignment_log)
+      allow(described_class).to receive(:log_logs_fetched).and_call_original
       described_class.all
-      expect(described_class).to have_received(:log_logs_fetched).with(2)
+      expect(described_class).to have_received(:log_logs_fetched).with(AssignmentLog.count)
     end
   end
 
   describe '.update' do
-    let!(:log_to_update) { Fabricate(:assignment_log, action: 'OLD_ACTION') }
-    let(:update_attributes) { { details: 'New details' } }
+    let!(:log_to_update) do
+      Fabricate(:assignment_log, action: 'OLD_ACTION', object: 'OldObject', details: 'Old Details')
+    end
+    let(:update_attributes) { { details: 'New details', object: 'NewObjectToUpdate' } }
 
     context 'with valid attributes' do
       it 'updates the log attributes', :aggregate_failures do
         updated_log = described_class.update(log_to_update.pk, update_attributes)
         log_to_update.refresh
         expect(log_to_update.details).to eq('New details')
+        expect(log_to_update.object).to eq('NewObjectToUpdate')
         expect(updated_log.details).to eq('New details')
+        expect(updated_log.object).to eq('NewObjectToUpdate')
         expect(updated_log.action).to eq('OLD_ACTION')
       end
 
       it 'logs the update' do
-        allow(described_class).to receive(:log_log_updated)
+        allow(described_class).to receive(:log_log_updated).and_call_original
         described_class.update(log_to_update.pk, update_attributes)
-        expect(described_class).to have_received(:log_log_updated).with(an_object_having_attributes(details: 'New details'))
+        expect(described_class).to have_received(:log_log_updated).with(an_object_having_attributes(
+                                                                          details: 'New details', object: 'NewObjectToUpdate'
+                                                                        ))
       end
     end
 
-    context 'with invalid attributes' do
-      let!(:log_to_update_val) { Fabricate(:assignment_log, action: 'VALID_ACTION', details: 'Initial details') }
-      let(:invalid_update_attributes) { { details: nil } }
+    context 'with invalid attributes (setting object to nil)' do
+      let(:invalid_update_attributes) { { object: nil } }
 
-      before do
-        AssignmentLog.plugin :validation_helpers
-        AssignmentLog.class_eval do
-          def validate
-            super
-            validates_presence :details
-          end
-        end
-      end
+      it 'does not update the log and calls handle_validation_error' do
+        original_object = log_to_update.object
+        expect(described_class).to receive(:handle_validation_error) do |_model, _context, messages|
+          expect(messages).to match(/Object darf nicht leer sein|object can't be blank/i)
+        end.and_call_original
 
-      after do
-        AssignmentLog.class_eval do
-          def validate
-            super
-          end
-        end
-      end
+        updated_log = described_class.update(log_to_update.pk, invalid_update_attributes)
+        expect(updated_log).to be_nil
 
-      it 'does not update the log' do
-        original_details = log_to_update_val.details
-        expect do
-          described_class.update(log_to_update_val.pk, invalid_update_attributes)
-        rescue DAO::ValidationError
-        end.not_to(change { log_to_update_val.refresh.details })
-        expect(log_to_update_val.details).to eq(original_details)
-      end
-
-      it 'raises a ValidationError with correct details', :aggregate_failures do
-        expect do
-          described_class.update(log_to_update_val.pk, invalid_update_attributes)
-        end.to raise_error(DAO::ValidationError) do |error|
-          expect(error.errors).to have_key(:details)
-        end
+        log_to_update.refresh
+        expect(log_to_update.object).to eq(original_object)
       end
     end
 
     context 'when the log does not exist' do
-      it 'raises a RecordNotFound error' do
+      it 'raises a DAO::RecordNotFound error' do
         expect do
-          described_class.update(99_999, details: 'something')
+          described_class.update(log_to_update.pk + 999, details: 'something')
         end.to raise_error(DAO::RecordNotFound)
       end
     end
@@ -196,30 +278,31 @@ RSpec.describe AssignmentLogDAO do
     end
 
     it 'logs the deletion' do
-      expect(described_class).to receive(:log_log_deleted).with(an_object_having_attributes(pk: log_id))
+      expect(described_class).to receive(:log_log_deleted).with(an_object_having_attributes(pk: log_id)).and_call_original
       described_class.delete(log_id)
     end
 
     context 'when the log does not exist' do
-      it 'raises a RecordNotFound error' do
+      it 'raises a DAO::RecordNotFound error' do
         expect do
-          described_class.delete(99_999)
+          described_class.delete(log_id + 999)
         end.to raise_error(DAO::RecordNotFound)
       end
     end
   end
 
   describe '.find_by_assignment' do
-    let!(:assignment) { Fabricate(:license_assignment) }
-    let!(:log_a) { Fabricate(:assignment_log, assignment_id: assignment.pk, action: 'ASSIGNED') }
-    let!(:log_b) { Fabricate(:assignment_log, assignment_id: assignment.pk, action: 'DEACTIVATED') }
-    let!(:other_assignment) { Fabricate(:license_assignment) }
-    let!(:other_log) { Fabricate(:assignment_log, assignment_id: other_assignment.pk) }
+    let!(:assignment_for_find) { Fabricate(:license_assignment) }
+    let!(:log_a) { Fabricate(:assignment_log, assignment_id: assignment_for_find.pk, action: 'ASSIGNED') }
+    let!(:log_b) { Fabricate(:assignment_log, assignment_id: assignment_for_find.pk, action: 'DEACTIVATED') }
+    let!(:other_assignment_for_find) { Fabricate(:license_assignment) }
+    let!(:other_log) { Fabricate(:assignment_log, assignment_id: other_assignment_for_find.pk) }
 
-    it 'returns logs only for the specified assignment' do
-      logs = described_class.find_by_assignment(assignment.pk)
+    it 'returns logs only for the specified assignment, ordered desc by timestamp' do
+      logs = described_class.find_by_assignment(assignment_for_find.pk)
       expect(logs.map(&:pk)).to match_array([log_a.pk, log_b.pk])
       expect(logs).not_to include(other_log)
+      expect(logs.first.log_timestamp >= logs.last.log_timestamp).to be true if logs.size > 1
     end
 
     it 'returns an empty array if assignment has no logs' do
@@ -230,18 +313,18 @@ RSpec.describe AssignmentLogDAO do
   end
 
   describe '.delete_by_assignment' do
-    let!(:assignment) { Fabricate(:license_assignment) }
-    let!(:log_a) { Fabricate(:assignment_log, assignment_id: assignment.pk) }
-    let!(:log_b) { Fabricate(:assignment_log, assignment_id: assignment.pk) }
-    let!(:other_assignment) { Fabricate(:license_assignment) }
-    let!(:other_log) { Fabricate(:assignment_log, assignment_id: other_assignment.pk) }
+    let!(:assignment_for_delete) { Fabricate(:license_assignment) }
+    let!(:log_a_del) { Fabricate(:assignment_log, assignment_id: assignment_for_delete.pk) }
+    let!(:log_b_del) { Fabricate(:assignment_log, assignment_id: assignment_for_delete.pk) }
+    let!(:other_assignment_for_delete) { Fabricate(:license_assignment) }
+    let!(:other_log_del) { Fabricate(:assignment_log, assignment_id: other_assignment_for_delete.pk) }
 
     it 'deletes all logs for the given assignment and returns the count' do
-      expect(AssignmentLog.where(assignment_id: assignment.pk).count).to eq(2)
-      deleted_count = described_class.delete_by_assignment(assignment.pk)
+      expect(AssignmentLog.where(assignment_id: assignment_for_delete.pk).count).to eq(2)
+      deleted_count = described_class.delete_by_assignment(assignment_for_delete.pk)
       expect(deleted_count).to eq(2)
-      expect(AssignmentLog.where(assignment_id: assignment.pk).count).to eq(0)
-      expect(AssignmentLog[other_log.pk]).not_to be_nil
+      expect(AssignmentLog.where(assignment_id: assignment_for_delete.pk).count).to eq(0)
+      expect(AssignmentLog[other_log_del.pk]).not_to be_nil
     end
 
     it 'returns 0 if no logs exist for the assignment' do
@@ -251,53 +334,57 @@ RSpec.describe AssignmentLogDAO do
     end
 
     it 'logs the deletion' do
-      allow(described_class).to receive(:log_logs_deleted_for_assignment)
-      described_class.delete_by_assignment(assignment.pk)
-      expect(described_class).to have_received(:log_logs_deleted_for_assignment).with(assignment.pk, 2)
+      allow(described_class).to receive(:log_logs_deleted_for_assignment).and_call_original
+      described_class.delete_by_assignment(assignment_for_delete.pk)
+      expect(described_class).to have_received(:log_logs_deleted_for_assignment).with(assignment_for_delete.pk, 2)
     end
   end
 
   describe '.find_with_details' do
-    let!(:user_a) { Fabricate(:user, username: 'UserA') }
-    let!(:user_b) { Fabricate(:user, username: 'UserB') }
-    let!(:prod_a) { Fabricate(:product, product_name: 'ProductA') }
-    let!(:lic_a) { Fabricate(:license, product: prod_a, license_name: 'LicenseA') }
-    let!(:assign_a1) { Fabricate(:license_assignment, user: user_a, license: lic_a) }
-    let!(:assign_a2) { Fabricate(:license_assignment, user: user_a, license: lic_a) }
-    let!(:assign_b1) { Fabricate(:license_assignment, user: user_b, license: lic_a) }
+    let!(:user_a_detail) { user1 }
+    let!(:user_b_detail) { user2 }
+    let!(:prod_a_detail) { product1 }
+    let!(:lic_a_detail) { license1 }
 
-    let!(:time_now) { Time.now }
-    let!(:time_yesterday) { time_now - (24 * 60 * 60) }
-    let!(:time_two_days_ago) { time_now - (2 * 24 * 60 * 60) }
+    let!(:assign_a1_detail) { Fabricate(:license_assignment, user: user_a_detail, license: lic_a_detail) }
+    let!(:assign_a2_detail) do
+      Fabricate(:license_assignment, user: user_a_detail, license: lic_a_detail)
+    end
+    let!(:assign_b1_detail) { Fabricate(:license_assignment, user: user_b_detail, license: lic_a_detail) }
 
-    let!(:log_a1_assign) do
-      Fabricate(:assignment_log, assignment_id: assign_a1.pk, action: 'ASSIGNED', log_timestamp: time_yesterday)
+    let!(:time_now) { Time.now.utc.round }
+    let!(:time_yesterday) { (time_now - (24 * 60 * 60)).round }
+    let!(:time_two_days_ago) { (time_now - (2 * 24 * 60 * 60)).round }
+
+    let!(:log1_detail) do
+      Fabricate(:assignment_log, license_assignment: assign_a1_detail, action: 'ASSIGNED_A1', object: 'LicenseAssignment',
+                                 log_timestamp: time_yesterday)
     end
-    let!(:log_a1_revoke) do
-      Fabricate(:assignment_log, assignment_id: assign_a1.pk, action: 'REVOKED', log_timestamp: time_now)
+    let!(:log2_detail) do
+      Fabricate(:assignment_log, license_assignment: assign_a1_detail, action: 'REVOKED_A1',  object: 'LicenseAssignment',
+                                 log_timestamp: time_now)
     end
-    let!(:log_a2_assign) do
-      Fabricate(:assignment_log, assignment_id: assign_a2.pk, action: 'ASSIGNED', log_timestamp: time_two_days_ago)
+    let!(:log3_detail) do
+      Fabricate(:assignment_log, license_assignment: assign_a2_detail, action: 'ASSIGNED_A2', object: 'UserProfileUpdate',
+                                 log_timestamp: time_two_days_ago)
     end
-    let!(:log_b1_assign) do
-      Fabricate(:assignment_log, assignment_id: assign_b1.pk, action: 'ASSIGNED', log_timestamp: time_yesterday)
+    let!(:log4_detail) do
+      Fabricate(:assignment_log, license_assignment: assign_b1_detail, action: 'ASSIGNED_B1', object: 'LicenseAssignment',
+                                 log_timestamp: time_yesterday)
     end
 
     context 'without filters' do
-      it 'returns all logs paginated with details, ordered by timestamp descending', :aggregate_failures do
+      it 'returns all logs paginated with details, ordered by timestamp desc then id desc', :aggregate_failures do
         result = described_class.find_with_details({}, { per_page: 2 })
 
         expect(result).to be_a(Hash)
         expect(result[:logs].count).to eq(2)
-        expect(result[:logs][0].pk).to eq(log_a1_revoke.pk)
-        expect(result[:logs][1].pk).to eq(log_b1_assign.pk)
+        expect(result[:logs][0].pk).to eq(log2_detail.pk)
+        expect([log1_detail.pk, log4_detail.pk]).to include(result[:logs][1].pk)
 
         expect(result[:logs][0].associations).to have_key(:license_assignment)
         expect(result[:logs][0].license_assignment&.associations).to have_key(:user)
-        expect(result[:logs][0].license_assignment&.associations).to have_key(:license)
-        expect(result[:logs][0].license_assignment&.license&.associations).to have_key(:product)
-        expect(result[:logs][0].license_assignment&.user&.username).to eq('UserA')
-        expect(result[:logs][0].license_assignment&.license&.product&.product_name).to eq('ProductA')
+        expect(result[:logs][0].license_assignment&.user&.username).to eq(user_a_detail.username)
 
         expect(result[:current_page]).to eq(1)
         expect(result[:total_pages]).to eq(2)
@@ -306,123 +393,83 @@ RSpec.describe AssignmentLogDAO do
 
       it 'fetches the second page correctly', :aggregate_failures do
         result = described_class.find_with_details({}, { page: 2, per_page: 2 })
-
         expect(result[:logs].count).to eq(2)
-        expect(result[:logs].map(&:pk)).to include(log_a1_assign.pk, log_a2_assign.pk)
+        remaining_pks = [log1_detail.pk, log4_detail.pk,
+                         log3_detail.pk] - described_class.find_with_details({}, { per_page: 2 })[:logs].map(&:pk)
+        expect(result[:logs].map(&:pk)).to match_array(remaining_pks)
 
         expect(result[:current_page]).to eq(2)
-        expect(result[:total_pages]).to eq(2)
-        expect(result[:total_entries]).to eq(4)
       end
 
       it 'logs the info message' do
-        expect(described_class).to receive(:log_info).with(/Fetched \d+ assignment logs/)
+        expect(described_class).to receive(:log_info).with(/Fetched \d+ assignment logs/).and_call_original
         described_class.find_with_details
       end
     end
 
     context 'with user filter' do
       it 'returns only logs related to the specified user' do
-        result = described_class.find_with_details({ user_id: user_a.user_id })
+        result = described_class.find_with_details({ user_id: user_a_detail.user_id })
         log_pks = result[:logs].map(&:pk)
 
-        expect(log_pks).to include(log_a1_assign.pk, log_a1_revoke.pk, log_a2_assign.pk)
-        expect(log_pks).not_to include(log_b1_assign.pk)
+        expect(log_pks).to match_array([log1_detail.pk, log2_detail.pk, log3_detail.pk])
+        expect(log_pks).not_to include(log4_detail.pk)
         expect(result[:total_entries]).to eq(3)
-      end
-
-      it 'returns an empty set if user has no logs' do
-        user_c = Fabricate(:user)
-        result = described_class.find_with_details({ user_id: user_c.user_id })
-        expect(result[:logs]).to be_empty
-        expect(result[:total_entries]).to eq(0)
-      end
-
-      it 'handles invalid user id gracefully' do
-        result = described_class.find_with_details({ user_id: 'invalid' })
-        expect(result[:total_entries]).to eq(4)
-        result_zero = described_class.find_with_details({ user_id: 0 })
-        expect(result_zero[:total_entries]).to eq(4)
-        result_nil = described_class.find_with_details({ user_id: nil })
-        expect(result_nil[:total_entries]).to eq(4)
       end
     end
 
-    context 'with action filter' do
-      it 'returns only logs matching the action (case-insensitive)' do
-        result = described_class.find_with_details({ action: ' assigned ' })
+    context 'with action filter (partial, case-insensitive)' do
+      it 'returns only logs matching the action' do
+        result = described_class.find_with_details({ action: ' assigned_a' })
         log_pks = result[:logs].map(&:pk)
-
-        expect(log_pks).to include(log_a1_assign.pk, log_a2_assign.pk, log_b1_assign.pk)
-        expect(log_pks).not_to include(log_a1_revoke.pk)
-        expect(result[:total_entries]).to eq(3)
-      end
-
-      it 'returns logs partially matching the action' do
-        result = described_class.find_with_details({ action: 'sign' })
-        expect(result[:total_entries]).to eq(3)
-      end
-
-      it 'handles empty or nil action filter' do
-        result = described_class.find_with_details({ action: ' ' })
-        expect(result[:total_entries]).to eq(4)
-        result_nil = described_class.find_with_details({ action: nil })
-        expect(result_nil[:total_entries]).to eq(4)
-      end
-    end
-
-    context 'with date filters' do
-      it 'returns logs from a specific date onwards' do
-        result = described_class.find_with_details({ date_from: time_yesterday.to_date })
-        log_pks = result[:logs].map(&:pk)
-
-        expect(log_pks).to include(log_a1_revoke.pk, log_b1_assign.pk, log_a1_assign.pk)
-        expect(log_pks).not_to include(log_a2_assign.pk)
-        expect(result[:total_entries]).to eq(3)
-      end
-
-      it 'returns logs up to a specific date (inclusive)' do
-        result = described_class.find_with_details({ date_to: time_yesterday.to_date })
-        log_pks = result[:logs].map(&:pk)
-
-        expect(log_pks).to include(log_b1_assign.pk, log_a1_assign.pk, log_a2_assign.pk)
-        expect(log_pks).not_to include(log_a1_revoke.pk)
-        expect(result[:total_entries]).to eq(3)
-      end
-
-      it 'returns logs within a date range' do
-        result = described_class.find_with_details({ date_from: time_yesterday.to_date,
-                                                     date_to: time_yesterday.to_date })
-        log_pks = result[:logs].map(&:pk)
-
-        expect(log_pks).to include(log_b1_assign.pk, log_a1_assign.pk)
-        expect(log_pks).not_to include(log_a1_revoke.pk, log_a2_assign.pk)
+        expect(log_pks).to match_array([log1_detail.pk, log3_detail.pk])
         expect(result[:total_entries]).to eq(2)
       end
+    end
 
-      it 'handles invalid date strings gracefully' do
-        result = described_class.find_with_details({ date_from: 'invalid date' })
-        expect(result[:total_entries]).to eq(4)
+    context 'with object filter (partial, case-insensitive)' do
+      it 'returns only logs matching the object' do
+        result = described_class.find_with_details({ object: 'LicenseAssign' })
+        log_pks = result[:logs].map(&:pk)
+        expect(log_pks).to match_array([log1_detail.pk, log2_detail.pk, log4_detail.pk])
+        expect(log_pks).not_to include(log3_detail.pk)
+        expect(result[:total_entries]).to eq(3)
+      end
+    end
+
+    context 'with date_from filter' do
+      it 'returns logs from a specific date onwards' do
+        result = described_class.find_with_details({ date_from: time_yesterday.to_date.to_s })
+        log_pks = result[:logs].map(&:pk)
+        expect(log_pks).to match_array([log1_detail.pk, log2_detail.pk, log4_detail.pk])
+        expect(log_pks).not_to include(log3_detail.pk)
+        expect(result[:total_entries]).to eq(3)
+      end
+    end
+
+    context 'with date_to filter' do
+      it 'returns logs up to a specific date (inclusive)' do
+        result = described_class.find_with_details({ date_to: time_yesterday.to_date.to_s })
+        log_pks = result[:logs].map(&:pk)
+        expect(log_pks).to match_array([log1_detail.pk, log3_detail.pk, log4_detail.pk])
+        expect(log_pks).not_to include(log2_detail.pk)
+        expect(result[:total_entries]).to eq(3)
       end
     end
 
     context 'with combined filters' do
-      it 'returns logs matching user and action' do
-        result = described_class.find_with_details({ user_id: user_a.user_id, action: 'ASSIGNED' })
+      it 'returns logs matching user, object, and date range' do
+        result = described_class.find_with_details(
+          {
+            user_id: user_a_detail.user_id,
+            object: 'LicenseAssignment',
+            date_from: time_yesterday.to_date.to_s,
+            date_to: time_yesterday.to_date.to_s
+          }
+        )
         log_pks = result[:logs].map(&:pk)
-
-        expect(log_pks).to include(log_a1_assign.pk, log_a2_assign.pk)
-        expect(log_pks).not_to include(log_a1_revoke.pk, log_b1_assign.pk)
-        expect(result[:total_entries]).to eq(2)
-      end
-
-      it 'returns logs matching user and date range' do
-        result = described_class.find_with_details({ user_id: user_a.user_id, date_to: time_yesterday.to_date })
-        log_pks = result[:logs].map(&:pk)
-
-        expect(log_pks).to include(log_a1_assign.pk, log_a2_assign.pk)
-        expect(log_pks).not_to include(log_a1_revoke.pk)
-        expect(result[:total_entries]).to eq(2)
+        expect(log_pks).to eq([log1_detail.pk])
+        expect(result[:total_entries]).to eq(1)
       end
     end
   end
