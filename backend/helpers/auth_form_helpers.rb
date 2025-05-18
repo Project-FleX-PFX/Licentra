@@ -15,12 +15,12 @@ module AuthFormHelpers
 
   def render_login_error(message)
     @error = message
-    erb :login, layout: false
+    erb :'auth/login', layout: false
   end
 
   def render_registration_error(message)
     @error = message
-    erb :register, layout: false
+    erb :'auth/register', layout: false
   end
 
   def required_fields_missing?

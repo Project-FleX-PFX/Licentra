@@ -1,68 +1,62 @@
-<h1>Available Licenses</h1>
-<p class="page-description">Select a license to assign it to yourself.</p>
+<h1 class="text-start">Activate Your Assigned Licenses</h1> 
+<p class="page-description text-start">Select a license to activate it and view the license key.</p> 
 
-<% if @available_assignments && !@available_assignments.empty? %>
-  <div class="cards-container">
-    <% @available_assignments.each do |assignment| %>
-      <div class="card license-card-available">
-        <h2><%= Rack::Utils.escape_html("#{assignment.license.product.product_name}: #{assignment.license.license_name}") %></h2>
+<div class="mt-3">
+  <% if @available_assignments && !@available_assignments.empty? %>
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4"> 
+      <% @available_assignments.each do |assignment| %>
+        <div class="col">
+          <div class="card license-card-available h-100">
+            <div class="card-body d-flex flex-column">
+              <h2 class="card-title h5"><%= "#{assignment.license.product.product_name}: #{assignment.license.license_name}" %></h2>
+              <p class="card-text">This license has been assigned to you by an administrator.</p> 
+              
+              <p class="card-text"><strong>Seats Available:</strong> <%= assignment.license.available_seats %></p>
 
-        <p><strong>Seats Available:</strong> <%= assignment.license.available_seats %></p>
+              <% if assignment.license.notes && !assignment.license.notes.strip.empty? %>
+                <p class="license-notes card-text flex-grow-1"><strong>Notes:</strong> <%= assignment.license.notes %></p>
+              <% else %>
+                <div class="flex-grow-1"></div> 
+              <% end %>
 
-        <% if assignment.license.notes && !assignment.license.notes.strip.empty? %>
-          <p class="license-notes"><strong>Notes:</strong> <%= Rack::Utils.escape_html(assignment.license.notes) %></p>
-        <% end %>
+              <button class="btn btn-primary mt-auto" onclick="showActivatePopup('<%= assignment.assignment_id %>', '<%= assignment.license.product.product_name || assignment.license.license_name || "Unnamed License" %>')">
+                Activate License
+              </button>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% else %>
+    <div class="alert alert-info" role="alert">
+      You have no pending license activations. All your assigned licenses are active.
+    </div>
+  <% end %>
+</div>
 
-        <button class="button-primary" onclick="showAssignPopup('<%= assignment.assignment_id %>', '<%= Rack::Utils.escape_html(assignment.license.product.product_name || assignment.license.license_name || "Unnamed License") %>')">
-          Assign to Me
-        </button>
-
+<div class="modal fade" id="activateLicensePopup" tabindex="-1" aria-labelledby="activateLicenseModalLabel" aria-hidden="true"> 
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="activateLicenseModalLabel">Activate License</h5> 
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" onclick="hideActivatePopup()"></button> 
       </div>
-    <% end %>
-  </div>
-<% else %>
-  <p class="no-licenses-message">No licenses are currently available for self-assignment.</p>
-<% end %>
-
-<div class="popup" id="assignLicensePopup">
-  <div class="popup-content">
-    <h3 id="popupAssignTitle">Assign License</h3>
-    <p>Are you sure you want to assign the license for <strong id="popupAssignProductName">Product Name Here</strong> to yourself?</p>
-    <form id="assignForm" method="post" action="">
-      <div class="button-group">
-        <button type="submit" class="button-primary">Yes, Assign</button>
-        <button type="button" class="button-secondary" onclick="hideAssignPopup()">Cancel</button>
+      <div class="modal-body">
+        <p>Are you sure you want to activate the license for <strong id="popupActivateProductName">Product Name Here</strong>?</p> 
+        <p class="small text-muted">Once activated, the license key will be visible to you.</p> 
       </div>
-    </form>
+      <div class="modal-footer">
+        <form id="activateForm" method="post" action=""> 
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="hideActivatePopup()">Cancel</button> 
+          <button type="submit" class="btn btn-primary">Yes, Activate</button> 
+        </form>
+      </div>
+    </div>
   </div>
 </div>
 
-<script>
-    function showAssignPopup(licenseId, productName) {
-        const productNameElement = document.getElementById("popupAssignProductName");
-        if (productNameElement) {
-            productNameElement.textContent = productName;
-        }
-
-        const assignForm = document.getElementById("assignForm");
-        if (assignForm) {
-            // Hier muss die URL angepasst werden, wenn sich der Endpunkt geändert hat
-            assignForm.action = `/licenses/${licenseId}/activate`;
-            // Alternativ, falls der Endpunkt immer noch auf licenses verweist:
-            // assignForm.action = `/licenses/${licenseId}/activate`;
-        }
-
-        const assignPopup = document.getElementById("assignLicensePopup");
-        if (assignPopup) {
-            assignPopup.style.display = "flex";
-        }
-    }
-
-    function hideAssignPopup() {
-        const assignPopup = document.getElementById("assignLicensePopup");
-        if (assignPopup) {
-            assignPopup.style.display = "none";
-        }
-    }
-
+<script type="module">
+  import { initAvailableLicensesPage } from '/js/features/licenses/availableLicensesHandler.js';
+  document.addEventListener('DOMContentLoaded', initAvailableLicensesPage);
 </script>
+

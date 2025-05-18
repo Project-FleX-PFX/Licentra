@@ -1,0 +1,83 @@
+<h1 class="text-start">Manage Your Active Licenses</h1>
+<p class="page-description text-start">Select an active license to view the key or return it.</p>
+
+
+<div class="mt-3">
+  <% if @my_assignments.empty? %>
+    <div class="alert alert-info" role="alert">
+      You do not have any active licenses currently.
+    </div>
+  <% else %>
+    <div class="row row-cols-1 g-4">
+      <% @my_assignments.each_with_index do |assignment, index| %>
+        <div class="col">
+          <div class="card license-card" data-bs-toggle="collapse" data-bs-target="#collapseMyLicense<%= index %>">
+            <div class="card-header d-flex justify-content-between align-items-center" id="headingMyLicense<%= index %>">
+              <h2 class="card-title mb-0 h5">
+                <%= assignment.license&.product.product_name || assignment.license&.license_name || "Unnamed License" %>
+              </h2>
+              <button class="btn btn-outline-primary btn-sm toggle-details" type="button" data-bs-toggle="collapse" data-bs-target="#collapseMyLicense<%= index %>" aria-expanded="false" aria-controls="collapseMyLicense<%= index %>">
+                <span class="show-text">Show Details</span>
+                <span class="hide-text d-none">Hide Details</span>
+              </button>
+            </div>
+            <div id="collapseMyLicense<%= index %>" class="collapse" aria-labelledby="headingMyLicense<%= index %>">
+              <div class="card-body d-flex flex-column">
+                <p class="card-text">
+                  <strong>Assigned on:</strong>
+                  <time class="utc-time" datetime="<%= assignment.assignment_date.iso8601 %>">
+                    <%= assignment.assignment_date.strftime('%Y-%m-%d %H:%M') %>
+                  </time>
+                </p>
+                <p class="card-text">
+                  <strong>License Key:</strong>
+                  <span class="license-key-value"><%= assignment.license&.license_key || "N/A" %></span>
+                </p>
+                <% if assignment.license&.notes && !assignment.license.notes.empty? %>
+                  <p class="card-text"><strong>License Notes:</strong> <%= assignment.license.notes %></p>
+                <% end %>
+                <% if assignment.notes && !assignment.notes.empty? %>
+                  <p class="card-text flex-grow-1"><strong>Assignment Notes:</strong> <%= assignment.notes %></p>
+                <% else %>
+                  <div class="flex-grow-1"></div>
+                <% end %>
+                <button type="button" class="btn btn-danger btn-sm mt-auto return-license-btn" 
+                        data-assignment-id="<%= assignment.assignment_id %>" 
+                        data-product-name="<%= assignment.license&.product.product_name || assignment.license&.license_name || "Unnamed License" %>">
+                  Return License
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+</div>
+
+<div class="modal fade" id="returnLicenseModal" tabindex="-1" aria-labelledby="returnLicenseModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="returnLicenseModalLabel">Return License</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p>Are you sure you want to return the license for <strong id="returnLicenseProductName"></strong>?</p>
+        <p class="small text-muted">This will deactivate the license and make it available to be reassigned.</p>
+      </div>
+      <div class="modal-footer">
+        <form id="returnLicenseForm" method="post" action="">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-danger">Yes, Return License</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { initMyLicensesPage } from '/js/features/licenses/myLicensesHandler.js';
+  document.addEventListener('DOMContentLoaded', initMyLicensesPage);
+</script>
+

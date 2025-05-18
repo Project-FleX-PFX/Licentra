@@ -17,14 +17,14 @@ module AdminRoutes
       @assignments = LicenseAssignmentDAO.all
       @logs = AssignmentLogDAO.all
 
-      erb :data, layout: false
+      erb :'admin/data_view/index', layout: :'layouts/application'
     end
 
     app.get '/user_management' do
       require_role('Admin')
       @users = UserDAO.all
       @roles = RoleDAO.all
-      erb :'admin/user_management'
+      erb :'admin/user_management/index', layout: :'layouts/application'
     end
 
     app.post '/user_management' do
@@ -130,7 +130,7 @@ module AdminRoutes
       begin
         @user = UserDAO.find!(user_id)
         @assignments = LicenseAssignmentDAO.find_by_user(user_id)
-        erb :'admin/user_management_assignments'
+        erb :'admin/user_management_assignments', layout: :'layouts/application'
       rescue DAO::RecordNotFound
         halt 404, 'User not found'
       end
@@ -257,7 +257,7 @@ module AdminRoutes
     app.get '/product_management' do
       require_role('Admin')
       @products = ProductDAO.all
-      erb :'admin/product_management'
+      erb :'admin/product_management/index', layout: :'layouts/application'
     end
 
     app.post '/product_management' do
@@ -326,7 +326,7 @@ module AdminRoutes
       @products = ProductDAO.all
       @licenses = LicenseDAO.all
       @license_types = LicenseTypeDAO.all
-      erb :'admin/license_management'
+      erb :'admin/license_management/index', layout: :'layouts/application'
     end
 
     app.post '/license_management' do

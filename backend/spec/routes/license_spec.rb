@@ -166,7 +166,7 @@ RSpec.describe 'License Routes' do
       active_assignment_for_user.update(is_active: false)
       get '/my-licenses'
       expect(response_status).to eq(200)
-      expect(response_body).to include('You do not have any licenses assigned')
+      expect(response_body).to include('You do not have any active licenses currently')
     end
 
     it 'redirects unauthenticated users to login' do
@@ -237,7 +237,7 @@ RSpec.describe 'License Routes' do
       follow_redirect!
 
       expect(response_status).to eq(200)
-      expect(response_body).to include('<div class="alert error">')
+      expect(response_body).to include('<div class="alert alert-danger">')
       expect(response_body).to include('already inactive')
     end
 
