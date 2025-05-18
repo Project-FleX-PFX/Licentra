@@ -1,0 +1,115 @@
+<div class="container py-4">
+  <div class="row">
+    <div class="col-xl-8 mx-auto">
+      <div class="card shadow-sm rounded-3">
+        <div class="card-header bg-primary text-white">
+          <h3 class="mb-0">User Information</h3>
+        </div>
+        <div class="card-body">
+          <div class="row mb-4 align-items-lg-start" id="username-item">
+            <div class="col-12 col-lg-3 mb-1 mb-lg-0">
+              <label class="col-form-label fw-bold">Username:</label>
+            </div>
+            <div class="col-12 col-lg-6 mb-2 mb-lg-0">
+              <span class="form-control-plaintext" id="username-display"><%= @user.username %></span>
+              <input type="text" class="form-control rounded-3" id="username-input" value="<%= @user.username %>" hidden>
+            </div>
+            <div class="col-12 col-lg-3 text-center text-lg-end">
+              <button class="btn btn-outline-secondary btn-sm edit-button w-100 w-lg-auto d-inline-flex align-items-center justify-content-center">
+                <i class="fas fa-edit me-2"></i>Edit
+              </button>
+              <div class="d-none mt-2 mt-lg-0" id="username-buttons">
+                <div class="d-grid gap-2 d-lg-flex justify-content-lg-end">
+                  <button class="btn btn-success btn-sm save-button d-inline-flex align-items-center justify-content-center" id="username-save">
+                    <i class="fas fa-check me-2"></i>Save
+                  </button>
+                  <button class="btn btn-danger btn-sm cancel-button d-inline-flex align-items-center justify-content-center" id="username-cancel">
+                    <i class="fas fa-times me-2"></i>Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row mb-4 align-items-lg-start" id="email-item"> 
+            <div class="col-12 col-lg-3 mb-1 mb-lg-0">
+              <label class="col-form-label fw-bold">Email:</label>
+            </div>
+            <div class="col-12 col-lg-6 mb-2 mb-lg-0">
+              <span class="form-control-plaintext" id="email-display"><%= @user.email %></span>
+              <input type="email" class="form-control rounded-3" id="email-input" value="<%= @user.email %>" hidden>
+            </div>
+            <div class="col-12 col-lg-3 text-center text-lg-end">
+              <button class="btn btn-outline-secondary btn-sm edit-button w-100 w-lg-auto d-inline-flex align-items-center justify-content-center">
+                <i class="fas fa-edit me-2"></i>Edit
+              </button>
+              <div class="d-none mt-2 mt-lg-0" id="email-buttons">
+                <div class="d-grid gap-2 d-lg-flex justify-content-lg-end">
+                  <button class="btn btn-success btn-sm save-button d-inline-flex align-items-center justify-content-center" id="email-save">
+                    <i class="fas fa-check me-2"></i>Save
+                  </button>
+                  <button class="btn btn-danger btn-sm cancel-button d-inline-flex align-items-center justify-content-center" id="email-cancel">
+                    <i class="fas fa-times me-2"></i>Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row mb-4 align-items-lg-start" id="password-item"> 
+            <div class="col-12 col-lg-3 mb-1 mb-lg-0">
+              <label class="col-form-label fw-bold">Password:</label>
+            </div>
+            <div class="col-12 col-lg-6 mb-2 mb-lg-0">
+              <span class="form-control-plaintext" id="password-display">********</span>
+              <div class="password-fields" hidden>
+                <input type="password" class="form-control rounded-3 mb-2" id="password" name="password" placeholder="New Password">
+                <div id="password-strength" class="mt-2 mb-3" hidden>
+                  <h6 class="small">Password must contain:</h6>
+                  <p id="length" class="small text-danger mb-1"><i class="fas fa-times-circle me-1"></i>At least 10 characters</p>
+                  <p id="letter" class="small text-danger mb-1"><i class="fas fa-times-circle me-1"></i>At least one lowercase letter</p>
+                  <p id="capital" class="small text-danger mb-1"><i class="fas fa-times-circle me-1"></i>At least one uppercase letter</p>
+                  <p id="number" class="small text-danger mb-1"><i class="fas fa-times-circle me-1"></i>At least one number</p>
+                  <p id="special" class="small text-danger mb-1"><i class="fas fa-times-circle me-1"></i>At least one special character</p>
+                  <p id="forbidden" class="small text-danger mb-1"><i class="fas fa-times-circle me-1"></i>Must not contain "licentra" or "password"</p>
+                </div>
+                <input type="password" class="form-control rounded-3" id="password_confirmation" name="password_confirmation" placeholder="Confirm New Password">
+                <p id="match" class="small text-danger mt-2" hidden><i class="fas fa-times-circle me-1"></i>Passwords do not match</p>
+              </div>
+            </div>
+            <div class="col-12 col-lg-3 text-center text-lg-end">
+              <button class="btn btn-outline-secondary btn-sm edit-button w-100 w-lg-auto d-inline-flex align-items-center justify-content-center">
+                <i class="fas fa-edit me-2"></i>Edit
+              </button>
+              <div class="d-none mt-2 mt-lg-0" id="password-buttons">
+                <div class="d-grid gap-2 d-lg-flex justify-content-lg-end">
+                  <button class="btn btn-success btn-sm save-button d-inline-flex align-items-center justify-content-center" id="password-save">
+                    <i class="fas fa-check me-2"></i>Save
+                  </button>
+                  <button class="btn btn-danger btn-sm cancel-button d-inline-flex align-items-center justify-content-center" id="password-cancel">
+                    <i class="fas fa-times me-2"></i>Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row align-items-lg-start" id="role-item"> 
+            <div class="col-12 col-lg-3 mb-1 mb-lg-0">
+              <label class="col-form-label fw-bold">Roles:</label>
+            </div>
+            <div class="col-12 col-lg-9">
+              <span class="form-control-plaintext" id="role-display">
+                <% @user.roles.each do |role| %>
+                  <span class="badge bg-primary me-1 mb-1"><%= role.role_name %></span>
+                <% end %>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/js/features/profile/profileFormHandler.js" type="module"></script>

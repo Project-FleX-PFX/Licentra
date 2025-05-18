@@ -15,9 +15,12 @@ Dir.glob('./routes/*.rb').sort.each { |file| require file }
 class LicentraApp < Sinatra::Base
   enable :method_override
   enable :sessions
+  set :erb, escape_html: true
   set :session_secret, ENV.fetch('SESSION_SECRET') { SecureRandom.hex(64) }
-  set :views, File.join(File.dirname(__FILE__), 'frontend', 'views')
+  set :root, '/app'
+  set :views, '/app/frontend/views'
   set :public_folder, '/app/frontend/public'
+  set :layout, '/app/frontend/views/layouts/application'
 
   use Rack::Flash, sweep: true
 
@@ -38,7 +41,7 @@ class LicentraApp < Sinatra::Base
   end
 
   get '/forbidden' do
-    erb :forbidden, layout: true
+    erb :'errors/403', layout: true
   end
 
   register AuthRoutes

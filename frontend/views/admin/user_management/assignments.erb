@@ -1,0 +1,133 @@
+<% @title = "License Assignments for #{@user.username}" %>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="text-start mb-0">License Assignments for: <strong><%= @user.username %></strong></h1>
+  <a href="/user_management" class="btn btn-outline-secondary">
+    <i class="fas fa-arrow-left me-1"></i> Back to User Management
+  </a>
+</div>
+<p class="page-description text-start">Manage license assignments for this user.</p>
+
+<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 mt-3">
+  <% @assignments.each do |assignment| %>
+    <div class="col">
+      <div class="card assignment-card h-100 <%= assignment.is_active? ? 'border-success' : 'border-warning' %>"
+           data-assignment-id="<%= assignment.assignment_id %>"
+           data-is-active="<%= assignment.is_active? %>">
+        <div class="card-header bg-transparent <%= assignment.is_active? ? 'text-success' : 'text-warning' %>">
+           <h2 class="card-title h5 mb-0"><%= assignment.license.product.product_name %></h2>
+           <small class="text-muted"><%= assignment.license.license_name %></small>
+        </div>
+        <div class="card-body d-flex flex-column">
+          <p class="card-text"><strong>License Key:</strong> <%= assignment.license.license_key %></p>
+          <p class="card-text"><strong>Assigned:</strong> <%= assignment.assignment_date.strftime('%d.%m.%Y') %></p>
+          <% if assignment.assignment_expire_date %>
+            <p class="card-text"><strong>Expires:</strong> <%= assignment.assignment_expire_date.strftime('%d.%m.%Y') %></p>
+          <% end %>
+          <p class="card-text flex-grow-1"><strong>Status:</strong>
+            <span class="badge <%= assignment.is_active? ? 'bg-success' : 'bg-warning text-dark' %>">
+              <%= assignment.is_active? ? 'Active' : 'Inactive' %>
+            </span>
+          </p>
+          <div class="mt-auto"> 
+            <div class="btn-group w-100" role="group" aria-label="Assignment Actions">
+              <% if assignment.is_active? %>
+                <button class="btn btn-sm btn-warning toggle-status-btn" data-action="deactivate">Deactivate</button>
+                <button class="btn btn-sm btn-outline-danger delete-assignment-btn" disabled title="Deactivate assignment first before deleting">Delete</button>
+              <% else %>
+                <button class="btn btn-sm btn-success toggle-status-btn" data-action="activate">Activate</button>
+                <button class="btn btn-sm btn-danger delete-assignment-btn">Delete</button>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% end %>
+
+  <div class="col">
+    <div class="card add-assignment-card h-100 text-center" id="addAssignmentBtn" style="cursor: pointer;">
+      <div class="card-body d-flex flex-column justify-content-center align-items-center">
+        <i class="fas fa-plus-circle fa-3x text-primary mb-2"></i>
+        <h2 class="card-title h5">Add New Assignment</h2>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="statusConfirmModal" tabindex="-1" aria-labelledby="statusConfirmModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="statusConfirmModalLabel">Change Assignment Status</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p id="statusModalMessage">Are you sure you want to change the status of this license assignment?</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" id="confirmStatusBtn" class="btn">Confirm</button> 
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="addAssignmentModal" tabindex="-1" aria-labelledby="addAssignmentModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addAssignmentModalLabel">Add New License Assignment</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div id="licenseLoadingIndicator" class="text-center">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading available licenses...</span>
+          </div>
+          <p>Loading available licenses...</p>
+        </div>
+        <div id="licenseSelectionContainer" style="display: none;">
+          <p>Select a license to assign to <strong><%= @user.username %></strong>:</p>
+          <div id="availableLicensesList" class="list-group">
+            <%# Populated dynamically via JS %>
+          </div>
+        </div>
+        <div id="noLicensesAvailable" class="alert alert-warning" style="display: none;">
+          No unassigned licenses available for this user.
+        </div>
+         <div id="errorLoadingLicenses" class="alert alert-danger" style="display: none;">
+          Error loading available licenses. Please try again.
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="deleteAssignmentConfirmModal" tabindex="-1" aria-labelledby="deleteAssignmentConfirmModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="deleteAssignmentConfirmModalLabel">Delete Assignment</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p>Are you sure you want to delete this license assignment?</p>
+        <p><small>The license itself will not be deleted, only the assignment to this user.</small></p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" id="confirmAssignmentDeleteBtn" class="btn btn-danger">Delete Assignment</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { initAdminUserAssignments } from '/js/features/admin/userAssignmentsHandler.js';
+  document.addEventListener('DOMContentLoaded', () => initAdminUserAssignments('<%= @user.user_id %>'));
+</script>
+

@@ -9,7 +9,7 @@ module AuthRoutes
 
     app.get '/login' do
       redirect '/profile' if logged_in?
-      erb :login, layout: false
+      erb :'auth/login', layout: false
     end
 
     app.post '/login' do
@@ -56,14 +56,14 @@ module AuthRoutes
     end
 
     app.get '/register' do
-      erb :register, layout: false
+      erb :'auth/register', layout: false
     end
 
     app.post '/register' do
       validation_error = validate_registration_params
       if validation_error
         @error = validation_error
-        return erb :register, layout: false
+        return erb :'auth/register', layout: false
       end
 
       begin
@@ -72,7 +72,7 @@ module AuthRoutes
         redirect '/profile'
       rescue StandardError => e
         @error = "Registration error: #{e.message}"
-        erb :register, layout: false
+        erb :'auth/register', layout: false
       end
     end
   end

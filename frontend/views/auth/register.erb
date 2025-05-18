@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Register – Licentra</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/png" href="/images/icon.png">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-4Q6Gf2aSP4eDXB8Miphtr37CMZZQ5oXLH2yaXMJ2w8e2ZtHTl7GptT4jmndRuHDT" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+</head>
+<body class="bg-light">
+
+  <div class="container">
+    <div class="row justify-content-center my-5">
+      <div class="col-md-6 col-lg-5">
+        <div class="card shadow-lg border-0 rounded-3">
+          <div class="card-header bg-white text-center py-4 rounded-top">
+            <div class="mb-4">
+              <img src="/images/LizentraLogo.png" alt="Licentra Logo" class="img-fluid w-50">
+            </div>
+            <h3 class="fw-bold text-primary">Register</h3>
+          </div>
+          
+          <div class="card-body p-4">
+            <% if @error %>
+              <div class="alert alert-danger rounded-3" role="alert">
+                <%= @error %>
+              </div>
+            <% end %>
+            
+            <form id="register-form" action="/register" method="post">
+              <div class="mb-3">
+                <label for="username" class="form-label small mb-2">Username</label>
+                <input type="text" id="username" name="username" value="<%= params[:username] %>" placeholder="Choose a unique username" class="form-control py-3 rounded-3" required>
+              </div>
+              
+              <div class="mb-3">
+                <label for="first_name" class="form-label small mb-2">First Name</label>
+                <input type="text" id="first_name" name="first_name" value="<%= params[:first_name] %>" placeholder="Enter your first name" class="form-control py-3 rounded-3" required>
+              </div>
+              
+              <div class="mb-3">
+                <label for="last_name" class="form-label small mb-2">Last Name</label>
+                <input type="text" id="last_name" name="last_name" value="<%= params[:last_name] %>" placeholder="Enter your last name" class="form-control py-3 rounded-3" required>
+              </div>
+              
+              <div class="mb-3">
+                <label for="email" class="form-label small mb-2">Email</label>
+                <input type="email" id="email" name="email" value="<%= params[:email] %>" placeholder="example@domain.com" class="form-control py-3 rounded-3" required>
+              </div>
+              
+              <div class="mb-3">
+                <label for="password" class="form-label small mb-2">Password</label>
+                <input type="password" id="password" name="password" class="form-control py-3 rounded-3" placeholder="Enter a strong password" required>
+                <div id="password-strength" class="mt-2" hidden>
+                  <h6 class="small">Password must contain:</h6>
+                  <p id="length" class="small text-danger mb-1"><i class="fas fa-times-circle"></i> At least 10 characters</p>
+                  <p id="letter" class="small text-danger mb-1"><i class="fas fa-times-circle"></i> At least one lowercase letter</p>
+                  <p id="capital" class="small text-danger mb-1"><i class="fas fa-times-circle"></i> At least one uppercase letter</p>
+                  <p id="number" class="small text-danger mb-1"><i class="fas fa-times-circle"></i> At least one number</p>
+                  <p id="special" class="small text-danger mb-1"><i class="fas fa-times-circle"></i> At least one special character</p>
+                  <p id="forbidden" class="small text-danger mb-1"><i class="fas fa-times-circle"></i> Must not contain "licentra" or "password"</p>
+                </div>
+              </div>
+              
+              <div class="mb-4">
+                <label for="password_confirmation" class="form-label small mb-2">Confirm Password</label>
+                <input type="password" id="password_confirmation" name="password_confirmation" class="form-control py-3 rounded-3" placeholder="Re-enter your password" required>
+                <p id="match" class="small text-danger mt-2 mb-1" hidden><i class="fas fa-times-circle"></i> Please confirm your password</p>
+              </div>
+              
+              <div class="d-flex align-items-center justify-content-center mt-4 mb-0">
+                <button type="submit" class="btn btn-primary btn-lg px-5 rounded-3">
+                  Register
+                </button>
+              </div>
+            </form>
+          </div>
+          
+          <div class="card-footer text-center py-4 bg-white rounded-bottom">
+            <div class="small">
+              Already have an account? <a href="/login" class="fw-bold text-primary">Login here</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/js/bootstrap.bundle.min.js" integrity="sha384-j1CDi7MgGQ12Z7Qab0qlWQ/Qqz24Gc6BM0thvEMVjHnfYGF0rmFCozFSxQBxwHKO" crossorigin="anonymous"></script>
+  <script type="module" src="/js/features/register/registerFormHandler.js"></script>
+</body>
+</html>
+

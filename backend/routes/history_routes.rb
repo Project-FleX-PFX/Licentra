@@ -30,7 +30,7 @@ module HistoryRoutes
 
       @title = 'License Assignment History'
       @css = 'history'
-      erb :'history/index'
+      erb :'licenses/history', :layout => :'layouts/application'
     end
   end
 end
