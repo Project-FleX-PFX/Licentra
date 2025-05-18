@@ -17,7 +17,7 @@ module LicenseRoutes
 
       @available_assignments = LicenseAssignmentDAO.find_inactive_for_user_with_details(user.user_id)
 
-      erb :'licenses/available'
+      erb :'licenses/available', layout: :'layouts/application'
     end
 
     app.post '/licenses/:license_assignment_id/activate' do
@@ -51,7 +51,7 @@ module LicenseRoutes
 
       @my_assignments = LicenseAssignmentDAO.find_active_for_user_with_details(user.user_id)
 
-      erb :'licenses/my_licenses'
+      erb :'licenses/index', layout: :'layouts/application'
     end
 
     app.post '/my-licenses/:license_assignment_id/return' do

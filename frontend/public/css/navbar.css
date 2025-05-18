@@ -1,0 +1,78 @@
+/* frontend/public/css/navbar.css */
+#sidebar {
+    width: 250px;
+    position: fixed;
+    top: 0;
+    left: -250px; /* Standardmäßig ausgeblendet (relevant für Mobil) */
+    height: 100vh;
+    z-index: 1030; 
+    transition: left 0.3s ease-in-out; /* Animiere 'left' */
+    background-color: #212529; /* Entspricht Bootstrap .bg-dark */
+}
+
+#mainContent {
+    margin-left: 0; /* Standard für Mobil oder wenn Sidebar geschlossen */
+    transition: margin-left 0.3s ease-in-out; /* Animiere 'margin-left' */
+    padding: 15px;
+}
+
+/* Toggle Button Styles (nur für Mobil relevant) */
+#sidebarToggleBtn {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    z-index: 1040;
+    display: none; /* Standardmäßig ausgeblendet, wird per JS oder Media Query für mobil sichtbar */
+}
+
+/* --- Mobiler Zustand (< 768px) --- */
+@media (max-width: 767.98px) {
+    #sidebarToggleBtn {
+        display: block; /* Button auf Mobil anzeigen */
+    }
+    /* Die Klasse .open steuert die Sichtbarkeit auf Mobil */
+    #sidebar.open {
+        left: 0; /* Sidebar einblenden */
+    }
+    /* mainContent bleibt bei margin-left: 0 auf Mobil, da die Sidebar überlagert */
+}
+
+/* --- Desktop-Zustand (>= 768px) --- */
+@media (min-width: 768px) {
+    #sidebar {
+        left: 0; /* Sidebar auf Desktop immer sichtbar */
+        /* .open Klasse hat hier keine Auswirkung mehr auf 'left' */
+    }
+      
+    #mainContent {
+        margin-left: 250px; /* Platz für die immer offene Sidebar schaffen */
+    }
+    /* #sidebarToggleBtn bleibt display: none (Standard oder durch obige Regel) */
+}
+
+/* --- NEUER HOVER-EFFEKT --- */
+#sidebar .list-group-item-action.bg-dark:hover,
+#sidebar .list-group-item-action.bg-dark:focus { /* :focus für bessere Barrierefreiheit */
+    background-color: var(--bs-primary) !important; /* Verwendet die primäre Bootstrap-Farbe */
+    color: var(--bs-white) !important; /* Textfarbe auf Weiß setzen für Kontrast */
+    border-color: var(--bs-primary) !important; /* Optional: Randfarbe anpassen */
+}
+
+/* Sicherstellen, dass das Icon im Link auch die Textfarbe ändert */
+#sidebar .list-group-item-action.bg-dark:hover .fas,
+#sidebar .list-group-item-action.bg-dark:focus .fas {
+    color: var(--bs-white) !important;
+}
+
+/* --- Deutlicherer Active-Status --- */
+#sidebar .list-group-item-action.bg-dark.active {
+    background-color: var(--bs-primary) !important; /* Hintergrundfarbe Primär */
+    color: var(--bs-white) !important;               /* Textfarbe Weiß */
+    font-weight: bold !important;                    /* Text fett hervorheben */
+    /* border-color: var(--bs-primary) !important; /* Optional, falls Ränder angepasst werden sollen */
+}
+
+#sidebar .list-group-item-action.bg-dark.active .fas {
+    color: var(--bs-white) !important; /* Iconfarbe auch anpassen */
+}
+
