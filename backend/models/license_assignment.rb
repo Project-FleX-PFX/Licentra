@@ -6,7 +6,6 @@ class LicenseAssignment < Sequel::Model(:license_assignments)
   many_to_one :license, key: :license_id
   many_to_one :user, key: :user_id
   many_to_one :device, key: :device_id
-  one_to_many :assignment_logs, key: :assignment_id
 
   def assignee
     user || device

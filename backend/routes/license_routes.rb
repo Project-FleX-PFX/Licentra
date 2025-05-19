@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+require_relative '../services/license_service'
+require_relative '../dao/license_assignment_dao'
+
 # Module for routes within license context
 module LicenseRoutes
   def self.registered(app)
@@ -25,40 +28,15 @@ module LicenseRoutes
       user = current_user
 
       begin
-        assignment = LicenseAssignmentDAO.find(license_assignment_id)
-
-        raise ArgumentError, 'This license assignment does not belong to you' unless assignment.user_id == user.user_id
-
-        raise DAO::ValidationError, 'This license assignment is already active' if assignment.is_active?
-
-        raise DAO::ValidationError, 'No available seats' if assignment.license.available_seats <= 0
-
-        LicenseAssignmentDAO.activate(license_assignment_id)
-
-        assignment = LicenseAssignmentDAO.find(license_assignment_id)
-        action = AssignmentLogDAO::Actions::USER_ACTIVATED
-
-        details = "User '#{user.username}' (ID: #{user.user_id}) performed action '#{action}' " \
-          "for license '#{LicenseService._license_display_name(assignment.license)}' (License ID: #{assignment.license.license_id}). " \
-          "Assignment ID: #{license_assignment_id}."
-
-        AssignmentLogDAO.create_log(
-          assignment: assignment,
-          action: action,
-          object: LicenseService._license_display_name(assignment.license),
-          details: details
-        )
+        LicenseService.activate_license_for_user(license_assignment_id, user)
 
         flash[:success] = 'License successfully activated.'
         redirect '/my-licenses'
-      rescue ArgumentError => e
-        flash[:error] = e.message
-        redirect '/licenses'
-      rescue DAO::ValidationError => e
+      rescue LicenseService::ServiceError => e
         flash[:error] = e.message
         redirect '/licenses'
       rescue StandardError => e
-        logger.error "Unexpected error during license assignment: #{e.message}\n#{e.backtrace.join("\n")}"
+        logger.error "Unexpected error during license activation: #{e.message}\n#{e.backtrace.join("\n")}"
         flash[:error] = 'An unexpected error occurred. Please try again.'
         redirect '/licenses'
       end
@@ -84,34 +62,11 @@ module LicenseRoutes
       user = current_user
 
       begin
-        assignment = LicenseAssignmentDAO.find(license_assignment_id)
-
-        raise ArgumentError unless assignment.user_id == user.user_id
-
-        raise DAO::ValidationError, 'This license assignment is already inactive' unless assignment.is_active?
-
-        LicenseAssignmentDAO.deactivate(license_assignment_id)
-
-        assignment = LicenseAssignmentDAO.find(license_assignment_id)
-        action = AssignmentLogDAO::Actions::USER_DEACTIVATED
-
-        details = "User '#{user.username}' (ID: #{user.user_id}) performed action '#{action}' " \
-          "for license '#{LicenseService._license_display_name(assignment.license)}' (License ID: #{assignment.license.license_id}). " \
-          "Assignment ID: #{license_assignment_id}."
-
-        AssignmentLogDAO.create_log(
-          assignment: assignment,
-          action: action,
-          object: LicenseService._license_display_name(assignment.license),
-          details: details
-        )
+        LicenseService.deactivate_license_for_user(license_assignment_id, user)
 
         flash[:success] = 'License successfully deactivated.'
         redirect '/my-licenses'
-      rescue ArgumentError
-        flash[:error] = 'This license assignment does not belong to you'
-        redirect '/my-licenses'
-      rescue DAO::ValidationError => e
+      rescue LicenseService::ServiceError => e
         flash[:error] = e.message
         redirect '/my-licenses'
       rescue StandardError => e

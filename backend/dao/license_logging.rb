@@ -3,7 +3,7 @@
 # Logging functionality specific to License operations
 module LicenseLogging
   def log_created(license)
-    log_info("License created: ID #{license.pk}, Product ID #{license.product_id}, Type ID #{license.license_type_id}, Seats #{license.seat_count}")
+    log_info("License created: ID #{license.pk} Name #{license&.license_name}, Product ID #{license.product_id}, Type ID #{license.license_type_id}, Seats #{license.seat_count}")
   end
 
   def log_found(license)

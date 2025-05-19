@@ -5,8 +5,8 @@ require_relative 'base_dao'
 require_relative 'assignment_log_logging'
 require_relative 'assignment_log_error_handling'
 
-# Data Access Object for AssignmentLog records.
-# Provides an interface for all CRUD operations and custom queries related to assignment logs.
+# Data Access Object for immutable AssignmentLog records.
+# Provides an interface for creating and querying assignment logs.
 class AssignmentLogDAO < BaseDAO
   module Actions
     USER_ACTIVATED = 'user activated license'
@@ -25,43 +25,54 @@ class AssignmentLogDAO < BaseDAO
 
     # --- CRUD Methoden ---
 
-    # CREATE
-    def create_log(action:, object:, assignment: nil, details: nil)
-      context = "creating assignment log for action '#{action}' on '#{object}'"
-      with_error_handling(context) do
-        attributes = {
-          action: action,
-          object: object,
-          assignment_id: assignment&.assignment_id,
-          details: details,
-          log_timestamp: Time.now
-        }
+    # --- Specific Log Creation Methods ---
 
-        log_entry = AssignmentLog.new(attributes)
-        if log_entry.valid?
-          log_entry.save_changes
-          log_log_created(log_entry)
-          log_entry
-        else
-          handle_validation_error(log_entry, context, log_entry.errors.full_messages.join('; '))
-        end
-      end
+    def log_user_activated_license(acting_user:, target_assignment:)
+      _create_generic_event_log(
+        action_type: Actions::USER_ACTIVATED,
+        acting_user: acting_user,
+        target_assignment: target_assignment
+      )
     end
 
-    def create(attributes)
-      context = 'creating assignment log with generic attributes'
-      with_error_handling(context) do
-        attributes[:log_timestamp] ||= Time.now
+    def log_admin_activated_license(acting_user:, target_assignment:)
+      _create_generic_event_log(
+        action_type: Actions::ADMIN_ACTIVATED,
+        acting_user: acting_user,
+        target_assignment: target_assignment
+      )
+    end
 
-        log_entry = AssignmentLog.new(attributes)
-        if log_entry.valid?
-          log_entry.save_changes
-          log_log_created(log_entry)
-          log_entry
-        else
-          handle_validation_error(log_entry, context, log_entry.errors.full_messages.join('; '))
-        end
-      end
+    def log_user_deactivated_license(acting_user:, target_assignment:)
+      _create_generic_event_log(
+        action_type: Actions::USER_DEACTIVATED,
+        acting_user: acting_user,
+        target_assignment: target_assignment
+      )
+    end
+
+    def log_admin_deactivated_license(acting_user:, target_assignment:)
+      _create_generic_event_log(
+        action_type: Actions::ADMIN_DEACTIVATED,
+        acting_user: acting_user,
+        target_assignment: target_assignment
+      )
+    end
+
+    def log_admin_approved_assignment(acting_user:, target_assignment:)
+      _create_generic_event_log(
+        action_type: Actions::ADMIN_APPROVED,
+        acting_user: acting_user,
+        target_assignment: target_assignment
+      )
+    end
+
+    def log_admin_canceled_assignment(acting_user:, target_assignment:)
+      _create_generic_event_log(
+        action_type: Actions::ADMIN_CANCELED,
+        acting_user: acting_user,
+        target_assignment: target_assignment
+      )
     end
 
     # READ
@@ -127,29 +138,6 @@ class AssignmentLogDAO < BaseDAO
       end
     end
 
-    # UPDATE
-    def update(id, attributes)
-      context = "updating assignment log with ID #{id}"
-      with_error_handling(context) do
-        attributes.delete(:assignment_id)
-        attributes.delete(:log_timestamp)
-        attributes.delete(:log_id)
-
-        log_entry = find!(id)
-        log_entry.set(attributes)
-
-        if log_entry.valid?
-          log_entry.save_changes
-          log_log_updated(log_entry)
-          log_entry
-        else
-          handle_validation_error(log_entry, context, log_entry.errors.full_messages.join('; '))
-        end
-      rescue Sequel::ValidationFailed => e
-        handle_validation_error(e.model, context, e.errors.full_messages.join('; '))
-      end
-    end
-
     # DELETE
     def delete(id)
       context = "deleting assignment log with ID #{id}"
@@ -163,20 +151,10 @@ class AssignmentLogDAO < BaseDAO
 
     # --- SPECIAL QUERIES ---
 
-    def find_by_assignment(assignment_id, options = {})
-      context = "finding logs for assignment ID #{assignment_id}"
+    def delete_by_user(user_id)
+      context = "deleting logs for user ID #{user_id}"
       with_error_handling(context) do
-        logs = all(options.merge(where: { assignment_id: assignment_id }.merge(options[:where] || {})))
-        log_logs_for_assignment_fetched(assignment_id, logs.size)
-        logs
-      end
-    end
-
-    def delete_by_assignment(assignment_id)
-      context = "deleting logs for assignment ID #{assignment_id}"
-      with_error_handling(context) do
-        count = AssignmentLog.where(assignment_id: assignment_id).delete
-        log_logs_deleted_for_assignment(assignment_id, count)
+        count = AssignmentLog.where(user_id: user_id).delete
         count
       end
     end
@@ -187,10 +165,10 @@ class AssignmentLogDAO < BaseDAO
       context = "finding assignment logs with details and filters: #{filters}"
       with_error_handling(context) do
         dataset = AssignmentLog.dataset
-                               .eager(license_assignment: [{ user: [] }, { license: :product }])
                                .order(Sequel.desc(:log_timestamp), Sequel.desc(:log_id))
 
         dataset = _apply_user_filter(dataset, filters[:user_id])
+        dataset = _apply_license_filter(dataset, filters[:license_id])
         dataset = _apply_action_filter(dataset, filters[:action])
         dataset = _apply_object_filter(dataset, filters[:object])
         dataset = _apply_date_from_filter(dataset, filters[:date_from])
@@ -201,7 +179,9 @@ class AssignmentLogDAO < BaseDAO
         paginated_dataset = dataset.paginate(page, per_page)
 
         logs = paginated_dataset.all
+        # rubocop:disable Layout/LineLength
         log_info("Fetched #{logs.size} assignment logs. Page: #{page}, PerPage: #{per_page}, TotalRecords: #{paginated_dataset.pagination_record_count}")
+        # rubocop:enable Layout/LineLength
 
         {
           logs: logs,
@@ -214,17 +194,108 @@ class AssignmentLogDAO < BaseDAO
 
     private
 
+    # Helper to generate log entries for common assignment-related actions.
+    # acting_user: The user performing the action.
+    # target_assignment: The LicenseAssignment object being acted upon.
+    #                  Its associated user and license will be denormalized into the log.
+    def _create_generic_event_log(action_type:, acting_user:, target_assignment:,
+                                  custom_object_name: 'LicenseAssignment', additional_details_info: nil)
+      context = "creating specific log for action '#{action_type}'"
+      with_error_handling(context) do
+        current_target_user = target_assignment&.user
+        current_target_license = target_assignment&.license
+
+        unless current_target_user && current_target_license
+          # rubocop:disable Layout/LineLength
+          error_msg = "Cannot create log: target_assignment (ID: #{target_assignment&.assignment_id}) must have an associated user and license."
+          # rubocop:enable Layout/LineLength
+          log_error("#{context} - #{error_msg}")
+          raise ArgumentError, error_msg
+        end
+
+        details_string = _format_standard_log_details(
+          acting_user: acting_user,
+          action_description: action_type,
+          target_license: current_target_license,
+          original_assignment_id: target_assignment.assignment_id,
+          additional_info: additional_details_info
+        )
+
+        _persist_log_entry(
+          action: action_type,
+          object: custom_object_name,
+          target_user: current_target_user,
+          target_license: current_target_license,
+          details: details_string
+        )
+      end
+    end
+
+    # Formats the human-readable details string for standard log entries.
+    def _format_standard_log_details(acting_user:, action_description:, target_license:, original_assignment_id:,
+                                     additional_info: nil)
+      actor_info = if acting_user
+                     "User '#{acting_user.username}' (ID: #{acting_user.user_id})"
+                   else
+                     'System'
+                   end
+
+      # rubocop:disable Layout/LineLength
+      base_details = "#{actor_info} performed action '#{action_description}' for license '#{target_license.license_name}' (License ID: #{target_license.license_id}). Assignment ID: #{original_assignment_id}."
+      # rubocop:enable Layout/LineLength
+
+      additional_info ? "#{base_details} #{additional_info}" : base_details
+    end
+
+    # Core method to create and save the log entry to the database.
+    # target_user and target_license are the entities whose data is denormalized.
+    def _persist_log_entry(action:, object:, target_user:, target_license:, details: nil)
+      context = "persisting assignment log for action '#{action}' on '#{object}'"
+      with_error_handling(context) do
+        unless target_user&.user_id && target_user.username && target_user.email
+          raise ArgumentError,
+                'Invalid or incomplete target_user object provided for logging. Required: user_id, username, email.'
+        end
+        unless target_license&.license_id && target_license.license_name
+          raise ArgumentError,
+                'Invalid or incomplete target_license object provided for logging. Required: license_id, name.'
+        end
+
+        attributes = {
+          action: action,
+          object: object,
+          license_id: target_license.license_id,
+          license_name: target_license.license_name,
+          user_id: target_user.user_id,
+          username: target_user.username,
+          email: target_user.email,
+          details: details,
+          log_timestamp: Time.now
+        }
+
+        log_entry = AssignmentLog.new(attributes)
+        if log_entry.valid?
+          log_entry.save_changes
+          log_log_created(log_entry)
+          log_entry
+        else
+          handle_validation_error(log_entry, context, log_entry.errors.full_messages.join('; '))
+        end
+      end
+    end
+
     def _apply_user_filter(dataset, user_id_param)
       user_id = user_id_param.to_i
       return dataset unless user_id.positive?
 
-      relevant_assignment_ids = LicenseAssignment.where(user_id: user_id).select_map(:assignment_id)
+      dataset.where(user_id: user_id)
+    end
 
-      if relevant_assignment_ids.empty?
-        dataset.where(1 => 0)
-      else
-        dataset.where(assignment_id: relevant_assignment_ids)
-      end
+    def _apply_license_filter(dataset, license_id_param)
+      license_id = license_id_param.to_i
+      return dataset unless license_id.positive?
+
+      dataset.where(license_id: license_id)
     end
 
     def _apply_action_filter(dataset, action_param)

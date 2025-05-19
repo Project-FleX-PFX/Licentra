@@ -13,8 +13,9 @@ class License < Sequel::Model
   end
 
   def status
-    return "Active" if expire_date.nil? || expire_date >= Date.today
-    "Expired"
+    return 'Active' if expire_date.nil? || expire_date >= Date.today
+
+    'Expired'
   end
 
   def validate

@@ -3,7 +3,7 @@
 # Logging module of the assignment log
 module AssignmentLogLogging
   def log_log_created(log)
-    log_info("Assignment Log created: ID #{log.pk}, Assignment ID #{log.assignment_id}, Action: #{log.action}, Time: #{log.log_timestamp}")
+    log_info("Assignment Log created: ID #{log.pk}, License ID #{log.license_id}, Action: #{log.action}, Time: #{log.log_timestamp}")
   end
 
   def log_log_found(log)
@@ -23,7 +23,7 @@ module AssignmentLogLogging
   end
 
   def log_validation_failed(log, context)
-    log_warn("Validation failed while #{context} assignment log (ID: #{log.pk || 'new'}, Assignment: #{log.assignment_id}): #{log.errors.inspect}")
+    log_warn("Validation failed while #{context} assignment log (ID: #{log.pk || 'new'}, License: #{log.license_id}): #{log.errors.inspect}")
   end
 
   def log_logs_fetched(count)

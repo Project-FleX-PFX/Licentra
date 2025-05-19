@@ -95,7 +95,7 @@ RSpec.describe 'License Routes' do
 
         log = AssignmentLog.last
         expect(log).not_to be_nil
-        expect(log.assignment_id).to eq(inactive_assignment_word.assignment_id)
+        expect(log.license_id).to eq(inactive_assignment_word.license.license_id)
         expect(log.action).to eq(AssignmentLogDAO::Actions::USER_ACTIVATED)
         expect(log.details).to include(regular_user.username)
         expect(log.details).to include(word_license_available.license_name)
@@ -201,7 +201,7 @@ RSpec.describe 'License Routes' do
 
         log = AssignmentLog.last
         expect(log).not_to be_nil
-        expect(log.assignment_id).to eq(active_assignment.assignment_id)
+        expect(log.license_id).to eq(active_assignment.license.license_id)
         expect(log.action).to eq(AssignmentLogDAO::Actions::USER_DEACTIVATED)
       end
 

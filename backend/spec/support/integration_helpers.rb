@@ -86,4 +86,8 @@ module IntegrationHelpers
       expire_date: expire_date
     )
   end
+
+  def create_assignment_via_dao(user:, license:, is_active:)
+    LicenseAssignmentDAO.create(user_id: user.user_id, license_id: license.license_id, is_active: is_active)
+  end
 end
