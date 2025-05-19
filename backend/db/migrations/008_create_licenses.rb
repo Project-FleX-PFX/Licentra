@@ -15,7 +15,6 @@ Sequel.migration do
       String :currency, size: 3
       String :vendor
       Text :notes
-      String :status, default: 'Active' # e.g. Active, Expired, Archived
 
       index :license_key
       index :expire_date

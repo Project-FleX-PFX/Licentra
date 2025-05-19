@@ -1,0 +1,468 @@
+<%# views/admin/user_management.erb %>
+<% @title = "User Management" %>
+<% @css   = "management" %>
+
+<h1>User Management</h1>
+<p class="page-description">Manage users</p>
+
+<div class="cards-container">
+  <% @users.each do |user|%>
+    <div class="card user-card"
+         data-user-id="<%= user.user_id %>"
+         data-username="<%= user.username %>"
+         data-email="<%= user.email %>"
+         data-first-name="<%= user.first_name %>"
+         data-last-name="<%= user.last_name %>"
+         data-roles="<%= user.roles.map(&:role_name).join(',') %>"
+         data-role-ids="<%= user.roles.map(&:role_id).join(',') %>">
+      <h2><%= Rack::Utils.escape_html(user.username) %></h2>
+      <p><strong>E-Mail:</strong> <%= user.email %></p>
+      <p><strong>Roles:</strong>
+        <% if user.roles.any? %>
+          <%= user.roles.map(&:role_name).join(', ') %>
+        <% else %>
+          <em>No roles assigned</em>
+        <% end %>
+      </p>
+      <button class="button-primary user-edit-btn">Edit</button>
+    </div>
+  <% end %>
+
+  <div class="card add-user-card" id="add-user-btn">
+    <div class="add-icon">+</div>
+    <h2>Add New User</h2>
+  </div>
+</div>
+
+<!-- Modal für Add/Edit -->
+<div id="user-modal" class="modal hidden">
+  <div class="modal-content">
+    <span class="close-btn" title="Schließen">&times;</span>
+    <h2 id="modal-title">User configuration</h2>
+    <form id="user-form">
+      <input type="hidden" name="user_id">
+
+      <label>First Name:</label>
+      <input type="text" name="first_name" disabled required>
+
+      <label>Last Name:</label>
+      <input type="text" name="last_name" disabled required>
+
+      <label>Username:</label>
+      <input type="text" name="username" disabled required>
+
+      <label>Email:</label>
+      <input type="email" name="email" disabled required>
+
+      <label>Password:</label>
+      <input type="password" name="password" disabled placeholder="••••••">
+
+      <label>Roles:</label>
+      <div class="roles-container" id="roles-container">
+        <% @roles.each do |role| %>
+          <div class="role-checkbox">
+            <input type="checkbox" name="roles[]" value="<%= role.role_id %>" id="role-<%= role.role_id %>"
+                   data-role-name="<%= role.role_name %>" disabled>
+            <label for="role-<%= role.role_id %>"><%= role.role_name %></label>
+          </div>
+        <% end %>
+        <span id="rolesError" class="error-message" style="display: none; color: red;">Please select at least one role.</span>
+      </div>
+
+      <div class="license-management-section">
+        <button type="button" id="manage-licenses-btn" class="btn primary-btn full-width">Manage Licenses</button>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" id="edit-btn">Edit</button>
+        <button type="submit" id="save-btn" disabled>Save</button>
+        <button type="button" id="delete-btn" class="delete-btn">Delete</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Lösch-Bestätigungsmodal -->
+<div id="delete-confirm-modal" class="modal hidden">
+  <div class="modal-content">
+    <span class="close-btn" title="Schließen">&times;</span>
+    <h2>Delete User</h2>
+    <p>Are you sure you want to delete the user <span id="delete-user-name"></span>?</p>
+    <div class="modal-actions">
+      <button type="button" id="cancel-delete-btn">Cancel</button>
+      <button type="button" id="confirm-delete-btn" class="delete-btn">Delete</button>
+    </div>
+  </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const userCards = document.querySelectorAll(".user-card");
+        const modal = document.getElementById("user-modal");
+        const closeBtn = modal.querySelector(".close-btn");
+        const form = document.getElementById("user-form");
+        const editBtn = document.getElementById("edit-btn");
+        const saveBtn = document.getElementById("save-btn");
+        const deleteBtn = document.getElementById("delete-btn");
+        const title = document.getElementById("modal-title");
+        // Löschbestätigungsmodal
+        const deleteConfirmModal = document.getElementById("delete-confirm-modal");
+        const deleteConfirmCloseBtn = deleteConfirmModal.querySelector(".close-btn");
+        const cancelDeleteBtn = document.getElementById("cancel-delete-btn");
+        const confirmDeleteBtn = document.getElementById("confirm-delete-btn");
+        const deleteUserNameSpan = document.getElementById("delete-user-name");
+
+        let activeCard = null; // Aktive Karte global speichern
+        let isEditMode = false;
+
+        function openModal(mode, data = {}) {
+            activeCard = document.querySelector(".user-card.active"); // Aktive Karte setzen
+            modal.classList.remove("hidden");
+
+            // Formular zurücksetzen und Felder sperren
+            form.reset();
+            [...form.elements].forEach((el) => {
+                if (["edit-btn", "delete-btn"].includes(el.id)) return;
+                el.disabled = true;
+            });
+
+            // Fehlermeldung für Rollen ausblenden
+            const rolesError = document.getElementById("rolesError");
+            if (rolesError) {
+                rolesError.style.display = "none";
+            }
+
+            // Standardwerte für alle Eingabefelder setzen
+            form.user_id.value = data.userId || "";
+            form.user_id.defaultValue = data.userId || "";
+
+            form.first_name.value = data.firstName || "";
+            form.first_name.defaultValue = data.firstName || "";
+
+            form.last_name.value = data.lastName || "";
+            form.last_name.defaultValue = data.lastName || "";
+
+            form.username.value = data.username || "";
+            form.username.defaultValue = data.username || "";
+
+            form.email.value = data.email || "";
+            form.email.defaultValue = data.email || "";
+
+            // Passwort-Feld immer leer lassen
+            form.password.value = "";
+            form.password.defaultValue = "";
+
+            // Alle Checkboxen zurücksetzen
+            const roleCheckboxes = form.querySelectorAll('input[name="roles[]"]');
+            roleCheckboxes.forEach((checkbox) => {
+                checkbox.checked = false;
+                // defaultChecked-Eigenschaft für Checkboxen setzen
+                checkbox.defaultChecked = false;
+            });
+
+            // Rollen setzen, falls vorhanden
+            if (data.roleIds) {
+                const userRoleIds = data.roleIds.split(",");
+                userRoleIds.forEach((roleId) => {
+                    const roleCheckbox = document.querySelector(
+                      `input[name="roles[]"][value="${roleId}"]`
+                    );
+                    if (roleCheckbox) {
+                        roleCheckbox.checked = true;
+                        // Wichtig: Auch defaultChecked setzen
+                        roleCheckbox.defaultChecked = true;
+                    }
+                });
+            }
+
+            // "Manage Licenses" Button Logik
+            const licensesSection = document.querySelector(".license-management-section");
+            const manageLicensesBtn = document.getElementById("manage-licenses-btn");
+            if (mode === "edit" && data.userId) {
+                licensesSection.style.display = "block";
+                // Define the handler first
+                const handleManageLicenses = () => {
+                    window.location.href = `/user_management/${data.userId}/assignments`;
+                };
+                // Add the event listener (no need to remove first, as it will overwrite or add safely)
+                manageLicensesBtn.addEventListener("click", handleManageLicenses);
+            } else {
+                licensesSection.style.display = "none";
+            }
+
+
+            // Buttons je nach Modus konfigurieren
+            if (mode === "view") {
+                isEditMode = false;
+                editBtn.textContent = "Edit";
+                editBtn.classList.remove("cancel-btn");
+                saveBtn.disabled = true;
+            } else if (mode === "add") {
+                isEditMode = true;
+                editBtn.textContent = "Cancel";
+                editBtn.classList.add("cancel-btn");
+                // Felder für Neuerstellung entsperren
+                [...form.elements].forEach((el) => {
+                    if (["edit-btn", "delete-btn"].includes(el.id)) return;
+                    el.disabled = false;
+                });
+                saveBtn.disabled = false;
+            }
+        }
+
+
+        // Event-Listener für User-Karten
+        userCards.forEach((card) => {
+            const editBtn = card.querySelector(".user-edit-btn");
+            editBtn.addEventListener("click", (e) => {
+                e.stopPropagation(); // Verhindert Bubbling zum Card-Click
+
+                // Alle anderen Karten deaktivieren
+                userCards.forEach((c) => c.classList.remove("active"));
+                card.classList.add("active"); // Aktive Karte hervorheben
+
+                openModal("edit", card.dataset);
+            });
+
+            // Optional: Auch die Karte selbst klickbar machen
+            card.addEventListener("click", () => {
+                // Alle anderen Karten deaktivieren
+                userCards.forEach((c) => c.classList.remove("active"));
+                card.classList.add("active"); // Aktive Karte hervorheben
+
+                openModal("edit", card.dataset);
+            });
+        });
+
+        // "Add User" Karte
+        document
+          .getElementById("add-user-btn")
+          .addEventListener("click", () => openModal("add"));
+
+        closeBtn.addEventListener("click", () => {
+            modal.classList.add("hidden");
+
+            // Formular zurücksetzen
+            form.reset();
+
+            // Zustand zurücksetzen
+            isEditMode = false;
+            editBtn.textContent = "Edit";
+            editBtn.classList.remove("cancel-btn");
+
+            // Felder sperren
+            [...form.elements].forEach((el) => {
+                if (["edit-btn", "delete-btn"].includes(el.id)) return;
+                el.disabled = true;
+            });
+            saveBtn.disabled = true;
+
+            // Fehlermeldung für Rollen ausblenden
+            const rolesError = document.getElementById("rolesError");
+            if (rolesError) {
+                rolesError.style.display = "none";
+            }
+
+            // Aktive Karte entfernen
+            userCards.forEach((c) => c.classList.remove("active"));
+            activeCard = null;
+        });
+
+        editBtn.addEventListener("click", () => {
+            isEditMode = !isEditMode;
+
+            if (isEditMode) {
+                // Wechsel zu Edit-Modus
+                editBtn.textContent = "Cancel";
+                editBtn.classList.add("cancel-btn");
+
+                // Felder entsperren
+                [...form.elements].forEach((el) => {
+                    if (["edit-btn", "delete-btn"].includes(el.id)) return;
+                    el.disabled = false;
+                });
+                saveBtn.disabled = false;
+            } else {
+                // Wechsel zurück zum Ansichtsmodus und Formular zurücksetzen
+                editBtn.textContent = "Edit";
+                editBtn.classList.remove("cancel-btn");
+
+                // Formular auf Standardwerte zurücksetzen
+                form.reset();
+
+                // Felder wieder sperren
+                [...form.elements].forEach((el) => {
+                    if (["edit-btn", "delete-btn"].includes(el.id)) return;
+                    el.disabled = true;
+                });
+                saveBtn.disabled = true;
+
+                // Fehlermeldung für Rollen ausblenden
+                const rolesError = document.getElementById("rolesError");
+                if (rolesError) {
+                    rolesError.style.display = "none";
+                }
+            }
+        });
+
+        deleteBtn.disabled = false;
+        deleteBtn.title = "";
+
+        deleteBtn.addEventListener("click", () => {
+            // Username im Bestätigungsmodal anzeigen
+            activeCard = document.querySelector(".user-card.active"); // Aktive Karte setzen
+            if (!activeCard) {
+                return;
+            }
+            const username = activeCard.dataset.username || "unbekannter Benutzer";
+            deleteUserNameSpan.textContent = username;
+
+            // Bestätigungsmodal anzeigen
+            deleteConfirmModal.classList.remove("hidden");
+        });
+
+        // Modal schließen (X-Button und Abbrechen)
+        deleteConfirmCloseBtn.addEventListener("click", () => {
+            deleteConfirmModal.classList.add("hidden");
+        });
+
+        cancelDeleteBtn.addEventListener("click", () => {
+            deleteConfirmModal.classList.add("hidden");
+        });
+
+        // Löschbestätigung: DELETE-Request an Backend senden
+        confirmDeleteBtn.addEventListener("click", () => {
+            activeCard = document.querySelector(".user-card.active"); // Aktive Karte setzen
+            if (!activeCard) {
+                deleteConfirmModal.classList.add("hidden");
+                return;
+            }
+            const userId = activeCard.dataset.userId;
+            if (!userId) {
+                deleteConfirmModal.classList.add("hidden");
+                return;
+            }
+
+            fetch(`/user_management/${userId}`, {
+                method: "DELETE",
+            })
+              .then((response) => {
+                  deleteConfirmModal.classList.add("hidden");
+                  if (response.ok) {
+                      modal.classList.add("hidden");
+                      window.location.reload();
+                  } else {
+                      // Bei Fehler lassen wir das Backend die Fehlermeldung via Flash anzeigen
+                      window.location.reload();
+                  }
+              })
+              .catch(() => {
+                  // Bei Netzwerkfehlern einfach neu laden, um Flash-Nachrichten zu sehen
+                  deleteConfirmModal.classList.add("hidden");
+                  window.location.reload();
+              });
+        });
+
+        form.addEventListener("submit", (e) => {
+            e.preventDefault(); // Verhindert das standardmäßige Absenden des Formulars
+
+            // Sammle alle Rollen-Checkboxen
+            const roleCheckboxes = form.querySelectorAll('input[name="roles[]"]');
+
+            // Prüfe, ob mindestens eine Checkbox ausgewählt ist
+            const atLeastOneRoleSelected = Array.from(roleCheckboxes).some(checkbox => checkbox.checked);
+
+            // Zeige oder verstecke die Fehlermeldung
+            const rolesError = document.getElementById("rolesError");
+            if (!atLeastOneRoleSelected) {
+                rolesError.style.display = "block";
+                return; // Stoppt die weitere Ausführung der Funktion
+            } else {
+                rolesError.style.display = "none";
+            }
+
+            // Prüfe, ob das Formular gültig ist (einschließlich der HTML5-Validierung)
+            if (!form.checkValidity()) {
+                form.reportValidity(); // Zeigt die Meldung dem Nutzer an
+                return; // Stoppt die weitere Ausführung der Funktion
+            }
+
+            // Restlicher Code für das Absenden des Formulars bleibt gleich
+            // Sammle ausgewählte Rollen-IDs
+            const selectedRoles = Array.from(
+              form.querySelectorAll('input[name="roles[]"]:checked')
+            ).map((checkbox) => checkbox.value);
+
+            // Erstelle ein URLSearchParams-Objekt, um die Formulardaten korrekt zu kodieren
+            const formData = new URLSearchParams();
+            formData.append("first_name", form.first_name.value);
+            formData.append("last_name", form.last_name.value);
+            formData.append("username", form.username.value);
+            formData.append("email", form.email.value);
+
+            // Passwort nur hinzufügen, wenn es nicht leer ist
+            if (form.password.value && form.password.value.trim() !== "") {
+                formData.append("password", form.password.value);
+            }
+
+            // Füge jede ausgewählte Rolle einzeln hinzu
+            selectedRoles.forEach((roleId) => {
+                formData.append("roles[]", roleId);
+            });
+
+            // Ziel-URL und Methode bestimmen
+            let url = "/user_management";
+            let method = "POST";
+
+            activeCard = document.querySelector(".user-card.active");
+            if (title.textContent && !title.textContent.includes("Add new User") && activeCard && activeCard.dataset.userId) {
+                const userId = activeCard.dataset.userId;
+                if (!userId || userId === "undefined") {
+                    console.error("User ID not found for update.");
+                    return;
+                }
+                url = `/user_management/${userId}`;
+                method = "PUT";
+            } else if (title.textContent && title.textContent.includes("Add new User")) {
+                method = "POST";
+                url = "/user_management";
+            } else if (activeCard && activeCard.dataset.userId) {
+                const userId = activeCard.dataset.userId;
+                url = `/user_management/${userId}`;
+                method = "PUT";
+            }
+
+            console.log(
+              `Sending ${method} request to ${url} with body: ${formData.toString()}`
+            );
+
+            fetch(url, {
+                method: method,
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                },
+                body: formData,
+            })
+              .then((response) => {
+                  if (response.ok) {
+                      modal.classList.add("hidden");
+                      window.location.reload();
+                  } else {
+                      console.error("Server responded with an error:", response.status);
+                      response
+                        .text()
+                        .then((text) => console.error("Error details:", text));
+                      window.location.reload();
+                  }
+              })
+              .catch((error) => {
+                  console.error("Network error or problem with fetch:", error);
+                  window.location.reload();
+              });
+        });
+
+
+
+    });
+
+</script>

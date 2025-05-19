@@ -4,7 +4,11 @@ Sequel.migration do
   change do
     create_table(:assignment_logs) do
       primary_key :log_id
-      foreign_key :assignment_id, :license_assignments, null: true, on_delete: :set_null
+      Integer :user_id, null: false
+      String :username, null: false
+      String :email, null: false
+      Integer :license_id, null: false
+      String :license_name, null: false
       DateTime :log_timestamp, null: false, default: Sequel::CURRENT_TIMESTAMP
       String :action, null: false
       String :object, null: false

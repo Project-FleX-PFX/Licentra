@@ -3,7 +3,6 @@
 require_relative '../spec_helper'
 
 RSpec.describe 'Product Management API' do
-  # --- Test User Setup ---
   let!(:admin_user) { create_admin_user }
   let!(:regular_user) { create_regular_user }
 
@@ -82,8 +81,8 @@ RSpec.describe 'Product Management API' do
 
     it 'returns an error if the product does not exist' do
       update_product_via_api(9999, 'Nonexistent Product')
-      expect(response_status).to eq(500)
-      expect(response_body).to include('Error updating product')
+      expect(response_status).to eq(404)
+      expect(response_body).to include('Product not found')
     end
   end
 

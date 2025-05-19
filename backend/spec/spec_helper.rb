@@ -46,6 +46,10 @@ def session
   last_request.env['rack.session'] if last_request
 end
 
+def flash
+  last_request.env['x-rack.flash'] || {}
+end
+
 def app
   LicentraApp.new
 end

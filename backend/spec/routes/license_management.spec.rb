@@ -4,10 +4,6 @@ require_relative '../spec_helper'
 RSpec.describe 'License Management Routes' do
   include Rack::Test::Methods
 
-  def app
-    Sinatra::Application # Oder deine Haupt-App-Klasse
-  end
-
   let!(:admin_user) { create_admin_user(username: 'admin_lic_mgr', email: 'admin_lic_mgr@example.com') }
   let!(:regular_user) { create_regular_user(username: 'user_lic_mgr', email: 'user_lic_mgr@example.com') }
   let!(:product1) { create_product_via_dao(name: 'Software X') }
@@ -61,8 +57,8 @@ RSpec.describe 'License Management Routes' do
         create_license_via_dao( # Erstelle einige Lizenzen, um sie in der Ansicht anzuzeigen
           product: product1,
           license_type: license_type1,
-          license_key: "TESTKEY001",
-          license_name: "Test License 1"
+          license_key: 'TESTKEY001',
+          license_name: 'Test License 1'
         )
         login_as(admin_user)
         get path
@@ -76,7 +72,7 @@ RSpec.describe 'License Management Routes' do
         expect(last_response.body).to include('License Management') # Oder ein spezifischerer Text
         expect(last_response.body).to include(product1.product_name)
         expect(last_response.body).to include(license_type1.license_type_name)
-        expect(last_response.body).to include("TESTKEY001")
+        expect(last_response.body).to include('TESTKEY001')
       end
     end
   end
@@ -121,8 +117,8 @@ RSpec.describe 'License Management Routes' do
 
         it 'sets an error flash message with validation errors' do
           # Simuliere DAO::ValidationError
-          errors_mock = double("errors", full_messages: ["License key can't be blank", "Product must exist"])
-          validation_error = DAO::ValidationError.new("Validation failed")
+          errors_mock = double('errors', full_messages: ["License key can't be blank", 'Product must exist'])
+          validation_error = DAO::ValidationError.new('Validation failed')
           allow(validation_error).to receive(:errors).and_return(errors_mock)
           allow(LicenseDAO).to receive(:create).and_raise(validation_error)
 
@@ -133,7 +129,7 @@ RSpec.describe 'License Management Routes' do
 
       context 'when a generic error occurs' do
         before do
-          allow(LicenseDAO).to receive(:create).and_raise(StandardError.new("Database connection lost"))
+          allow(LicenseDAO).to receive(:create).and_raise(StandardError.new('Database connection lost'))
         end
 
         it 'returns a 500 Internal Server Error status' do
@@ -153,8 +149,9 @@ RSpec.describe 'License Management Routes' do
     let!(:existing_license) { create_license_via_dao(valid_license_attributes) }
     let(:path_proc) { -> { "/license_management/#{existing_license.id}" } } # Proc für lazy evaluation
 
-    include_examples 'admin access only', :put, -> { "/license_management/#{existing_license.id}" }, { license_name: 'updated' }
-
+    include_examples 'admin access only', :put, lambda {
+      "/license_management/#{existing_license.id}"
+    }, { license_name: 'updated' }
 
     context 'when logged in as admin' do
       before { login_as(admin_user) }
@@ -170,12 +167,16 @@ RSpec.describe 'License Management Routes' do
         end
 
         it 'returns a 200 OK status' do
-          put path_proc.call, updated_attributes.merge(product_id: existing_license.product_id, license_type_id: existing_license.license_type_id)
+          put path_proc.call,
+              updated_attributes.merge(product_id: existing_license.product_id,
+                                       license_type_id: existing_license.license_type_id)
           expect(last_response.status).to eq(200)
         end
 
         it 'sets a success flash message' do
-          put path_proc.call, updated_attributes.merge(product_id: existing_license.product_id, license_type_id: existing_license.license_type_id)
+          put path_proc.call,
+              updated_attributes.merge(product_id: existing_license.product_id,
+                                       license_type_id: existing_license.license_type_id)
           expect(flash[:success]).to eq('License successfully updated')
         end
       end
@@ -185,44 +186,54 @@ RSpec.describe 'License Management Routes' do
 
         it 'does not update the license attributes to invalid values' do
           original_name = existing_license.license_name
-          put path_proc.call, invalid_update_attributes.merge(product_id: existing_license.product_id, license_type_id: existing_license.license_type_id)
+          put path_proc.call,
+              invalid_update_attributes.merge(product_id: existing_license.product_id,
+                                              license_type_id: existing_license.license_type_id)
           expect(existing_license.reload.license_name).to eq(original_name) # Sollte nicht geändert werden
         end
 
         it 'returns a 422 Unprocessable Entity status' do
           # Simuliere DAO::ValidationError
-          errors_mock = double("errors", full_messages: ["License name can't be blank"])
-          validation_error = DAO::ValidationError.new("Validation failed")
+          errors_mock = double('errors', full_messages: ["License name can't be blank"])
+          validation_error = DAO::ValidationError.new('Validation failed')
           allow(validation_error).to receive(:errors).and_return(errors_mock)
           allow(LicenseDAO).to receive(:update).and_raise(validation_error)
 
-          put path_proc.call, invalid_update_attributes.merge(product_id: existing_license.product_id, license_type_id: existing_license.license_type_id)
+          put path_proc.call,
+              invalid_update_attributes.merge(product_id: existing_license.product_id,
+                                              license_type_id: existing_license.license_type_id)
           expect(last_response.status).to eq(422)
         end
 
         it 'sets an error flash message with validation errors' do
-          errors_mock = double("errors", full_messages: ["License name can't be blank"])
-          validation_error = DAO::ValidationError.new("Validation failed")
+          errors_mock = double('errors', full_messages: ["License name can't be blank"])
+          validation_error = DAO::ValidationError.new('Validation failed')
           allow(validation_error).to receive(:errors).and_return(errors_mock)
           allow(LicenseDAO).to receive(:update).and_raise(validation_error)
 
-          put path_proc.call, invalid_update_attributes.merge(product_id: existing_license.product_id, license_type_id: existing_license.license_type_id)
+          put path_proc.call,
+              invalid_update_attributes.merge(product_id: existing_license.product_id,
+                                              license_type_id: existing_license.license_type_id)
           expect(flash[:error]).to eq("License name can't be blank")
         end
       end
 
       context 'when a generic error occurs' do
         before do
-          allow(LicenseDAO).to receive(:update).and_raise(StandardError.new("Concurrency issue"))
+          allow(LicenseDAO).to receive(:update).and_raise(StandardError.new('Concurrency issue'))
         end
 
         it 'returns a 500 Internal Server Error status' do
-          put path_proc.call, { license_name: 'test' }.merge(product_id: existing_license.product_id, license_type_id: existing_license.license_type_id)
+          put path_proc.call,
+              { license_name: 'test' }.merge(product_id: existing_license.product_id,
+                                             license_type_id: existing_license.license_type_id)
           expect(last_response.status).to eq(500)
         end
 
         it 'sets a generic error flash message' do
-          put path_proc.call, { license_name: 'test' }.merge(product_id: existing_license.product_id, license_type_id: existing_license.license_type_id)
+          put path_proc.call,
+              { license_name: 'test' }.merge(product_id: existing_license.product_id,
+                                             license_type_id: existing_license.license_type_id)
           expect(flash[:error]).to eq('Error updating license: Concurrency issue')
         end
       end
@@ -259,8 +270,8 @@ RSpec.describe 'License Management Routes' do
       context 'when deletion fails (e.g., due to associated records or DAO validation)' do
         before do
           # Simuliere einen Fehler beim Löschen, z.B. eine DAO::ValidationError
-          errors_mock = double("errors", full_messages: ["Cannot delete license with active assignments"])
-          validation_error = DAO::ValidationError.new("Deletion failed")
+          errors_mock = double('errors', full_messages: ['Cannot delete license with active assignments'])
+          validation_error = DAO::ValidationError.new('Deletion failed')
           allow(validation_error).to receive(:errors).and_return(errors_mock)
           allow(LicenseDAO).to receive(:delete).with(license_to_delete.id.to_s).and_raise(validation_error)
         end
@@ -284,7 +295,7 @@ RSpec.describe 'License Management Routes' do
 
       context 'when a generic error occurs during deletion' do
         before do
-          allow(LicenseDAO).to receive(:delete).with(license_to_delete.id.to_s).and_raise(StandardError.new("Filesystem error"))
+          allow(LicenseDAO).to receive(:delete).with(license_to_delete.id.to_s).and_raise(StandardError.new('Filesystem error'))
         end
 
         it 'returns a 500 Internal Server Error status' do
@@ -298,26 +309,25 @@ RSpec.describe 'License Management Routes' do
         end
       end
 
-       context 'when trying to delete a non-existent license' do
+      context 'when trying to delete a non-existent license' do
         before do
           # Stelle sicher, dass LicenseDAO.delete eine DAO::RecordNotFound wirft, wenn der Datensatz nicht existiert.
           # Wenn es nur false zurückgibt oder einen allgemeinen Fehler, passe dies an.
           # Hier wird angenommen, dass ein Standardfehler ausgelöst wird, der in einen 500-Status umgewandelt wird.
-          allow(LicenseDAO).to receive(:delete).with('nonexistentid').and_raise(DAO::RecordNotFound.new("License not found"))
+          allow(LicenseDAO).to receive(:delete).with('nonexistentid').and_raise(DAO::RecordNotFound.new('License not found'))
         end
 
         it 'returns a 500 status (oder 404, je nach Fehlerbehandlung in der Route)' do
           # Die aktuelle Route fängt DAO::RecordNotFound nicht explizit ab, daher wird es als StandardError behandelt => 500
-          delete "/license_management/nonexistentid"
+          delete '/license_management/nonexistentid'
           expect(last_response.status).to eq(500)
         end
 
         it 'sets an error flash message' do
-          delete "/license_management/nonexistentid"
+          delete '/license_management/nonexistentid'
           expect(flash[:error]).to include('Error deleting license: License not found')
         end
       end
     end
   end
 end
-
