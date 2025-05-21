@@ -130,7 +130,7 @@ module AdminRoutes
       begin
         @user = UserDAO.find!(user_id)
         @assignments = LicenseAssignmentDAO.find_by_user(user_id)
-        erb :'admin/user_management_assignments', layout: :'layouts/application'
+        erb :'admin/user_management/assignments', layout: :'layouts/application'
       rescue DAO::RecordNotFound
         halt 404, 'User not found'
       end
