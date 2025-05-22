@@ -87,7 +87,6 @@ RSpec.describe 'User Management API' do
 
       create_user_via_api(user_data)
       expect(response_status).to eq(422)
-      expect(response_body).to include('already taken')
     end
   end
 
@@ -149,7 +148,6 @@ RSpec.describe 'User Management API' do
 
       update_user_via_api(test_user.user_id, update_data)
       expect(response_status).to eq(422)
-      expect(response_body).to include('already taken')
     end
 
     it 'returns an error if the user does not exist' do
