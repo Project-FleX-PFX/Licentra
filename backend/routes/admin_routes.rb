@@ -16,6 +16,7 @@ module AdminRoutes
       @licenses = LicenseDAO.all
       @assignments = LicenseAssignmentDAO.all
       @logs = AssignmentLogDAO.all
+      @security_logs = SecurityLogDAO.all
 
       erb :'admin/data_view/index', layout: :'layouts/application'
     end
