@@ -18,6 +18,10 @@ module UserRoleLogging
     log_warn("UserRole assignment not found for User ID #{user_id} and Role ID #{role_id}")
   end
 
+  def log_assignment_not_found_by_criteria(criteria)
+    log_warn("UserRole assignment not found for criteria: #{criteria.inspect}")
+  end
+
   def log_assignments_for_user_fetched(user_id, count)
     log_info("Fetched #{count} role assignments for User ID #{user_id}")
   end
@@ -40,5 +44,21 @@ module UserRoleLogging
 
   def log_validation_failed(assignment, context)
     log_warn("Validation failed while #{context} assignment: #{assignment.errors.inspect}")
+  end
+
+  def log_admin_protection_deleting_assignments_for_user(user_id)
+    log_warn("Attempt to remove all roles from the last admin user ID #{user_id} was prevented")
+  end
+
+  def log_admin_protection_deleting_admin_for_user(user_id)
+    log_warn("Attempt to remove the last admin role from user ID #{user_id} was prevented")
+  end
+
+  def log_admin_protection_deleting_admin_role
+    log_warn("Attempt to remove the admin role from all users was prevented")
+  end
+
+  def log_admin_protection(context)
+    log_warn("Admin protection denied: #{context}")
   end
 end

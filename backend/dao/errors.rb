@@ -17,4 +17,6 @@ module DAO
   end
 
   class DatabaseError < DAOError; end
+
+  class AdminProtectionError < DAOError; end
 end

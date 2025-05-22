@@ -30,30 +30,42 @@ module AdminRoutes
 
     app.post '/user_management' do
       require_role('Admin')
-      user_data = {
-        username: params[:username],
-        email: params[:email],
-        first_name: params[:first_name],
-        last_name: params[:last_name],
-        is_active: true,
-        credential_attributes: {
-          password: params[:password]
-        }
-      }
 
       begin
-        user = User.new(user_data)
-        user.save_changes
+        # Erstelle den Benutzer über UserDAO
+        user_data = {
+          username: params[:username],
+          email: params[:email],
+          first_name: params[:first_name],
+          last_name: params[:last_name],
+          is_active: true
+        }
 
+        # Verwende die create-Methode des UserDAO (erwartet ein Hash)
+        user = UserDAO.create(user_data)
+
+        # Setze das Passwort über UserCredentialDAO
+        if params[:password] && !params[:password].empty?
+          # UserCredentialDAO.create erwartet ein Hash mit Attributen
+          UserCredentialDAO.create({
+                                     user_id: user.user_id,
+                                     password: params[:password]
+                                   })
+        end
+
+        # Füge Rollen hinzu über UserRoleDAO
         if params[:roles].is_a?(Array)
           params[:roles].each do |role_id|
-            role = RoleDAO.find(role_id)
-            user.add_role(role) if role
+            # UserRoleDAO.create erwartet zwei separate Parameter
+            UserRoleDAO.create(user.user_id, role_id.to_i)
           end
         end
 
         flash[:success] = 'User successfully created'
         status 200
+      rescue DAO::RecordNotFound
+        status 404
+        flash[:error] = 'Role not found.'
       rescue Sequel::ValidationFailed => e
         status 422
         flash[:error] = e.errors.full_messages.join(', ')
@@ -72,20 +84,38 @@ module AdminRoutes
         user = UserDAO.find!(user_id)
 
         update_data = params.slice(:username, :email, :first_name, :last_name).compact
-        user.set(update_data) unless update_data.empty?
 
+        # Aktualisiere Benutzerdaten
+        unless update_data.empty?
+          UserDAO.update(user_id, update_data)
+          user.refresh
+        end
+
+        # Aktualisiere Passwort, falls angegeben
         if params[:password] && !params[:password].empty?
           user.credential.password = params[:password]
           user.credential.save_changes
         end
 
-        user.save_changes
-
+        # Aktualisiere Rollen, falls angegeben
         if params[:roles].is_a?(Array)
-          user.remove_all_roles
+          # Prüfe, ob der Benutzer ein Admin ist und ob es nur einen Admin gibt
+          is_admin = UserRoleDAO.is_user_admin?(user_id)
+          admin_count = UserRoleDAO.count_admins
+          admin_role_id = UserRoleDAO.get_admin_role_id
+
+          # Wenn der Benutzer der letzte Admin ist und die Admin-Rolle nicht in den neuen Rollen enthalten ist
+          if is_admin && admin_count <= 1 && !params[:roles].include?(admin_role_id.to_s)
+            status 403
+            flash[:error] = "Cannot remove the admin role from the last admin user"
+            return
+          end
+
+          # Entferne alle bestehenden Rollen und füge die neuen hinzu
+          UserRoleDAO.delete_by_user(user_id) # Diese Methode enthält bereits den Admin-Schutz
+
           params[:roles].each do |role_id|
-            role = RoleDAO.find(role_id)
-            user.add_role(role) if role
+            UserRoleDAO.create(user_id, role_id.to_i)
           end
         end
 
@@ -94,6 +124,9 @@ module AdminRoutes
       rescue DAO::RecordNotFound
         status 404
         flash[:error] = 'User not found.'
+      rescue DAO::AdminProtectionError => e
+        status 403
+        flash[:error] = e.message
       rescue Sequel::ValidationFailed => e
         status 422
         flash[:error] = e.errors.full_messages.join(', ')
@@ -104,25 +137,35 @@ module AdminRoutes
       end
     end
 
+
     app.delete '/user_management/:user_id' do
       require_role('Admin')
       user_id = params[:user_id]
 
       begin
-        user = UserDAO.find!(user_id)
-        user.delete
+        if UserRoleDAO.is_user_admin?(user_id) && UserRoleDAO.count_admins <= 1
+          status 403
+          flash[:error] = "Cannot delete the last admin user from the system"
+          return
+        end
+
+        UserDAO.delete(user_id)
 
         flash[:success] = 'User successfully deleted'
         status 200
       rescue DAO::RecordNotFound
         status 404
         flash[:error] = 'User not found.'
+      rescue DAO::AdminProtectionError => e
+        status 403
+        flash[:error] = e.message
       rescue StandardError => e
         logger.error "Error deleting user: #{e.message}\n#{e.backtrace.join("\n")}"
         status 500
         flash[:error] = "Error deleting user: #{e.message}"
       end
     end
+
 
     app.get '/user_management/:user_id/assignments' do
       require_role('Admin')

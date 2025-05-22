@@ -20,4 +20,21 @@ module UserRoleErrorHandling
     log_assignment_not_found_by_criteria(criteria)
     raise DAO::RecordNotFound, "UserRole assignment not found for criteria: #{criteria.inspect}"
   end
+
+  def handle_admin_protection(context)
+    log_admin_protection(context)
+
+    message = case context
+              when /deleting assignment for user_id .+, role_id .+/
+                "Cannot remove the admin role from the last administrator"
+              when /deleting all assignments for user_id .+/
+                "Cannot remove all roles from the last administrator"
+              when /deleting all assignments for role_id .+/
+                "Cannot remove the admin role from the system"
+              else
+                "This operation would leave the system without administrators"
+              end
+
+    raise DAO::AdminProtectionError, message
+  end
 end
