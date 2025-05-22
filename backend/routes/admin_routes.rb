@@ -67,7 +67,7 @@ module AdminRoutes
         flash[:error] = 'Role not found.'
       rescue DAO::ValidationError => e
         status 422
-        format_creation_error(e)
+        dao_validation_format_creation_error(e)
       rescue StandardError => e
         logger.error "Error creating user: #{e.message}\n#{e.backtrace.join("\n")}"
         status 500
@@ -92,20 +92,9 @@ module AdminRoutes
           UserCredentialDAO.update_password(user_to_update.user_id, params[:password])
         end
 
-        if params[:roles].is_a?(Array)
-          is_admin = UserRoleDAO.is_user_admin?(user_to_update.user_id)
-          admin_count = UserRoleDAO.count_admins
-          admin_role = RoleDAO.find_by_name('Admin')
-
-          if is_admin && admin_count <= 1 && admin_role && !params[:roles].include?(admin_role.role_id.to_s)
-            status 403
-            flash[:error] = "Cannot remove admin role from the last admin ('#{user_to_update.username}')."
-            return
-          end
-          UserRoleDAO.delete_by_user(user_to_update.user_id) # Wirft DAO::AdminProtectionError
-          params[:roles].each do |role_id|
-            UserRoleDAO.create(user_to_update.user_id, role_id.to_i) # Wirft DAO::RecordNotFound für Rolle
-          end
+        if params.key?(:roles)
+          new_role_ids = params[:roles].is_a?(Array) ? params[:roles] : []
+          UserRoleDAO.set_user_roles(user_to_update.user_id, new_role_ids)
         end
 
         flash[:success] = "User '#{user_to_update.username}' was successfully updated."
@@ -116,10 +105,10 @@ module AdminRoutes
         flash[:error] = e.message
       rescue DAO::ValidationError => e
         status 422
-        format_update_error(e)
+        dao_validation_format_update_error(e)
       rescue DAO::AdminProtectionError => e
         status 403
-        flash[:error] = e.message
+        dao_admin_protection_error(e)
       rescue StandardError => e
         logger.error "Unexpected error updating user #{user_id}: #{e.class} - #{e.message}\n#{e.backtrace.join("\n")}"
         status 500
@@ -137,11 +126,11 @@ module AdminRoutes
       begin
         if UserRoleDAO.is_user_admin?(user_id) && UserRoleDAO.count_admins <= 1
           status 403
-          flash[:error] = "Cannot delete the last admin user from the system"
+          flash[:error] = "Admin protection: Cannot delete the last admin user from the system"
           return
         elsif LicenseAssignmentDAO.count_by_user(user_id) > 0
           status 422
-          flash[:error] = "Cannot delete users with license assignments, delete those assignments first"
+          flash[:error] = "User protection: Cannot delete users with license assignments, delete those assignments first"
           return
         end
 

@@ -1,5 +1,5 @@
 module RoutesErrorHelpers
-  def format_creation_error(error)
+  def dao_validation_format_creation_error(error)
     error_messages_array = error.errors.full_messages
 
     if error_messages_array.any?
@@ -10,7 +10,7 @@ module RoutesErrorHelpers
     end
   end
 
-  def format_update_error(error)
+  def dao_validation_format_update_error(error)
     error_messages_array = error.errors.full_messages
 
     if error_messages_array.any?
@@ -21,6 +21,11 @@ module RoutesErrorHelpers
     end
   end
 
+  def dao_admin_protection_error(error)
+    flash[:error] = "Admin protection: #{error.message}"
+  end
+
+  private
   def format_error_message(error_messages_array)
     error_messages_array.map.with_index do |message, index|
       if index == 0

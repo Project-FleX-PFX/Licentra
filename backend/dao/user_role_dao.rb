@@ -172,5 +172,37 @@ class UserRoleDAO < BaseDAO
       end
     end
 
+    def set_user_roles(user_id, new_role_ids_str_or_int)
+      target_role_ids = new_role_ids_str_or_int.map(&:to_i).to_set
+
+      context = "setting roles for user_id #{user_id} to [#{target_role_ids.to_a.join(', ')}]"
+
+      with_error_handling(context) do
+        DB.transaction do
+          current_assignments = model_class.where(user_id: user_id).all
+          current_role_ids = current_assignments.map(&:role_id).to_set
+
+          admin_role_id_db = get_admin_role_id
+
+          if is_user_admin?(user_id) && count_admins <= 1 && admin_role_id_db && !target_role_ids.include?(admin_role_id_db)
+            log_admin_protection("Attempt to remove admin role from last admin (user_id: #{user_id}) during role synchronization.")
+            handle_admin_protection("Cannot remove admin role from the last administrator (user ID: #{user_id}) when setting roles.")
+          end
+
+          roles_to_remove_ids = current_role_ids - target_role_ids
+          roles_to_remove_ids.each do |role_id|
+            delete_assignment(user_id, role_id)
+          end
+
+          roles_to_add_ids = target_role_ids - current_role_ids
+          roles_to_add_ids.each do |role_id|
+            create(user_id, role_id)
+          end
+
+          log_info("Roles for user_id #{user_id} synchronized. Added IDs: [#{roles_to_add_ids.to_a.join(', ')}], Removed IDs: [#{roles_to_remove_ids.to_a.join(', ')}]. Target IDs: [#{target_role_ids.to_a.join(', ')}]")
+        end
+        true
+      end
+    end
   end
 end
