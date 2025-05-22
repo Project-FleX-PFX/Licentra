@@ -171,7 +171,24 @@ class UserDAO < BaseDAO
       end
     end
 
-    
+    def may_reset_password_based_on_user_object?(user_object)
+      context = "checking if user #{user_object[:user_id]} may reset password"
+      with_error_handling(context) do
+        return false unless user_object && user_object[:is_active]
+
+        last_reset_time = user_object[:last_password_reset_requested_at]
+        return true if last_reset_time.nil?
+
+        (Time.now - last_reset_time) > (24 * 60 * 60)
+      end
+    end
+
+    def record_password_reset_request(user_id)
+      context = "recording password reset request for user #{user_id}"
+      with_error_handling(context) do
+        DB[:users].where(user_id: user_id).update(last_password_reset_requested_at: Time.now)
+      end
+    end
 
     private
 
@@ -232,6 +249,22 @@ class UserDAO < BaseDAO
           log_error("Failed to #{action_description_for_log_and_context.downcase} for user ID #{user_instance.pk}. No rows updated.")
           nil
         end
+      end
+    end
+
+    def may_request_password_reset?(user)
+      return false unless user
+
+      is_active = user[:is_active]
+      last_request_time = user[:last_password_reset_requested_at]
+
+      return false unless is_active
+
+      if last_request_time.nil?
+        true
+      else
+        one_day_ago = Time.now - (24 * 60 * 60)
+        last_request_time < one_day_ago
       end
     end
   end

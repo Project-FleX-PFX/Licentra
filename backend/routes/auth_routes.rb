@@ -75,5 +75,26 @@ module AuthRoutes
         erb :'auth/register', layout: false
       end
     end
+
+    app.get '/forgot-password' do
+      erb :'auth/forgot-password', layout: false
+    end
+
+    app.post '/forgot-password' do
+      email = params[:email]
+      user = UserDAO.find_by_email(email)
+
+      if user && UserDAO.may_reset_password_based_on_user_object?(user)
+
+        # TODO: Token generation + Mail
+
+        UserDAO.record_password_reset_request(user[:user_id])
+        puts "DEBUG: Passwort-Reset für #{email} angefordert und berechtigt. TODO: Token & Mail."
+      else
+        puts "DEBUG: Passwort-Reset für #{email} angefordert, aber nicht berechtigt oder Nutzer nicht gefunden."
+      end
+      flash[:notice] = "As long as there is an active account with this information an email has been sent. Please check your mail and spam folder."
+      redirect '/login'
+    end
   end
 end
