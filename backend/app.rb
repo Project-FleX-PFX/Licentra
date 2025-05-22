@@ -30,6 +30,8 @@ class LicentraApp < Sinatra::Base
 
   configure :production, :development do
     set :host_authorization, { permitted_hosts: ['licensemanager.licentra.de', 'localhost', '127.0.0.1'] }
+    disable :show_exceptions
+    disable :raise_errors
   end
 
   configure :test do
@@ -53,6 +55,7 @@ class LicentraApp < Sinatra::Base
   register LicenseRoutes
   register AdminRoutes
   register HistoryRoutes
+  register ErrorHandlers
 end
 
 run LicentraApp if __FILE__ == $PROGRAM_NAME
