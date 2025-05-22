@@ -171,6 +171,8 @@ class UserDAO < BaseDAO
       end
     end
 
+    
+
     private
 
     # Helper methods to reduce complexity
