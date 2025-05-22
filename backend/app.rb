@@ -4,6 +4,7 @@ require 'sinatra'
 require 'sequel'
 require 'sinatra/base'
 require 'rack/flash'
+require 'dotenv/load'
 require_relative 'config/environment'
 
 # Load all files in order
@@ -11,6 +12,9 @@ Dir.glob('./dao/*.rb').sort.each { |file| require file }
 Dir.glob('./helpers/*.rb').sort.each { |file| require file }
 Dir.glob('./services/*.rb').sort.each { |file| require file }
 Dir.glob('./routes/*.rb').sort.each { |file| require file }
+
+# Load .env Variable
+Dotenv.load(File.expand_path('./.env', __dir__))
 
 class LicentraApp < Sinatra::Base
   enable :method_override
