@@ -33,6 +33,15 @@ class LicenseDAO < BaseDAO
       end
     end
 
+    def count_by_product(product_id)
+      context = "counting licenses for product ID #{product_id}"
+      with_error_handling(context) do
+        count = where(product_id: product_id).count
+        log_licenses_for_product_fetched(product_id, count)
+        count
+      end
+    end
+
     def find_by_license_type(license_type_id)
       context = "finding licenses for type ID #{license_type_id}"
       with_error_handling(context) do

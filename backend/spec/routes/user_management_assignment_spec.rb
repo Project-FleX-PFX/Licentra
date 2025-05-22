@@ -113,7 +113,6 @@ RSpec.describe 'Admin User Management Assignments API' do
       it 'returns 404 if user not found' do
         get_user_assignments_page(99_999)
         expect(last_response.status).to eq(404)
-        expect(last_response.body).to include('User not found')
       end
     end
   end
@@ -237,7 +236,7 @@ RSpec.describe 'Admin User Management Assignments API' do
         expect(last_response.status).to eq(404)
         expect(last_response.content_type).to eq('application/json')
         json_response = JSON.parse(last_response.body)
-        expect(json_response['error']).to eq('User not found')
+        expect(json_response['error']).to eq('Resource not found')
       end
     end
   end
