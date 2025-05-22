@@ -26,7 +26,7 @@ class LicentraApp < Sinatra::Base
 
   configure :production, :development do
     set :host_authorization, { permitted_hosts: ['licensemanager.licentra.de', 'localhost', '127.0.0.1'] }
-    disable :show_exceptions
+    enable :show_exceptions
     disable :raise_errors
   end
 
@@ -35,8 +35,11 @@ class LicentraApp < Sinatra::Base
         { permitted_hosts: ['licensemanager.licentra.de', 'localhost', '127.0.0.1', 'example.org'] }
   end
 
+  helpers AdminDataHelpers
   helpers AuthHelpers
+  helpers AuthFormHelpers
   helpers ApplicationHelpers
+  helpers RoutesErrorHelpers
 
   get '/' do
     redirect logged_in? ? '/profile' : '/login'

@@ -62,7 +62,7 @@ RSpec.describe 'User Management API' do
       }
 
       create_user_via_api(user_data)
-      expect(response_status).to eq(200)
+      expect(response_status).to eq(201)
 
       user = User.first(username: 'newuser')
       expect(user).not_to be_nil
@@ -83,7 +83,7 @@ RSpec.describe 'User Management API' do
       }
 
       create_user_via_api(user_data)
-      expect(response_status).to eq(200)
+      expect(response_status).to eq(201)
 
       create_user_via_api(user_data)
       expect(response_status).to eq(422)
@@ -251,7 +251,7 @@ RSpec.describe 'User Management API' do
       }
 
       create_user_via_api(user_data)
-      expect(response_status).to eq(200)
+      expect(response_status).to eq(201)
 
       created_user = User.first(username: 'adminuser')
       expect(created_user).not_to be_nil
@@ -287,7 +287,7 @@ RSpec.describe 'User Management API' do
       }
 
       create_user_via_api(user_data)
-      expect(response_status).to eq(200)
+      expect(response_status).to eq(201)
 
       created_user = User.first(username: 'deletetest')
       expect(created_user).not_to be_nil

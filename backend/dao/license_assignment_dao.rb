@@ -44,12 +44,30 @@ class LicenseAssignmentDAO < BaseDAO
       end
     end
 
+    def count_by_license(license_id)
+      context = "finding assignments for license ID #{license_id}"
+      with_error_handling(context) do
+        count = where(license_id: license_id).count
+        log_assignments_for_license_fetched(license_id, count)
+        count
+      end
+    end
+
     def find_by_user(user_id)
       context = "finding assignments for user ID #{user_id}"
       with_error_handling(context) do
         assignments = where(user_id: user_id)
         log_assignments_for_user_fetched(user_id, assignments.size)
         assignments
+      end
+    end
+
+    def count_by_user(user_id)
+      context = "counting assignments for user ID #{user_id}"
+      with_error_handling(context) do
+        count = where(user_id: user_id).count
+        log_assignments_for_user_fetched(user_id, count)
+        count
       end
     end
 
