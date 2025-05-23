@@ -9,6 +9,7 @@ GEM
     database_cleaner-sequel (2.0.2)
       database_cleaner-core (~> 2.0.0)
       sequel
+    date (3.4.1)
     diff-lcs (1.6.1)
     dotenv (3.1.8)
     erubi (1.13.1)
@@ -18,10 +19,26 @@ GEM
     i18n (1.14.7)
       concurrent-ruby (~> 1.0)
     logger (1.7.0)
+    mail (2.8.1)
+      mini_mime (>= 0.1.1)
+      net-imap
+      net-pop
+      net-smtp
+    mini_mime (1.1.5)
     mini_portile2 (2.8.8)
     mustermann (3.0.3)
       ruby2_keywords (~> 0.0.1)
+    net-imap (0.5.8)
+      date
+      net-protocol
+    net-pop (0.1.2)
+      net-protocol
+    net-protocol (0.2.2)
+      timeout
+    net-smtp (0.5.1)
+      net-protocol
     nio4r (2.7.4)
+    openssl (3.3.0)
     pg (1.5.9)
     puma (6.6.0)
       nio4r (~> 2.0)
@@ -66,18 +83,22 @@ GEM
     sqlite3 (1.7.3)
       mini_portile2 (~> 2.8.0)
     tilt (2.6.0)
+    timeout (0.4.3)
 
 PLATFORMS
   ruby
   x86_64-linux
 
 DEPENDENCIES
+  base64
   bcrypt
   database_cleaner-sequel
   dotenv
   erubi (>= 1.12.0)
   fabrication
   faker
+  mail
+  openssl
   pg
   puma
   rack-flash3

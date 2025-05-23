@@ -4,11 +4,11 @@ require 'sequel'
 require 'logger'
 
 unless ENV['RACK_ENV'] == 'test'
-  db_host = ENV.fetch('POSTGRES_HOST', 'db')
-  db_name = ENV.fetch('POSTGRES_DB', 'licentra_development')
-  db_user = ENV.fetch('POSTGRES_USER', 'myusername')
-  db_pass = ENV.fetch('POSTGRES_PASSWORD', 'mypassword')
-  db_port = ENV.fetch('POSTGRES_PORT', 5432)
+  db_host = ENV.fetch('DATABASE_HOST', 'db')
+  db_name = ENV.fetch('DATABASE_NAME', 'licentra_development')
+  db_user = ENV.fetch('DATABASE_USER', 'myusername')
+  db_pass = ENV.fetch('DATABASE_PASSWORD', 'mypassword')
+  db_port = ENV.fetch('DATABASE_PORT', 5432)
 
   DATABASE_URL = "postgres://#{db_user}:#{db_pass}@#{db_host}:#{db_port}/#{db_name}"
 

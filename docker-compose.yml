@@ -19,6 +19,8 @@ services:
       DATABASE_NAME: ${POSTGRES_DB}
       DATABASE_USER: ${POSTGRES_USER}
       DATABASE_PASSWORD: ${POSTGRES_PASSWORD}
+      SESSION_SECRET: ${SESSION_SECRET}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
     volumes:
       - ./backend:/app
       - ./frontend:/app/frontend
