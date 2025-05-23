@@ -57,5 +57,25 @@
         </form>
       </div>
     </div>
+
+    <div class="card shadow-lg border-0 rounded-3">
+      <div class="card-header bg-info text-white text-center py-3 rounded-top">
+        <h4 class="fw-bold mb-0"><i class="fas fa-paper-plane me-2"></i> Test SMTP Settings</h4>
+      </div>
+      <div class="card-body p-4 p-md-5">
+        <form id="test-smtp-form" action="/admin/settings/test_smtp" method="post">
+          <div class="mb-3">
+            <label for="test_email_recipient" class="form-label small">Send Test Email To:</label>
+            <input type="email" id="test_email_recipient" name="test_email_recipient" class="form-control py-2 rounded-3" placeholder="Enter recipient email address" value="<%= session[:admin_email] || '' %>" required>
+            <small class="form-text text-muted">A test email will be sent to this address using the currently saved SMTP settings.</small>
+          </div>
+          <div class="d-flex justify-content-end mt-4">
+            <button type="submit" id="test-smtp-button" class="btn btn-info btn-lg px-5 rounded-3">
+              <i class="fas fa-paper-plane me-2"></i> Send Test Email
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   </div>
 </div>
