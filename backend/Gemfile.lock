@@ -72,6 +72,7 @@ GEM
       rspec-support (~> 3.13.0)
     rspec-support (3.13.2)
     ruby2_keywords (0.0.5)
+    securerandom (0.4.1)
     sequel (5.91.0)
       bigdecimal
     sinatra (4.1.1)
@@ -109,6 +110,7 @@ DEPENDENCIES
   rackup
   rake
   rspec
+  securerandom
   sequel
   sinatra (>= 4.1.0)
   sqlite3 (~> 1.7.3)

@@ -1,0 +1,77 @@
+<%# views/layouts/layout_auth.erb %>
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title><%= @title || "Licentra - Authentication" %></title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/png" href="/images/icon.png">
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" integrity="sha512-1ycn6IcaQQ40/MKBW2W4Rhis/DbILU74C1vSrLJxCq57o941Ym01SwNsOMqvEBFlcgUa6xLiPY/NS5R+E6ztJQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <%# <link rel="stylesheet" href="/css/auth_pages.css"> %>
+</head>
+<body class="bg-light">
+<div class="container">
+  <div class="row justify-content-center align-items-center min-vh-100 py-4">
+    <div class="col-md-6 col-lg-5 col-xl-4">
+      <div class="card shadow-lg border-0 rounded-3">
+        <div class="card-header bg-white text-center py-4 rounded-top-3">
+          <div class="mb-3">
+            <img src="/images/LizentraLogo.png" alt="Licentra Logo" class="img-fluid" style="max-width: 180px;">
+          </div>
+          <h3 class="fw-bold text-primary mb-0"><%= @page_heading || "Welcome" %></h3>
+        </div>
+
+        <div class="card-body p-4">
+          <%# Flash-Nachrichten %>
+          <% if defined?(flash) %>
+            <% [:notice, :success, :info, :warning, :error].each do |type| %>
+              <% if flash[type] && !flash[type].empty? %>
+                <% alert_class = case type
+                                 when :success then 'alert-success'
+                                 when :error   then 'alert-danger'
+                                 when :warning then 'alert-warning'
+                                 else 'alert-info'
+                                 end %>
+                <div class="alert <%= alert_class %> alert-dismissible fade show rounded-3" role="alert">
+                  <%= flash[type] %>
+                  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+              <% end %>
+            <% end %>
+          <% end %>
+
+          <%# Spezifische @error Anzeige %>
+          <% if defined?(@error) && @error && !@error.empty? %>
+            <div class="alert alert-danger alert-dismissible fade show rounded-3" role="alert">
+              <%= @error %>
+              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+          <% end %>
+
+          <%== yield %>
+        </div>
+
+        <%# Footer-Bereich: Wird jetzt über eine Instanzvariable gesteuert,
+              die den Namen eines Partials enthält oder nil ist. %>
+        <% if @auth_card_footer_partial %>
+          <%== erb @auth_card_footer_partial, layout: false %>
+        <% else %>
+          <%# Standard-Footer, wenn keine View einen spezifischen Footer wünscht %>
+          <div class="card-footer text-center py-3 bg-white rounded-bottom-3">
+            <div class="small">
+              <a href="/login" class="text-decoration-none text-primary">Back to Login</a>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+
+<%# Seitenspezifische Skripte werden nun direkt in den jeweiligen Views am Ende platziert. %>
+</body>
+</html>
