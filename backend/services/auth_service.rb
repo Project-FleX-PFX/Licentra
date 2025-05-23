@@ -27,7 +27,7 @@ class AuthService
       email: params[:email],
       first_name: params[:first_name],
       last_name: params[:last_name],
-      is_active: true,
+      is_active: false,
       credential_attributes: { password: params[:password] }
     )
 
