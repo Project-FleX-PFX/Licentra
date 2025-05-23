@@ -1,4 +1,7 @@
 #Example
-POSTGRES_USER=""
-POSTGRES_PASSWORD=""
-POSTGRES_DB=""
+POSTGRES_USER="[my-db-user]"
+POSTGRES_PASSWORD="[my-very-secure-password]"
+POSTGRES_DB="[database_name]"
+SESSION_SECRET="[32 byte Hex]"
+ENCRYPTION_KEY="[32 byte Hex]"
+APP_BASE_URL="[url_of_app]"

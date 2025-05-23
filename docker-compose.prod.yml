@@ -2,3 +2,4 @@ services:
   backend:
     environment:
       ENVIRONMENT: production
+      APP_BASE_URL: ${APP_BASE_URL}

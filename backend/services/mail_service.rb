@@ -92,7 +92,11 @@ module MailService
       end
     end
 
-    puts "DEBUG: Mail delivery_options: #{delivery_options.inspect}" # Für Debugging
+    options_for_log = delivery_options.dup # Erstelle eine Kopie
+    if options_for_log.key?(:password) && options_for_log[:password].is_a?(String) && !options_for_log[:password].empty?
+      options_for_log[:password] = "[FILTERED]" # Maskiere das Passwort
+    end
+    puts "DEBUG: Mail delivery_options (filtered): #{options_for_log.inspect}"
 
     Mail.defaults do
       delivery_method :smtp, delivery_options
