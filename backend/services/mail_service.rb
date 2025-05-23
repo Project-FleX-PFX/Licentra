@@ -79,21 +79,47 @@ module MailService
     raise SendError, error_message
   end
 
-  # Zukünftige Methode für Passwort-Reset-E-Mails
-  def self.send_password_reset_email(recipient_email, reset_token, user_id)
-    # configure_mailer!
-    # from_address = AppConfigDAO.get_smtp_settings[:username]
-    # reset_link = "https://ihre-licentra-domain.com/reset_password?token=#{reset_token}&user_id=#{user_id}"
-    #
-    # Mail.deliver do
-    #   to      recipient_email
-    #   from    from_address
-    #   subject 'Licentra - Password Reset Request'
-    #   body    "Hello,\n\nPlease click the following link to reset your password:\n#{reset_link}\n\nIf you did not request this, please ignore this email."
-    # end
-    # true
+  def self.send_password_reset_email(recipient_email, klartext_token, user_id)
+    configure_mailer! # Stellt sicher, dass Mailer konfiguriert ist
+
+    from_address = AppConfigDAO.get_smtp_settings[:username]
+
+    # 1. RACK_ENV sicher abrufen, standardmäßig auf 'development' setzen, falls nicht vorhanden
+    rack_env = ENV.fetch('RACK_ENV', 'development')
+
+    # 2. base_url basierend auf rack_env bestimmen
+    base_url = if rack_env == 'production'
+                 # In Produktion MUSS APP_BASE_URL gesetzt sein.
+                 # ENV.fetch ohne zweiten Parameter löst einen Fehler aus, wenn der Key nicht existiert.
+                 ENV.fetch('APP_BASE_URL')
+               else
+                 # Für andere Umgebungen (development, test, etc.)
+                 # Erlaube ein Überschreiben durch APP_BASE_URL, aber setze einen lokalen Standardwert.
+                 ENV.fetch('APP_BASE_URL', 'http://localhost:4567')
+               end
+    reset_link = "#{base_url}/reset_password?token=#{CGI.escape(klartext_token)}"
+
+    mail_content = Mail.new do
+      from     from_address
+      to       recipient_email
+      subject  'Licentra - Password Reset Request'
+      body     "Hello,\n\nPlease click the following link to reset your password:\n#{reset_link}\n\nThis link will expire in #{PasswordResetTokenDAO::TOKEN_VALIDITY_HOURS} hour(s).\n\nIf you did not request this, please ignore this email."
+    end
+
+    puts "DEBUG: Attempting to send password reset email to #{recipient_email}"
+    mail_content.deliver!
+    puts "DEBUG: Password reset email to #{recipient_email} sent successfully."
+    true
+  rescue ConfigurationError => e
+    puts "ERROR (Configuration) sending reset mail: #{e.message}"
+    raise SendError, e.message
+  rescue Net::SMTPAuthenticationError, Net::SMTPServerBusy, Net::SMTPFatalError, Net::SMTPSyntaxError, Timeout::Error => e
+    error_message = "SMTP Error while sending reset email to #{recipient_email}: #{e.class} - #{e.message}"
+    puts "ERROR (SMTP) sending reset mail: #{error_message}"
+    raise SendError, error_message
   rescue => e
-    # Fehlerbehandlung
-    # raise SendError, "Failed to send password reset email: #{e.message}"
+    error_message = "Generic error while sending reset email to #{recipient_email}: #{e.class} - #{e.message}"
+    puts "ERROR (Generic) sending reset mail: #{error_message}"
+    raise SendError, error_message
   end
 end
