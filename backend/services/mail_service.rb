@@ -11,6 +11,60 @@ module MailService
       raise ConfigurationError, "SMTP settings are not fully configured. Please check admin settings."
     end
 
+    required_keys = [:server, :port, :username, :password]
+    missing_keys = []
+    invalid_values = {}
+
+    required_keys.each do |key|
+      value = smtp_settings[key]
+      if value.nil? || (value.is_a?(String) && value.empty?)
+        missing_keys << key
+      end
+    end
+
+    unless missing_keys.empty?
+      raise ConfigurationError, "SMTP settings are incomplete. Missing or empty: #{missing_keys.join(', ')}. Please check admin settings."
+    end
+
+    # Spezifische Port-Validierung
+    port = smtp_settings[:port]
+    unless port.is_a?(Integer) && port > 0 && port <= 65535
+      # Versuche, den Port zu einem Integer zu konvertieren, falls er als String vorliegt
+      begin
+        port_as_int = Integer(port)
+        if port_as_int > 0 && port_as_int <= 65535
+          smtp_settings[:port] = port_as_int # Korrigierten Wert verwenden
+        else
+          invalid_values[:port] = "must be a valid port number (1-65535), got '#{port}'"
+        end
+      rescue ArgumentError, TypeError
+        invalid_values[:port] = "must be a valid integer port number, got '#{port.class}: #{port}'"
+      end
+    end
+
+    # Weitere Validierungen (optional, aber gut):
+    # Server-Adresse könnte auf ein einfaches Format geprüft werden (nicht leer, keine offensichtlich falschen Zeichen)
+    unless smtp_settings[:server].is_a?(String) && !smtp_settings[:server].strip.empty?
+      invalid_values[:server] = "must be a non-empty string, got '#{smtp_settings[:server].class}'"
+    end
+    # Username (E-Mail) könnte auf ein E-Mail-Format geprüft werden
+    unless smtp_settings[:username].is_a?(String) && smtp_settings[:username].match?(URI::MailTo::EMAIL_REGEXP)
+      invalid_values[:username] = "must be a valid email address, got '#{smtp_settings[:username]}'"
+    end
+    # Security-Typ könnte auf gültige Werte geprüft werden
+    valid_security_types = ['SSL', 'TLS', 'NONE', nil, ''] # nil oder leer für Auto-Detection oder Default
+    unless valid_security_types.include?(smtp_settings[:security]&.upcase)
+      invalid_values[:security] = "must be one of #{valid_security_types.compact.join(', ')}, got '#{smtp_settings[:security]}'"
+    end
+
+
+    unless invalid_values.empty?
+      error_details = invalid_values.map { |k, v| "#{k} #{v}" }.join('; ')
+      raise ConfigurationError, "Invalid SMTP settings: #{error_details}. Please check admin settings."
+    end
+
+    # --- ENDE VALIDIERUNG ---
+
     delivery_options = {
       address:        smtp_settings[:server],
       port:           smtp_settings[:port].to_i,
@@ -43,10 +97,12 @@ module MailService
     Mail.defaults do
       delivery_method :smtp, delivery_options
     end
-  rescue AppConfigDAO::DecryptionError => e
-    raise ConfigurationError, "Failed to decrypt SMTP settings: #{e.message}"
-  rescue => e
-    raise ConfigurationError, "Error loading/configuring SMTP settings: #{e.message}"
+  rescue AppConfigDAO::ConfigLoadError => e # Fängt den Fehler vom DAO
+    # Dieser Fehler beinhaltet bereits, dass die Konfiguration (wahrscheinlich wegen Entschlüsselung) fehlgeschlagen ist.
+    # Wir wandeln ihn in einen EmailService-spezifischen Konfigurationsfehler um.
+    raise ConfigurationError, "Failed to configure mailer due to an issue with SMTP settings: #{e.message}"
+  rescue => e # Andere unerwartete Fehler während der Konfiguration selbst
+    raise ConfigurationError, "Unexpected error during mailer configuration: #{e.message}"
   end
 
   def self.send_test_email(recipient_email)
@@ -67,15 +123,16 @@ module MailService
     puts "DEBUG: Test email to #{recipient_email} sent successfully."
     true
   rescue ConfigurationError => e
-    puts "ERROR (Configuration): #{e.message}"
-    raise SendError, e.message
+    # Dieser Fehler kommt von configure_mailer! oder direkt von hier, falls get_smtp_settings fehlschlägt
+    puts "ERROR (Configuration) in send_test_email: #{e.message}"
+    raise SendError, "Cannot send email: Mailer configuration failed. #{e.message}" # Bessere Nachricht
   rescue Net::SMTPAuthenticationError, Net::SMTPServerBusy, Net::SMTPFatalError, Net::SMTPSyntaxError, Timeout::Error => e
     error_message = "SMTP Error while sending test email to #{recipient_email}: #{e.class} - #{e.message}"
-    puts "ERROR (SMTP): #{error_message}"
+    puts "ERROR (SMTP) in send_test_email: #{error_message}"
     raise SendError, error_message
-  rescue => e
+  rescue => e # Alle anderen Fehler (z.B. SocketError, etc.)
     error_message = "Generic error while sending test email to #{recipient_email}: #{e.class} - #{e.message}\n#{e.backtrace.join("\n")}"
-    puts "ERROR (Generic): #{error_message}"
+    puts "ERROR (Generic) in send_test_email: #{error_message}"
     raise SendError, error_message
   end
 
