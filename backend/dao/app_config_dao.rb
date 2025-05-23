@@ -3,6 +3,8 @@ require_relative '../lib/encryption_service'
 # dao/app_config_dao.rb
 module AppConfigDAO
   SMTP_SETTINGS_KEY = 'smtp_settings'.freeze
+
+  class ConfigLoadError < StandardError; end
   def self.save_smtp_settings(settings_from_form_hash)
     current_decrypted_settings = get_smtp_settings || {}
     new_password_input = settings_from_form_hash[:smtp_password_from_form]
@@ -39,9 +41,24 @@ module AppConfigDAO
 
   def self.get_smtp_settings
     record = DB[:app_configurations].where(key: SMTP_SETTINGS_KEY).first
-    return nil unless record && record[:encrypted_value_package]
+    return nil unless record && record[:encrypted_value_package] # Wenn kein Eintrag da ist oder leer
 
-    decrypted_settings = EncryptionService.decrypt(record[:encrypted_value_package])
-    decrypted_settings
+    begin
+      decrypted_settings = EncryptionService.decrypt(record[:encrypted_value_package])
+      decrypted_settings # Gibt die entschlüsselten Einstellungen oder nil (falls decrypt nil zurückgibt) zurück
+    rescue EncryptionService::DecryptionError => e
+      # Spezifischen Entschlüsselungsfehler vom EncryptionService fangen
+      error_message = "Failed to load SMTP settings due to a decryption issue: #{e.message}"
+      puts "AppConfigDAO: #{error_message}"
+      # Entscheiden, wie hierauf reagiert werden soll:
+      # Option 1: Einen DAO-spezifischen Fehler werfen
+      raise ConfigLoadError, error_message
+      # Option 2: nil zurückgeben und den Aufrufer damit umgehen lassen
+      # return nil
+    rescue => e # Andere unerwartete Fehler beim Laden
+      error_message = "Unexpected error loading SMTP settings: #{e.class} - #{e.message}"
+      puts "AppConfigDAO: #{error_message}"
+      raise ConfigLoadError, error_message
+    end
   end
 end
