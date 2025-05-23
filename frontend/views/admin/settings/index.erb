@@ -43,9 +43,9 @@
 
           <div class="mb-4">
             <label for="smtp_password" class="form-label small">Password</label>
-            <input type="password" id="smtp_password" name="smtp_password" class="form-control py-2 rounded-3" placeholder="Enter SMTP password" <%== 'value="' + (@smtp_settings && @smtp_settings[:password_placeholder].to_s) + '"' if @smtp_settings && @smtp_settings[:password_placeholder] %>>
+            <input type="password" id="smtp_password" name="smtp_password" class="form-control py-2 rounded-3" placeholder="Enter new password (only if changing)">
             <small class="form-text text-muted">
-              Enter password only if you want to change it. Stored securely.
+              Leave blank to keep the current password. Enter a new password only if you want to change it.
             </small>
           </div>
 
