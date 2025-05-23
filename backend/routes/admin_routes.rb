@@ -438,5 +438,41 @@ module AdminRoutes
         flash[:error] = "Error deleting license: #{e.message}"
       end
     end
+
+    app.get '/admin/settings' do
+      require_role('Admin')
+      @title = "SMTP Configuration Licentra"
+      @smtp_settings = AppConfigDAO.get_smtp_settings
+      erb :'admin/settings/index', layout: :'layouts/application'
+    end
+
+    app.post '/admin/settings' do
+      require_role('Admin')
+
+      settings_from_form = {
+        server: params[:smtp_server]&.strip,
+        port: params[:smtp_port]&.strip.to_i,
+        security: params[:smtp_security]&.strip,
+        username: params[:smtp_username]&.strip,
+        smtp_password_from_form: params[:smtp_password]
+      }
+
+      if settings_from_form.slice(:server, :port, :security, :username).values.any?(&:nil?) || \
+         settings_from_form.slice(:server, :security, :username).values.any?(&:empty?) || \
+         settings_from_form[:port] == 0
+        flash[:error] = "Server, Port, Security, and Username are required."
+        redirect '/admin/settings'
+        return
+      end
+
+
+      if AppConfigDAO.save_smtp_settings(settings_from_form)
+        flash[:success] = "SMTP settings saved successfully."
+      else
+        flash[:error] = "Failed to save SMTP settings. Please check logs."
+      end
+      redirect '/admin/settings'
+
+    end
   end
 end
