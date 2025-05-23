@@ -1,48 +1,31 @@
 # frozen_string_literal: true
 
-source 'https://rubygems.org' # Die primäre Quelle für Gems [1]
+source 'https://rubygems.org'
 
-# Gems, die in allen Umgebungen benötigt werden (production, development, test)
 gem 'bcrypt'
-# gem 'base64' # base64 ist Teil der Ruby Standard Library, kein separates Gem nötig
-# gem 'json'   # json ist Teil der Ruby Standard Library, kein separates Gem nötig
-gem 'pg'                # Für PostgreSQL-Verbindung
-gem 'puma'              # Webserver für Produktion und ggf. Entwicklung
+gem 'pg'
+gem 'puma'
 gem 'rackup'
-gem 'rake'              # Für Rake-Tasks (z.B. Migrationen)
-gem 'sequel'            # ORM
-gem 'sinatra', '>= 4.1.0' # Web-Framework
-gem 'tilt', '>= 2.2.0'    # Template-Engine-Interface
-gem 'erubi', '>= 1.12.0'  # ERB-Handler für Tilt
-gem 'rack-protection'     # Sicherheitsmiddleware für Rack-Anwendungen
-gem 'rack-flash3'         # Für Flash-Nachrichten
-gem 'dotenv'              # Zum Laden von .env Dateien (hauptsächlich für Development/Test)
-# gem 'securerandom' # securerandom ist Teil der Ruby Standard Library
-gem 'mail'                # Für E-Mail-Versand
-# gem 'openssl' # openssl ist eine C-Extension, die normalerweise mit Ruby kommt und für Verschlüsselung benötigt wird
+gem 'rake'
+gem 'sequel'
+gem 'sinatra', '>= 4.1.0'
+gem 'tilt', '>= 2.2.0'
+gem 'erubi', '>= 1.12.0'
+gem 'rack-protection'
+gem 'rack-flash3'
+gem 'mail'
 
-# Gems nur für die Entwicklungsumgebung
 group :development do
-  # Hier könnten Gems wie 'pry' (Debugging), 'sinatra-reloader' etc. stehen
-  # gem 'pry'
-  # gem 'sinatra-reloader'
 end
 
-# Gems nur für die Testumgebung
 group :test do
-  gem 'database_cleaner-sequel' # Spezifisches Gem für Sequel [3]
-  gem 'fabrication'             # Für die Erstellung von Testdaten
-  gem 'faker'                   # Zur Generierung von Fake-Daten für Tests
-  gem 'rack-test', require: 'rack/test' # Für das Testen von Rack-Anwendungen
-  gem 'rspec'                   # Test-Framework
-  # sqlite3 wird oft in Tests als schnelle In-Memory-DB verwendet, wenn nicht gegen die echte PG getestet wird.
-  # Wenn Sie immer gegen PostgreSQL testen, ist es hier nicht zwingend nötig, es sei denn,
-  # ein anderes Test-Gem benötigt es explizit.
-  gem 'sqlite3', '~> 1.7.3' # Für Tests, falls verwendet
+  gem 'database_cleaner-sequel'
+  gem 'fabrication'
+  gem 'faker'
+  gem 'rack-test', require: 'rack/test'
+  gem 'rspec'
+  gem 'sqlite3', '~> 1.7.3'
 end
 
-# Gems, die sowohl in Entwicklung als auch in Tests nützlich sein können
 group :development, :test do
-  # z.B. Gems für Code-Qualität oder detailliertere Logs
-  # gem 'rubocop', require: false
 end
