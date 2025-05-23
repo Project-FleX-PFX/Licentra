@@ -54,6 +54,9 @@
       <a href="/license_management" class="list-group-item list-group-item-action bg-dark text-white border-secondary border-start-0 border-end-0 <%= 'active' if request.path_info == '/license_management' %>">
         <i class="fas fa-key me-2"></i> License Management
       </a>
+      <a href="/admin/settings" class="list-group-item list-group-item-action bg-dark text-white border-secondary border-start-0 border-end-0 <%= 'active' if request.path_info == '/admin/settings' %>">
+        <i class="fas fa-cogs me-2"></i> SMTP Settings
+      </a>
       <a href="/data" class="list-group-item list-group-item-action bg-dark text-white border-secondary border-start-0 border-end-0 <%= 'active' if request.path_info == '/data' %>">
         <i class="fas fa-database me-2"></i> Raw Data View
       </a>
