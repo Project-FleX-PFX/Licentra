@@ -54,6 +54,17 @@ class UserDAO < BaseDAO
       find_by_email(email) || handle_record_not_found_by_email(email)
     end
 
+    def find_by_id(id_value)
+      return nil if id_value.nil?
+      context = "finding user by ID #{id_value}"
+
+      with_error_handling(context) do
+        user = find_one_by(self.primary_key => id_value)
+        log_info("User lookup by ID: #{id_value}, Found: #{!user.nil?}") if user
+        user
+      end
+    end
+
     # Advanced query methods
     def where(criteria)
       context = "filtering #{model_class_name_plural} by criteria"
