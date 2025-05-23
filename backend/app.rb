@@ -6,6 +6,7 @@ require 'sinatra/base'
 require 'rack/flash'
 
 require_relative 'config/environment'
+require_relative 'lib/encryption_service'
 
 # Load all files in order
 Dir.glob('./dao/*.rb').sort.each { |file| require file }
