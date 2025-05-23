@@ -474,5 +474,38 @@ module AdminRoutes
       redirect '/admin/settings'
 
     end
+
+    app.post '/admin/settings/test_smtp' do
+      require_role('Admin')
+
+      recipient_email = params[:test_email_recipient]&.strip
+
+      if recipient_email.nil? || recipient_email.empty? || !recipient_email.match?(URI::MailTo::EMAIL_REGEXP)
+        flash[:error] = "Invalid recipient email address provided for the test."
+        redirect '/admin/settings'
+      end
+
+      begin
+        puts "Attempting to send test email via EmailService to: #{recipient_email}"
+        MailService.send_test_email(recipient_email)
+        flash[:success] = "Test email successfully sent to #{recipient_email}. Please check the inbox (and spam folder)."
+      rescue MailService::ConfigurationError => e
+        # Dieser Fehler kommt, wenn SMTP nicht konfiguriert ist oder die Konfig nicht geladen/entschlüsselt werden konnte
+        error_message = "SMTP Configuration Error: #{e.message}. Please verify your SMTP settings."
+        puts "ERROR in /admin/settings/test_smtp: #{error_message}"
+        flash[:error] = error_message
+      rescue MailService::SendError => e
+        # Dieser Fehler kommt bei SMTP-Problemen während des Versands
+        error_message = "Failed to send test email: #{e.message}"
+        puts "ERROR in /admin/settings/test_smtp: #{error_message}"
+        flash[:error] = error_message
+      rescue => e # Alle anderen unerwarteten Fehler
+        error_message = "An unexpected error occurred: #{e.message}"
+        puts "ERROR in /admin/settings/test_smtp (Unexpected): #{e.class} - #{e.message}\n#{e.backtrace.join("\n")}"
+        flash[:error] = error_message
+      end
+
+      redirect '/admin/settings'
+    end
   end
 end
