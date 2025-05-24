@@ -49,6 +49,7 @@ class LicentraApp < Sinatra::Base
 
   get '/home' do
     require_login
+    @user = current_user
   erb :home, layout: :'layouts/application'
   end
 
