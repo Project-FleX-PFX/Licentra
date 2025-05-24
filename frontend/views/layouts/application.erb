@@ -26,6 +26,9 @@
     
     <div class="list-group list-group-flush">
   <!-- Gemeinsame Links für alle Benutzer -->
+  <a href="/home" class="list-group-item list-group-item-action bg-dark text-white border-secondary border-start-0 border-end-0 <%= 'active' if request.path_info == '/home' %>">
+    <i class="fas fa-user me-2"></i> Home
+  </a>
   <a href="/profile" class="list-group-item list-group-item-action bg-dark text-white border-secondary border-start-0 border-end-0 <%= 'active' if request.path_info == '/profile' %>">
     <i class="fas fa-user me-2"></i> Profile
   </a>
