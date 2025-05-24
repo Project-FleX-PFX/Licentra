@@ -8,7 +8,7 @@ module AuthRoutes
     app.helpers AuthFormHelpers
 
     app.get '/login' do
-      redirect '/profile' if logged_in?
+      redirect '/' if logged_in?
       erb :'auth/login', layout: false
     end
 
@@ -69,7 +69,7 @@ module AuthRoutes
       begin
         user = AuthService.register(params)
         session[:user_id] = user.user_id
-        redirect '/profile'
+        redirect '/'
       rescue StandardError => e
         @error = "Registration error: #{e.message}"
         erb :'auth/register', layout: false
