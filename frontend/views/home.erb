@@ -1,0 +1,71 @@
+<% @title = "Welcome" %>
+<!-- Frage ist noch:
+     - wo den pfad hin weil gerade einfach in app.rb -->
+
+<div class="container py-4">
+  <div class="row">
+    <div class="col-xl-8 mx-auto">
+      <div class="card shadow-sm rounded-3">
+        <div class="card-header bg-primary text-white">
+          <h3 class="mb-0">Welcome to Licentra license managemer</h3>
+        </div>
+        <div class="card-body">
+          <p class="page-description mb-4">
+            Here you can manage your profile and licenses. Choose what you want to do:
+          </p>
+          <div class="row row-cols-1 row-cols-md-2 g-4">
+            <!-- My Profile -->
+            <div class="col">
+              <div class="card home-nav-card h-100" data-target="/profile" style="cursor:pointer;">
+                <div class="card-body d-flex flex-column align-items-start">
+                  <i class="fas fa-user fa-2x text-primary mb-3"></i>
+                  <h5 class="card-title">My Profile</h5>
+                  <p class="card-text flex-grow-1">View and edit your user information.</p>
+                  <button class="btn btn-outline-primary mt-auto">Go to Profile</button>
+                </div>
+              </div>
+            </div>
+            <!-- All Licenses -->
+            <div class="col">
+              <div class="card home-nav-card h-100" data-target="/licenses" style="cursor:pointer;">
+                <div class="card-body d-flex flex-column align-items-start">
+                  <i class="fas fa-key fa-2x text-success mb-3"></i>
+                  <h5 class="card-title">All Licenses</h5>
+                  <p class="card-text flex-grow-1">Browse all available licenses in the system.</p>
+                  <button class="btn btn-outline-success mt-auto">Show Licenses</button>
+                </div>
+              </div>
+            </div>
+            <!-- My Licenses -->
+            <div class="col">
+              <div class="card home-nav-card h-100" data-target="/my-licenses" style="cursor:pointer;">
+                <div class="card-body d-flex flex-column align-items-start">
+                  <i class="fas fa-id-badge fa-2x text-warning mb-3"></i>
+                  <h5 class="card-title">My Licenses</h5>
+                  <p class="card-text flex-grow-1">See all licenses assigned to you.</p>
+                  <button class="btn btn-outline-warning mt-auto">Show My Licenses</button>
+                </div>
+              </div>
+            </div>
+            <!-- History -->
+            <div class="col">
+              <div class="card home-nav-card h-100" data-target="/history" style="cursor:pointer;">
+                <div class="card-body d-flex flex-column align-items-start">
+                  <i class="fas fa-history fa-2x text-info mb-3"></i>
+                  <h5 class="card-title">History</h5>
+                  <p class="card-text flex-grow-1">Check your license request and usage history.</p>
+                  <button class="btn btn-outline-info mt-auto">Show History</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { initHomeHandler } from '/js/home/homeHandler.js';
+  document.addEventListener('DOMContentLoaded', initHomeHandler);
+</script>
