@@ -74,7 +74,7 @@ module AuthRoutes
       begin
         user = AuthService.register(params)
         session[:user_id] = user.user_id
-        redirect '/profile'
+        redirect '/'
       rescue StandardError => e
         @error = "Registration error: #{e.message}"
         erb :'auth/register', layout: :'layouts/auth'
