@@ -11,19 +11,31 @@ require_relative 'security_log_error_handling'
 # Provides an interface for creating and querying security-relevant logs.
 class SecurityLogDAO < BaseDAO
   module Actions
-    LOGIN_SUCCESS = 'login success'
-    LOGIN_FAILURE = 'login failure'
+    LOGIN_SUCCESS          = 'login success'
+    LOGIN_FAILURE          = 'login failure'
     PASSWORD_RESET_REQUEST = 'password reset request'
-    PASSWORD_CHANGED = 'password changed'
-    USER_CREATED = 'user created'
-    USER_UPDATED = 'user updated'
-    USER_DELETED = 'user deleted'
-    PRODUCT_CREATED = 'product created'
-    PRODUCT_UPDATED = 'product updated'
-    PRODUCT_DELETED = 'product deleted'
-    LICENSE_CREATED = 'license created'
-    LICENSE_UPDATED = 'license updated'
-    LICENSE_DELETED = 'license deleted'
+    PASSWORD_CHANGED       = 'password changed'
+    USER_CREATED           = 'user created'
+    USER_UPDATED           = 'user updated'
+    USER_DELETED           = 'user deleted'
+    USER_LOCKED            = 'user locked'
+    PRODUCT_CREATED        = 'product created'
+    PRODUCT_UPDATED        = 'product updated'
+    PRODUCT_DELETED        = 'product deleted'
+    LICENSE_CREATED        = 'license created'
+    LICENSE_UPDATED        = 'license updated'
+    LICENSE_DELETED        = 'license deleted'
+
+    ALL_ACTIONS = [
+      LOGIN_SUCCESS, LOGIN_FAILURE, PASSWORD_RESET_REQUEST, PASSWORD_CHANGED,
+      USER_CREATED, USER_UPDATED, USER_DELETED, USER_LOCKED,
+      PRODUCT_CREATED, PRODUCT_UPDATED, PRODUCT_DELETED,
+      LICENSE_CREATED, LICENSE_UPDATED, LICENSE_DELETED
+    ].freeze
+  end
+
+  module Objects
+    ALL_OBJECTS = %w[UserSession UserAccount Product License].freeze
   end
 
   class << self
@@ -46,71 +58,87 @@ class SecurityLogDAO < BaseDAO
 
     def log_login_success(user:)
       details = "User '#{user.username}' (ID: #{user.id}) successfully logged in."
-      create_log_entry(action: Actions::LOGIN_SUCCESS, object: 'UserSession', acting_user: user, details: details)
+      create_log_entry(action: Actions::LOGIN_SUCCESS, object: Objects::ALL_OBJECTS[0], acting_user: user,
+                       details: details)
     end
 
     def log_login_failure(attempted_username:, ip_address: nil)
       details = "Failed login attempt for username '#{attempted_username}'."
       details += " IP: #{ip_address}." if ip_address
-      create_log_entry(action: Actions::LOGIN_FAILURE, object: 'UserSession', acting_user: _unknown_user_for_logging,
+      create_log_entry(action: Actions::LOGIN_FAILURE, object: Objects::ALL_OBJECTS[0], acting_user: _unknown_user_for_logging,
                        details: details)
     end
 
     def log_password_reset_request(user_making_request:, target_email:)
       details = "Password reset requested for email '#{target_email}' by user '#{user_making_request.username}' (ID: #{user_making_request.id})."
-      create_log_entry(action: Actions::PASSWORD_RESET_REQUEST, object: 'UserAccount',
+      create_log_entry(action: Actions::PASSWORD_RESET_REQUEST, object: Objects::ALL_OBJECTS[1],
                        acting_user: user_making_request, details: details)
     end
 
     def log_password_changed(user_who_changed_password:)
       details = "Password changed for user '#{user_who_changed_password.username}' (ID: #{user_who_changed_password.id})."
-      create_log_entry(action: Actions::PASSWORD_CHANGED, object: 'UserAccount',
+      create_log_entry(action: Actions::PASSWORD_CHANGED, object: Objects::ALL_OBJECTS[1],
                        acting_user: user_who_changed_password, details: details)
     end
 
     def log_user_created(acting_user:, created_user:)
       details = "User '#{created_user.username}' (ID: #{created_user.id}) was created by '#{acting_user.username}' (ID: #{acting_user.id})."
-      create_log_entry(action: Actions::USER_CREATED, object: 'UserAccount', acting_user: acting_user, details: details)
+      create_log_entry(action: Actions::USER_CREATED, object: Objects::ALL_OBJECTS[1], acting_user: acting_user,
+                       details: details)
     end
 
     def log_user_updated(acting_user:, updated_user:, changes_description: 'details updated')
       details = "User '#{updated_user.username}' (ID: #{updated_user.id}) was updated by '#{acting_user.username}' (ID: #{acting_user.id}). Changes: #{changes_description}."
-      create_log_entry(action: Actions::USER_UPDATED, object: 'UserAccount', acting_user: acting_user, details: details)
+      create_log_entry(action: Actions::USER_UPDATED, object: Objects::ALL_OBJECTS[1], acting_user: acting_user,
+                       details: details)
     end
 
     def log_user_deleted(acting_user:, deleted_user_username:, deleted_user_id:)
       details = "User '#{deleted_user_username}' (ID: #{deleted_user_id}) was deleted by '#{acting_user.username}' (ID: #{acting_user.id})."
-      create_log_entry(action: Actions::USER_DELETED, object: 'UserAccount', acting_user: acting_user, details: details)
+      create_log_entry(action: Actions::USER_DELETED, object: Objects::ALL_OBJECTS[1], acting_user: acting_user,
+                       details: details)
+    end
+
+    def log_user_locked(acting_user:, locked_user:, reason: 'Account locked due to too many invalid login attempts.')
+      details = "User '#{locked_user.username}' (ID: #{locked_user.user_id}) was locked by '#{@_system_user_for_logging.username}' (ID: #{@_system_user_for_logging.user_id}). Reason: #{reason}."
+      create_log_entry(action: Actions::USER_LOCKED, object: Objects::ALL_OBJECTS[1], acting_user: acting_user,
+                       details: details)
     end
 
     def log_product_created(acting_user:, product:)
       details = "Product '#{product.product_name}' (ID: #{product.id}) was created by '#{acting_user.username}' (ID: #{acting_user.id})."
-      create_log_entry(action: Actions::PRODUCT_CREATED, object: 'Product', acting_user: acting_user, details: details)
+      create_log_entry(action: Actions::PRODUCT_CREATED, object: Objects::ALL_OBJECTS[2], acting_user: acting_user,
+                       details: details)
     end
 
     def log_product_updated(acting_user:, product:, changes_description: 'details updated')
       details = "Product '#{product.product_name}' (ID: #{product.id}) was updated by '#{acting_user.username}' (ID: #{acting_user.id}). Changes: #{changes_description}."
-      create_log_entry(action: Actions::PRODUCT_UPDATED, object: 'Product', acting_user: acting_user, details: details)
+      create_log_entry(action: Actions::PRODUCT_UPDATED, object: Objects::ALL_OBJECTS[2], acting_user: acting_user,
+                       details: details)
     end
 
     def log_product_deleted(acting_user:, deleted_product_name:, deleted_product_id:)
       details = "Product '#{deleted_product_name}' (ID: #{deleted_product_id}) was deleted by '#{acting_user.username}' (ID: #{acting_user.id})."
-      create_log_entry(action: Actions::PRODUCT_DELETED, object: 'Product', acting_user: acting_user, details: details)
+      create_log_entry(action: Actions::PRODUCT_DELETED, object: Objects::ALL_OBJECTS[2], acting_user: acting_user,
+                       details: details)
     end
 
     def log_license_created(acting_user:, license:)
       details = "License '#{license.license_name}' (ID: #{license.id}) for product '#{license.product&.product_name}' was created by '#{acting_user.username}' (ID: #{acting_user.id})."
-      create_log_entry(action: Actions::LICENSE_CREATED, object: 'License', acting_user: acting_user, details: details)
+      create_log_entry(action: Actions::LICENSE_CREATED, object: Objects::ALL_OBJECTS[3], acting_user: acting_user,
+                       details: details)
     end
 
     def log_license_updated(acting_user:, license:, changes_description: 'details updated')
       details = "License '#{license.license_name}' (ID: #{license.id}) was updated by '#{acting_user.username}' (ID: #{acting_user.id}). Changes: #{changes_description}."
-      create_log_entry(action: Actions::LICENSE_UPDATED, object: 'License', acting_user: acting_user, details: details)
+      create_log_entry(action: Actions::LICENSE_UPDATED, object: Objects::ALL_OBJECTS[3], acting_user: acting_user,
+                       details: details)
     end
 
     def log_license_deleted(acting_user:, deleted_license_name:, deleted_license_id:)
       details = "License '#{deleted_license_name}' (ID: #{deleted_license_id}) was deleted by '#{acting_user.username}' (ID: #{acting_user.id})."
-      create_log_entry(action: Actions::LICENSE_DELETED, object: 'License', acting_user: acting_user, details: details)
+      create_log_entry(action: Actions::LICENSE_DELETED, object: Objects::ALL_OBJECTS[3], acting_user: acting_user,
+                       details: details)
     end
 
     # --- CRUD Methoden ---
@@ -210,6 +238,20 @@ class SecurityLogDAO < BaseDAO
     end
 
     DEFAULT_PER_PAGE = 25
+
+    def distinct_actions
+      context = 'fetching distinct security log actions'
+      with_error_handling(context) do
+        Actions::ALL_ACTIONS.sort
+      end
+    end
+
+    def distinct_objects
+      context = 'fetching distinct security log objects'
+      with_error_handling(context) do
+        Objects::ALL_OBJECTS.sort
+      end
+    end
 
     def find_with_details(filters = {}, options = {})
       context = "finding security logs with details and filters: #{filters}"
@@ -314,14 +356,14 @@ class SecurityLogDAO < BaseDAO
       action = action_param&.strip
       return dataset if action.nil? || action.empty?
 
-      dataset.where(Sequel.ilike(:action, "%#{action}%"))
+      dataset.where(action: action)
     end
 
     def _apply_filter_object(dataset, object_param)
       object = object_param&.strip
       return dataset if object.nil? || object.empty?
 
-      dataset.where(Sequel.ilike(:object, "%#{object}%"))
+      dataset.where(object: object)
     end
 
     def _apply_filter_details_contains(dataset, details_query_param)

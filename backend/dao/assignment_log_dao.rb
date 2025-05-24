@@ -15,6 +15,15 @@ class AssignmentLogDAO < BaseDAO
     ADMIN_DEACTIVATED = 'admin deactivated license'
     ADMIN_APPROVED = 'admin approved assignment'
     ADMIN_CANCELED = 'admin canceled assignment'
+
+    ALL_ACTIONS = [
+      USER_ACTIVATED,
+      ADMIN_ACTIVATED,
+      USER_DEACTIVATED,
+      ADMIN_DEACTIVATED,
+      ADMIN_APPROVED,
+      ADMIN_CANCELED
+    ].freeze
   end
 
   class << self
@@ -161,6 +170,13 @@ class AssignmentLogDAO < BaseDAO
 
     DEFAULT_PER_PAGE = 25
 
+    def distinct_actions
+      context = 'fetching distinct assignment log actions'
+      with_error_handling(context) do
+        Actions::ALL_ACTIONS.sort
+      end
+    end
+
     def find_with_details(filters = {}, options = {})
       context = "finding assignment logs with details and filters: #{filters}"
       with_error_handling(context) do
@@ -169,7 +185,8 @@ class AssignmentLogDAO < BaseDAO
 
         dataset = _apply_user_filter(dataset, filters[:user_id])
         dataset = _apply_license_filter(dataset, filters[:license_id])
-        dataset = _apply_action_filter(dataset, filters[:action])
+        dataset = _apply_specific_action_filter(dataset, filters[:action])
+        dataset = _apply_details_filter(dataset, filters[:details_contains])
         dataset = _apply_object_filter(dataset, filters[:object])
         dataset = _apply_date_from_filter(dataset, filters[:date_from])
         dataset = _apply_date_to_filter(dataset, filters[:date_to])
@@ -179,9 +196,7 @@ class AssignmentLogDAO < BaseDAO
         paginated_dataset = dataset.paginate(page, per_page)
 
         logs = paginated_dataset.all
-        # rubocop:disable Layout/LineLength
         log_info("Fetched #{logs.size} assignment logs. Page: #{page}, PerPage: #{per_page}, TotalRecords: #{paginated_dataset.pagination_record_count}")
-        # rubocop:enable Layout/LineLength
 
         {
           logs: logs,
@@ -298,11 +313,18 @@ class AssignmentLogDAO < BaseDAO
       dataset.where(license_id: license_id)
     end
 
-    def _apply_action_filter(dataset, action_param)
+    def _apply_specific_action_filter(dataset, action_param)
       action = action_param&.strip
       return dataset if action.nil? || action.empty?
 
-      dataset.where(Sequel.ilike(:action, "%#{action}%"))
+      dataset.where(action: action)
+    end
+
+    def _apply_details_filter(dataset, details_query_param)
+      query = details_query_param&.strip
+      return dataset if query.nil? || query.empty?
+
+      dataset.where(Sequel.ilike(:details, "%#{query}%"))
     end
 
     def _apply_object_filter(dataset, object_param)

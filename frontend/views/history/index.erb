@@ -1,0 +1,373 @@
+<h1 class="text-start mb-4">History Logs</h1>
+
+<ul class="nav nav-tabs" id="historyTabs" role="tablist">
+  <li class="nav-item" role="presentation">
+    <button class="nav-link <%= 'active' if @active_tab == 'assignments' %>" id="assignments-tab" data-bs-toggle="tab" data-bs-target="#assignments-pane" type="button" role="tab" aria-controls="assignments-pane" aria-selected="<%= @active_tab == 'assignments' %>">
+      <i class="fas fa-tasks me-1"></i> Assignment Logs
+    </button>
+  </li>
+  <li class="nav-item" role="presentation">
+    <button class="nav-link <%= 'active' if @active_tab == 'security' %>" id="security-tab" data-bs-toggle="tab" data-bs-target="#security-pane" type="button" role="tab" aria-controls="security-pane" aria-selected="<%= @active_tab == 'security' %>">
+      <i class="fas fa-shield-alt me-1"></i> Security Logs
+    </button>
+  </li>
+</ul>
+
+<div class="tab-content" id="historyTabsContent">
+  <div class="tab-pane fade <%= 'show active' if @active_tab == 'assignments' %>" id="assignments-pane" role="tabpanel" aria-labelledby="assignments-tab" tabindex="0">
+    <div class="card mt-3">
+      <div class="card-header">
+        <i class="fas fa-filter me-1"></i> Filter Assignment Logs
+      </div>
+      <div class="card-body">
+        <form method="get" action="/history" class="row g-3 align-items-end">
+          <input type="hidden" name="active_tab" value="assignments">
+
+          <% if current_user.admin? %>
+            <div class="col-md-3">
+              <label for="assignment_user_id_filter" class="form-label">User:</label>
+              <select name="assignment_user_id_filter" id="assignment_user_id_filter" class="form-select">
+                <option value="">-- All Users --</option>
+                <% @all_users.each do |u| %>
+                  <option value="<%= u.user_id %>" <%= 'selected' if @assignment_filter_params[:user_id] == u.user_id %>>
+                    <%= u.username %> (<%= u.email %>)
+                  </option>
+                <% end %>
+              </select>
+            </div>
+          <% else %>
+            <input type="hidden" name="assignment_user_id_filter" value="<%= current_user.user_id %>">
+          <% end %>
+
+          <div class="col-md-3">
+            <label for="assignment_license_id_filter" class="form-label">License:</label>
+            <select name="assignment_license_id_filter" id="assignment_license_id_filter" class="form-select">
+              <option value="">-- All Licenses --</option>
+              <% @all_licenses.each do |l| %>
+                <option value="<%= l.license_id %>" <%= 'selected' if @assignment_filter_params[:license_id] == l.license_id %>>
+                  <%= l.license_name %>
+                </option>
+              <% end %>
+            </select>
+          </div>
+
+          <div class="col-md-3">
+            <label for="assignment_action_filter" class="form-label">Action:</label>
+            <select name="assignment_action_filter" id="assignment_action_filter" class="form-select">
+              <option value="">-- All Actions --</option>
+              <% @assignment_actions.each do |action| %>
+                <option value="<%= action %>" <%= 'selected' if @assignment_filter_params[:action] == action %>>
+                  <%= action.gsub('_', ' ').capitalize %>
+                </option>
+              <% end %>
+            </select>
+          </div>
+
+          <div class="col-md-3">
+            <label for="assignment_date_from_filter" class="form-label">Date From:</label>
+            <input type="date" name="assignment_date_from_filter" id="assignment_date_from_filter" value="<%= @assignment_filter_params[:date_from] %>" class="form-control">
+          </div>
+          <div class="col-md-3">
+            <label for="assignment_date_to_filter" class="form-label">Date To:</label>
+            <input type="date" name="assignment_date_to_filter" id="assignment_date_to_filter" value="<%= @assignment_filter_params[:date_to] %>" class="form-control">
+          </div>
+          <div class="col-md-6">
+            <label for="assignment_details_filter" class="form-label">Details Contains:</label>
+            <input type="text" name="assignment_details_filter" id="assignment_details_filter" value="<%= @assignment_filter_params[:details_contains] %>" class="form-control">
+          </div>
+
+          <div class="col-md-auto mt-4">
+            <button type="submit" class="btn btn-primary w-100">Filter</button>
+          </div>
+          <div class="col-md-auto mt-4">
+            <a href="/history?active_tab=assignments" class="btn btn-outline-secondary w-100">Reset</a>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <% if @assignment_logs_data && !@assignment_logs_data[:logs].empty? %>
+      <div class="card mt-3">
+        <div class="card-header">
+          <i class="fas fa-history me-1"></i> Assignment Log Entries
+          <span class="badge bg-secondary float-end"><%= @assignment_logs_data[:total_entries] %> Total</span>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-striped table-hover mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Timestamp</th>
+                  <th>User</th>
+                  <th>Action</th>
+                  <th>License</th>
+                  <th>Assignment-ID</th>
+                  <th style="min-width: 250px;">Details</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% @assignment_logs_data[:logs].each do |log| %>
+                  <tr>
+                    <td data-label="Timestamp">
+                      <time class="local-timestamp" datetime="<%= log.log_timestamp.getutc.iso8601 %>">
+                        <%= log.log_timestamp.strftime('%Y-%m-%d %H:%M:%S') %> UTC
+                      </time>
+                    </td>
+                    <td data-label="User"><%= log.username %> (ID: <%= log.user_id %>)</td>
+                    <td data-label="Action">
+                       <%
+                        action_display = log.action.gsub('_', ' ').capitalize
+                        badge_bg_class = case log.action.downcase
+                                         when /admin-assigned|assigned-by-admin|admin activated license|admin approved assignment/
+                                           'bg-success'
+                                         when /admin-unassigned|revoked-by-admin|unassigned-by-admin|admin deactivated license|admin canceled assignment/
+                                           'bg-danger'
+                                         when /self-assigned|user-activated|user activated license/
+                                           'bg-primary'
+                                         when /user-deactived|self-returned|user deactivated license/
+                                           'bg-warning text-dark'
+                                         else
+                                           'bg-secondary'
+                                         end
+                      %>
+                      <span class="badge <%= badge_bg_class %>"><%= action_display %></span>
+                    </td>
+                    <td data-label="License"><%= log.license_name %> (ID: <%= log.license_id %>)</td>
+                    <td data-label="Assignment ID">
+                      <%
+                        assignment_id_match = log.details.match(/Assignment ID: (\d+)/)
+                        assignment_id = assignment_id_match ? assignment_id_match[1] : "N/A"
+                      %>
+                      <%= assignment_id %>
+                    </td>
+                    <td data-label="Details" class="details-column small"><%= log.details %></td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <% if @assignment_logs_data[:total_pages] > 1 %>
+        <nav aria-label="Assignment Log Navigation" class="mt-4 d-flex justify-content-center">
+          <ul class="pagination">
+            <% current_params = Rack::Utils.parse_nested_query(request.query_string).merge('active_tab' => 'assignments') %>
+            <% if @assignment_logs_data[:current_page] > 1 %>
+              <li class="page-item">
+                <a class="page-link" href="<%= request.path %>?<%= Rack::Utils.build_query(current_params.merge('assignment_page' => @assignment_logs_data[:current_page] - 1)) %>" aria-label="Previous">
+                  <span aria-hidden="true">«</span> Previous
+                </a>
+              </li>
+            <% else %>
+              <li class="page-item disabled"><span class="page-link">« Previous</span></li>
+            <% end %>
+            <li class="page-item disabled"><span class="page-link text-muted">Page <%= @assignment_logs_data[:current_page] %> of <%= @assignment_logs_data[:total_pages] %></span></li>
+            <% if @assignment_logs_data[:current_page] < @assignment_logs_data[:total_pages] %>
+              <li class="page-item">
+                <a class="page-link" href="<%= request.path %>?<%= Rack::Utils.build_query(current_params.merge('assignment_page' => @assignment_logs_data[:current_page] + 1)) %>" aria-label="Next">
+                  Next <span aria-hidden="true">»</span>
+                </a>
+              </li>
+            <% else %>
+              <li class="page-item disabled"><span class="page-link">Next »</span></li>
+            <% end %>
+          </ul>
+        </nav>
+      <% end %>
+
+    <% else %>
+      <div class="alert alert-warning mt-3" role="alert">
+        No assignment log entries found for the selected criteria.
+      </div>
+    <% end %>
+  </div>
+
+  <div class="tab-pane fade <%= 'show active' if @active_tab == 'security' %>" id="security-pane" role="tabpanel" aria-labelledby="security-tab" tabindex="0">
+    <div class="card mt-3">
+      <div class="card-header">
+        <i class="fas fa-filter me-1"></i> Filter Security Logs
+      </div>
+      <div class="card-body">
+        <form method="get" action="/history" class="row g-3 align-items-end">
+          <input type="hidden" name="active_tab" value="security">
+
+          <% if current_user.admin? %>
+            <div class="col-md-3">
+              <label for="security_user_id_filter" class="form-label">User:</label>
+              <select name="security_user_id_filter" id="security_user_id_filter" class="form-select">
+                <option value="">-- All Users --</option>
+                <% @all_users.each do |u| %>
+                  <option value="<%= u.user_id %>" <%= 'selected' if @security_filter_params[:user_id] == u.user_id %>>
+                    <%= u.username %> (<%= u.email %>)
+                  </option>
+                <% end %>
+              </select>
+            </div>
+          <% else %>
+             <input type="hidden" name="security_user_id_filter" value="<%= current_user.user_id %>">
+          <% end %>
+
+          <div class="col-md-3">
+            <label for="security_action_filter" class="form-label">Action:</label>
+            <select name="security_action_filter" id="security_action_filter" class="form-select">
+              <option value="">-- All Actions --</option>
+              <% @security_actions.each do |action| %>
+                <option value="<%= action %>" <%= 'selected' if @security_filter_params[:action] == action %>>
+                  <%= action.gsub('_', ' ').capitalize %>
+                </option>
+              <% end %>
+            </select>
+          </div>
+
+          <div class="col-md-3">
+            <label for="security_object_filter" class="form-label">Object:</label>
+            <select name="security_object_filter" id="security_object_filter" class="form-select">
+              <option value="">-- All Objects --</option>
+              <% @security_objects.each do |object| %>
+                <option value="<%= object %>" <%= 'selected' if @security_filter_params[:object] == object %>>
+                  <%= object.gsub('_', ' ').capitalize %>
+                </option>
+              <% end %>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label for="security_date_from_filter" class="form-label">Date From:</label>
+            <input type="date" name="security_date_from_filter" id="security_date_from_filter" value="<%= @security_filter_params[:date_from] %>" class="form-control">
+          </div>
+          <div class="col-md-3">
+            <label for="security_date_to_filter" class="form-label">Date To:</label>
+            <input type="date" name="security_date_to_filter" id="security_date_to_filter" value="<%= @security_filter_params[:date_to] %>" class="form-control">
+          </div>
+          <div class="col-md-6">
+            <label for="security_details_filter" class="form-label">Details Contains:</label>
+            <input type="text" name="security_details_filter" id="security_details_filter" value="<%= @security_filter_params[:details_contains] %>" class="form-control">
+          </div>
+
+          <div class="col-md-auto mt-4">
+            <button type="submit" class="btn btn-primary w-100">Filter</button>
+          </div>
+          <div class="col-md-auto mt-4">
+            <a href="/history?active_tab=security" class="btn btn-outline-secondary w-100">Reset</a>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <% if @security_logs_data && !@security_logs_data[:logs].empty? %>
+      <div class="card mt-3">
+        <div class="card-header">
+          <i class="fas fa-user-shield me-1"></i> Security Log Entries
+           <span class="badge bg-secondary float-end"><%= @security_logs_data[:total_entries] %> Total</span>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-striped table-hover mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Timestamp</th>
+                  <th>User</th>
+                  <th>Action</th>
+                  <th>Object</th>
+                  <th style="min-width: 300px;">Details</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% @security_logs_data[:logs].each do |log| %>
+                  <tr>
+                    <td data-label="Timestamp">
+                      <time class="local-timestamp" datetime="<%= log.log_timestamp.getutc.iso8601 %>">
+                        <%= log.log_timestamp.strftime('%Y-%m-%d %H:%M:%S') %> UTC
+                      </time>
+                    </td>
+                    <td data-label="User">
+                      <%= log.username %>
+                      <% if log.user_id %>(ID: <%= log.user_id %>)<% end %>
+                    </td>
+                    <td data-label="Action">
+                      <%
+                        action_display = log.action.gsub('_', ' ').capitalize
+                        badge_bg_class = case log.action.downcase
+                                         when /success|created|changed|approved/
+                                           'bg-success'
+                                         when /failure|deleted|revoked|locked|canceled/
+                                           'bg-danger'
+                                         when /request|updated/
+                                           'bg-warning text-dark'
+                                         else
+                                           'bg-info'
+                                         end
+                      %>
+                      <span class="badge <%= badge_bg_class %>"><%= action_display %></span>
+                    </td>
+                    <td data-label="Object"><%= log.object&.capitalize %></td>
+                    <td data-label="Details" class="details-column small"><%= log.details %></td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <% if @security_logs_data[:total_pages] > 1 %>
+        <nav aria-label="Security Log Navigation" class="mt-4 d-flex justify-content-center">
+          <ul class="pagination">
+            <% current_params = Rack::Utils.parse_nested_query(request.query_string).merge('active_tab' => 'security') %>
+            <% if @security_logs_data[:current_page] > 1 %>
+              <li class="page-item">
+                <a class="page-link" href="<%= request.path %>?<%= Rack::Utils.build_query(current_params.merge('security_page' => @security_logs_data[:current_page] - 1)) %>" aria-label="Previous">
+                  <span aria-hidden="true">«</span> Previous
+                </a>
+              </li>
+            <% else %>
+              <li class="page-item disabled"><span class="page-link">« Previous</span></li>
+            <% end %>
+            <li class="page-item disabled"><span class="page-link text-muted">Page <%= @security_logs_data[:current_page] %> of <%= @security_logs_data[:total_pages] %></span></li>
+            <% if @security_logs_data[:current_page] < @security_logs_data[:total_pages] %>
+              <li class="page-item">
+                <a class="page-link" href="<%= request.path %>?<%= Rack::Utils.build_query(current_params.merge('security_page' => @security_logs_data[:current_page] + 1)) %>" aria-label="Next">
+                  Next <span aria-hidden="true">»</span>
+                </a>
+              </li>
+            <% else %>
+              <li class="page-item disabled"><span class="page-link">Next »</span></li>
+            <% end %>
+          </ul>
+        </nav>
+      <% end %>
+
+    <% else %>
+      <div class="alert alert-warning mt-3" role="alert">
+        No security log entries found for the selected criteria.
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<script type="module">
+  function convertTimestampsToLocal() {
+    document.querySelectorAll('time.local-timestamp').forEach(function(timeElement) {
+      const utcTimestamp = timeElement.getAttribute('datetime');
+      if (utcTimestamp) {
+        const localDate = new Date(utcTimestamp);
+        const formattedLocalDate = localDate.getFullYear() + '-' +
+                                 ('0' + (localDate.getMonth() + 1)).slice(-2) + '-' +
+                                 ('0' + localDate.getDate()).slice(-2) + ' ' +
+                                 ('0' + localDate.getHours()).slice(-2) + ':' +
+                                 ('0' + localDate.getMinutes()).slice(-2) + ':' +
+                                 ('0' + localDate.getSeconds()).slice(-2) + ' Local';
+        timeElement.textContent = formattedLocalDate;
+        timeElement.setAttribute('title', `Original: ${timeElement.textContent.replace(' Local', ' UTC')}`);
+      }
+    });
+  }
+  document.addEventListener('DOMContentLoaded', convertTimestampsToLocal);
+
+  const historyTabs = document.getElementById('historyTabs');
+  if (historyTabs) {
+    historyTabs.addEventListener('shown.bs.tab', function (event) {
+       convertTimestampsToLocal();
+    });
+  }
+</script>
