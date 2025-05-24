@@ -44,7 +44,11 @@ class LicentraApp < Sinatra::Base
   helpers RoutesErrorHelpers
 
   get '/' do
-    redirect logged_in? ? '/profile' : '/login'
+    redirect logged_in? ? '/home' : '/login'
+  end
+
+  get '/home' do
+  erb :home, layout: :'layouts/application'
   end
 
   get '/forbidden' do
