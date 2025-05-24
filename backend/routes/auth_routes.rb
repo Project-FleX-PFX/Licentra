@@ -68,7 +68,7 @@ module AuthRoutes
       validation_error = validate_registration_params
       if validation_error
         @error = validation_error
-        return erb :'auth/register', layout: false
+        return erb :'auth/register', layout: :'layouts/auth'
       end
 
       begin
@@ -77,7 +77,7 @@ module AuthRoutes
         redirect '/profile'
       rescue StandardError => e
         @error = "Registration error: #{e.message}"
-        erb :'auth/register', layout: false
+        erb :'auth/register', layout: :'layouts/auth'
       end
     end
 
