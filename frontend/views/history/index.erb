@@ -28,7 +28,7 @@
               <label for="assignment_user_id_filter" class="form-label">User:</label>
               <select name="assignment_user_id_filter" id="assignment_user_id_filter" class="form-select">
                 <option value="">-- All Users --</option>
-                <% @all_users.each do |u| %>
+                <% @all_users_for_filter.each do |u| %>
                   <option value="<%= u.user_id %>" <%= 'selected' if @assignment_filter_params[:user_id] == u.user_id %>>
                     <%= u.username %> (<%= u.email %>)
                   </option>
@@ -43,7 +43,7 @@
             <label for="assignment_license_id_filter" class="form-label">License:</label>
             <select name="assignment_license_id_filter" id="assignment_license_id_filter" class="form-select">
               <option value="">-- All Licenses --</option>
-              <% @all_licenses.each do |l| %>
+              <% @all_licenses_for_filter.each do |l| %>
                 <option value="<%= l.license_id %>" <%= 'selected' if @assignment_filter_params[:license_id] == l.license_id %>>
                   <%= l.license_name %>
                 </option>
@@ -55,7 +55,7 @@
             <label for="assignment_action_filter" class="form-label">Action:</label>
             <select name="assignment_action_filter" id="assignment_action_filter" class="form-select">
               <option value="">-- All Actions --</option>
-              <% @assignment_actions.each do |action| %>
+              <% @assignment_actions_for_filter.each do |action| %>
                 <option value="<%= action %>" <%= 'selected' if @assignment_filter_params[:action] == action %>>
                   <%= action.gsub('_', ' ').capitalize %>
                 </option>
@@ -197,7 +197,7 @@
               <label for="security_user_id_filter" class="form-label">User:</label>
               <select name="security_user_id_filter" id="security_user_id_filter" class="form-select">
                 <option value="">-- All Users --</option>
-                <% @all_users.each do |u| %>
+                <% @all_users_for_filter.each do |u| %>
                   <option value="<%= u.user_id %>" <%= 'selected' if @security_filter_params[:user_id] == u.user_id %>>
                     <%= u.username %> (<%= u.email %>)
                   </option>
@@ -212,7 +212,7 @@
             <label for="security_action_filter" class="form-label">Action:</label>
             <select name="security_action_filter" id="security_action_filter" class="form-select">
               <option value="">-- All Actions --</option>
-              <% @security_actions.each do |action| %>
+              <% @security_actions_for_filter.each do |action| %>
                 <option value="<%= action %>" <%= 'selected' if @security_filter_params[:action] == action %>>
                   <%= action.gsub('_', ' ').capitalize %>
                 </option>
@@ -224,13 +224,14 @@
             <label for="security_object_filter" class="form-label">Object:</label>
             <select name="security_object_filter" id="security_object_filter" class="form-select">
               <option value="">-- All Objects --</option>
-              <% @security_objects.each do |object| %>
+              <% @security_objects_for_filter.each do |object| %>
                 <option value="<%= object %>" <%= 'selected' if @security_filter_params[:object] == object %>>
                   <%= object.gsub('_', ' ').capitalize %>
                 </option>
               <% end %>
             </select>
           </div>
+
           <div class="col-md-3">
             <label for="security_date_from_filter" class="form-label">Date From:</label>
             <input type="date" name="security_date_from_filter" id="security_date_from_filter" value="<%= @security_filter_params[:date_from] %>" class="form-control">
