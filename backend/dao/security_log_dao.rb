@@ -35,7 +35,11 @@ class SecurityLogDAO < BaseDAO
   end
 
   module Objects
-    ALL_OBJECTS = %w[UserSession UserAccount Product License].freeze
+    USER_SESSION = 'UserSession'
+    USER_ACCOUNT = 'UserAccount'
+    PRODUCT = 'Product'
+    LICENSE = 'License'
+    ALL_OBJECTS = [USER_SESSION, USER_ACCOUNT, PRODUCT, LICENSE].freeze
   end
 
   class << self
@@ -144,6 +148,20 @@ class SecurityLogDAO < BaseDAO
     # --- CRUD Methoden ---
 
     # READ
+    def distinct_actions
+      context = 'fetching distinct security log actions'
+      with_error_handling(context) do
+        Actions::ALL_ACTIONS.sort
+      end
+    end
+
+    def distinct_objects
+      context = 'fetching distinct security log objects'
+      with_error_handling(context) do
+        Objects::ALL_OBJECTS.sort
+      end
+    end
+
     def find!(id)
       context = "finding security log with ID #{id}"
       with_error_handling(context) do

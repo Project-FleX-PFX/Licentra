@@ -85,6 +85,46 @@ class AssignmentLogDAO < BaseDAO
     end
 
     # READ
+    def distinct_actions
+      context = 'fetching distinct assignment log actions'
+      with_error_handling(context) do
+        Actions::ALL_ACTIONS.sort
+      end
+    end
+
+    def find_unique_license_info
+      context = 'finding unique license info from logs'
+      with_error_handling(context) do
+        licenses_info = AssignmentLog.distinct(:license_id, :license_name)
+                                     .select(:license_id, :license_name)
+                                     .order(:license_name)
+                                     .all
+
+        log_info("Found #{licenses_info.count} unique license info entries in logs.")
+        licenses_info
+      end
+    rescue StandardError => e
+      log_error("#{context} - Error: #{e.message}")
+      []
+    end
+
+    def find_unique_license_info_for_user_logs(user_id)
+      context = "finding unique license info from logs for user ID #{user_id}"
+      with_error_handling(context) do
+        licenses_info = AssignmentLog.where(user_id: user_id)
+                                     .distinct(:license_id, :license_name)
+                                     .select(:license_id, :license_name)
+                                     .order(:license_name)
+                                     .all
+
+        log_info("Found #{licenses_info.count} unique license info entries in logs for user ID #{user_id}.")
+        licenses_info
+      end
+    rescue StandardError => e
+      log_error("#{context} - Error: #{e.message}")
+      []
+    end
+
     def find!(id)
       context = "finding assignment log with ID #{id}"
       with_error_handling(context) do
