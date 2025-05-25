@@ -247,6 +247,25 @@ class AssignmentLogDAO < BaseDAO
       end
     end
 
+    def find_all_with_details(filters = {})
+      context = "finding ALL assignment logs with details and filters: #{filters}"
+      with_error_handling(context) do
+        dataset = AssignmentLog.dataset
+                               .order(Sequel.desc(:log_timestamp), Sequel.desc(:log_id))
+
+        dataset = _apply_user_filter(dataset, filters[:user_id])
+        dataset = _apply_license_filter(dataset, filters[:license_id])
+        dataset = _apply_specific_action_filter(dataset, filters[:action])
+        dataset = _apply_details_filter(dataset, filters[:details_contains])
+        dataset = _apply_date_from_filter(dataset, filters[:date_from])
+        dataset = _apply_date_to_filter(dataset, filters[:date_to])
+
+        logs = dataset.all
+        log_info("Fetched #{logs.size} assignment logs for export.")
+        logs
+      end
+    end
+
     private
 
     # Helper to generate log entries for common assignment-related actions.

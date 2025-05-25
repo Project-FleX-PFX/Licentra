@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative '../lib/pdf_exporters/log_exporter'
+
 # Module for routes within history context
 module HistoryRoutes
   def self.registered(app) # rubocop:disable Metrics/AbcSize
@@ -22,6 +24,34 @@ module HistoryRoutes
       @title = 'History Logs'
       @css = 'history'
       erb :'history/index', layout: :'layouts/application'
+    end
+
+    app.get '/history/assignments/export.pdf' do
+      require_login
+      content_type 'application/pdf'
+      attachment "assignment_logs_#{Time.now.strftime('%Y%m%d_%H%M%S')}.pdf"
+
+      _params, filters = collect_assignment_log_filters(params, current_user)
+      logs = AssignmentLogDAO.find_all_with_details(filters) || []
+
+      filters_applied_text = build_filters_applied_text(_params)
+      user_info = "#{current_user.username} (ID: #{current_user.user_id})"
+
+      PdfExporters::LogExporter.generate_assignment_logs_pdf(logs, filters_applied_text, user_info)
+    end
+
+    app.get '/history/security/export.pdf' do
+      require_login
+      content_type 'application/pdf'
+      attachment "security_logs_#{Time.now.strftime('%Y%m%d_%H%M%S')}.pdf"
+
+      _params, filters = collect_security_log_filters(params, current_user)
+      logs = SecurityLogDAO.find_all_with_details(filters) || []
+
+      filters_applied_text = build_filters_applied_text(_params)
+      user_info = "#{current_user.username} (ID: #{current_user.user_id})"
+
+      PdfExporters::LogExporter.generate_security_logs_pdf(logs, filters_applied_text, user_info)
     end
 
     app.helpers do # rubocop:disable Metrics/BlockLength
@@ -119,6 +149,38 @@ module HistoryRoutes
         filters[:date_to] = date_to_value if date_to_value && !date_to_value.strip.empty?
 
         [filter_params, filters]
+      end
+
+      def build_filters_applied_text(filter_params)
+        applied = []
+        if filter_params[:user_id]&.positive?
+          user_for_filter = UserDAO.find(filter_params[:user_id])
+          applied << "User: #{user_for_filter ? user_for_filter.username : "ID #{filter_params[:user_id]}"}"
+        elsif !current_user.admin? && filter_params.key?(:user_id) && filter_params[:user_id] == current_user.user_id
+          applied << "User: #{current_user.username}"
+        end
+
+        if filter_params[:license_id]&.positive? && defined?(@all_licenses_for_filter) && @all_licenses_for_filter
+          license_name = @all_licenses_for_filter.find { |l| l.license_id == filter_params[:license_id] }&.license_name
+          applied << "License: #{license_name || "ID #{filter_params[:license_id]}"}"
+        end
+
+        if filter_params[:action] && !filter_params[:action].strip.empty?
+          applied << "Action: #{filter_params[:action].gsub('_',
+                                                            ' ').capitalize}"
+        end
+        if filter_params[:object] && !filter_params[:object].strip.empty?
+          applied << "Object: #{filter_params[:object].gsub('_',
+                                                            ' ').capitalize}"
+        end
+        if filter_params[:details_contains] && !filter_params[:details_contains].strip.empty?
+          applied << "Details: \"#{filter_params[:details_contains]}\""
+        end
+        if filter_params[:date_from] && !filter_params[:date_from].strip.empty?
+          applied << "From: #{filter_params[:date_from]}"
+        end
+        applied << "To: #{filter_params[:date_to]}" if filter_params[:date_to] && !filter_params[:date_to].strip.empty?
+        applied.empty? ? 'None' : applied.join('; ')
       end
     end
   end

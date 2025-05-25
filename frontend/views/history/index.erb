@@ -20,7 +20,7 @@
         <i class="fas fa-filter me-1"></i> Filter Assignment Logs
       </div>
       <div class="card-body">
-        <form method="get" action="/history" class="row g-3 align-items-end">
+        <form method="get" id="assignmentFilterForm" action="/history" class="row g-3 align-items-end">
           <input type="hidden" name="active_tab" value="assignments">
 
           <% if current_user.admin? %>
@@ -81,6 +81,11 @@
           </div>
           <div class="col-md-auto mt-4">
             <a href="/history?active_tab=assignments" class="btn btn-outline-secondary w-100">Reset</a>
+          </div>
+          <div class="col-md-auto mt-4">
+            <a href="#" id="exportAssignmentsPdf" class="btn btn-info w-100">
+              <i class="fas fa-file-pdf me-1"></i> Export PDF
+            </a>
           </div>
         </form>
       </div>
@@ -189,7 +194,7 @@
         <i class="fas fa-filter me-1"></i> Filter Security Logs
       </div>
       <div class="card-body">
-        <form method="get" action="/history" class="row g-3 align-items-end">
+        <form method="get" id="securityFilterForm" action="/history" class="row g-3 align-items-end">
           <input type="hidden" name="active_tab" value="security">
 
           <% if current_user.admin? %>
@@ -250,6 +255,11 @@
           </div>
           <div class="col-md-auto mt-4">
             <a href="/history?active_tab=security" class="btn btn-outline-secondary w-100">Reset</a>
+          </div>
+          <div class="col-md-auto mt-4">
+            <a href="#" id="exportSecurityPdf" class="btn btn-info w-100">
+              <i class="fas fa-file-pdf me-1"></i> Export PDF
+            </a>
           </div>
         </form>
       </div>
@@ -371,4 +381,42 @@
        convertTimestampsToLocal();
     });
   }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    function setupExportButton(buttonId, formId, exportUrlPath) {
+      const exportButton = document.getElementById(buttonId);
+      const filterForm = document.getElementById(formId);
+
+      if (exportButton && filterForm) {
+        exportButton.addEventListener('click', function(event) {
+          event.preventDefault();
+          const formData = new FormData(filterForm);
+          const params = new URLSearchParams();
+
+          if (formId === 'assignmentFilterForm') {
+            if (formData.get('assignment_user_id_filter')) params.append('assignment_user_id_filter', formData.get('assignment_user_id_filter'));
+            if (formData.get('assignment_license_id_filter')) params.append('assignment_license_id_filter', formData.get('assignment_license_id_filter'));
+            if (formData.get('assignment_action_filter')) params.append('assignment_action_filter', formData.get('assignment_action_filter'));
+            if (formData.get('assignment_details_filter')) params.append('assignment_details_filter', formData.get('assignment_details_filter'));
+            if (formData.get('assignment_date_from_filter')) params.append('assignment_date_from_filter', formData.get('assignment_date_from_filter'));
+            if (formData.get('assignment_date_to_filter')) params.append('assignment_date_to_filter', formData.get('assignment_date_to_filter'));
+          }
+          else if (formId === 'securityFilterForm') {
+            if (formData.get('security_user_id_filter')) params.append('security_user_id_filter', formData.get('security_user_id_filter'));
+            if (formData.get('security_action_filter')) params.append('security_action_filter', formData.get('security_action_filter'));
+            if (formData.get('security_object_filter')) params.append('security_object_filter', formData.get('security_object_filter'));
+            if (formData.get('security_details_filter')) params.append('security_details_filter', formData.get('security_details_filter'));
+            if (formData.get('security_date_from_filter')) params.append('security_date_from_filter', formData.get('security_date_from_filter'));
+            if (formData.get('security_date_to_filter')) params.append('security_date_to_filter', formData.get('security_date_to_filter'));
+          }
+
+          const exportUrl = `${exportUrlPath}?${params.toString()}`;
+          window.open(exportUrl, '_blank');
+        });
+      }
+    }
+
+    setupExportButton('exportAssignmentsPdf', 'assignmentFilterForm', '/history/assignments/export.pdf');
+    setupExportButton('exportSecurityPdf', 'securityFilterForm', '/history/security/export.pdf');
+  });
 </script>
