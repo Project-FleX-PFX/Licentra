@@ -22,6 +22,8 @@ module AuthRoutes
 
       user = UserDAO.find_by_email(email)
 
+      return render_login_error('Invalid email or password.') unless user&.is_active
+
       if UserDAO.locked?(user)
         return render_login_error('Your account has been blocked due to too many failed login attempts.')
       end
@@ -70,26 +72,7 @@ module AuthRoutes
       end
 
       begin
-        user_data = {
-          username: params[:username],
-          email: params[:email],
-          first_name: params[:first_name],
-          last_name: params[:last_name],
-          is_active: true # oder false, je nach gewünschtem Verhalten
-        }
-
-        user = UserDAO.create(user_data)
-
-        if params[:password] && !params[:password].empty?
-          UserCredentialDAO.create({
-                                     user_id: user.user_id,
-                                     password: params[:password]
-                                   })
-        else
-          @error = "Password is required."
-          return erb :'auth/register', layout: :'layouts/auth'
-        end
-
+        user = AuthService.register(params)
         session[:user_id] = user.user_id
         redirect '/profile'
       rescue StandardError => e
