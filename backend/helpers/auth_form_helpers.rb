@@ -8,7 +8,7 @@ module AuthFormHelpers
 
   def establish_session(user)
     session[:user_id] = user.user_id
-    redirect_url = session[:return_to] || '/profile'
+    redirect_url = session[:return_to] || '/'
     session.delete(:return_to)
     redirect redirect_url
   end
