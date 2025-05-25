@@ -257,20 +257,6 @@ class SecurityLogDAO < BaseDAO
 
     DEFAULT_PER_PAGE = 25
 
-    def distinct_actions
-      context = 'fetching distinct security log actions'
-      with_error_handling(context) do
-        Actions::ALL_ACTIONS.sort
-      end
-    end
-
-    def distinct_objects
-      context = 'fetching distinct security log objects'
-      with_error_handling(context) do
-        Objects::ALL_OBJECTS.sort
-      end
-    end
-
     def find_with_details(filters = {}, options = {})
       context = "finding security logs with details and filters: #{filters}"
       with_error_handling(context) do
@@ -305,6 +291,31 @@ class SecurityLogDAO < BaseDAO
           total_pages: paginated_dataset.page_count,
           total_entries: paginated_dataset.pagination_record_count
         }
+      end
+    end
+
+    def find_all_with_details(filters = {})
+      context = "finding ALL security logs with details and filters: #{filters}"
+      with_error_handling(context) do
+        dataset = SecurityLog.dataset
+
+        default_order = [Sequel.desc(:log_timestamp), Sequel.desc(:log_id)]
+        order_criteria = filters.fetch(:order, default_order)
+        order_criteria = Array(order_criteria)
+        dataset = dataset.order(*order_criteria) unless order_criteria.empty?
+
+        dataset = _apply_filter_user_id(dataset, filters[:user_id])
+        dataset = _apply_filter_username(dataset, filters[:username])
+        dataset = _apply_filter_email(dataset, filters[:email])
+        dataset = _apply_filter_action(dataset, filters[:action])
+        dataset = _apply_filter_object(dataset, filters[:object])
+        dataset = _apply_filter_date_from(dataset, filters[:date_from])
+        dataset = _apply_filter_date_to(dataset, filters[:date_to])
+        dataset = _apply_filter_details_contains(dataset, filters[:details_contains])
+
+        logs = dataset.all
+        log_info("Fetched #{logs.size} security logs for export.")
+        logs
       end
     end
 
