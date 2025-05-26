@@ -296,14 +296,14 @@ RSpec.describe SecurityLogDAO do
     end
 
     context 'with action filter' do
-      it 'returns logs matching action (partial, case-insensitive)' do
-        result = described_class.find_with_details({ action: 'action_u1' })
-        expect(result[:logs].map(&:pk)).to match_array([fwd_log_u1_now.pk, fwd_log_u1_yest_plus.pk])
+      it 'returns logs matching an exact action' do
+        result = described_class.find_with_details({ action: 'ACTION_U1_NOW' })
+        expect(result[:logs].map(&:pk)).to eq([fwd_log_u1_now.pk])
       end
     end
 
     context 'with object filter' do
-      it 'returns logs matching object (partial, case-insensitive)' do
+      it 'returns logs matching an exact object' do
         result = described_class.find_with_details({ object: 'ObjectA' })
         expect(result[:logs].map(&:pk)).to match_array([fwd_log_u1_now.pk, fwd_log_u1_yest_plus.pk])
       end
@@ -337,7 +337,7 @@ RSpec.describe SecurityLogDAO do
       it 'returns logs matching all criteria' do
         result = described_class.find_with_details({
                                                      user_id: user1_sl.id,
-                                                     action: 'YEST_PLUS',
+                                                     action: 'ACTION_U1_YEST_PLUS',
                                                      date_from: time_fwd_yest.to_date.to_s,
                                                      date_to: time_fwd_yest_plus_sec.to_date.to_s
                                                    })

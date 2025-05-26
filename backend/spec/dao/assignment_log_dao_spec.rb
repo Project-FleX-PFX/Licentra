@@ -431,13 +431,15 @@ RSpec.describe AssignmentLogDAO do
       end
     end
 
-    context 'with action filter (partial, case-insensitive)' do
-      it 'returns only logs matching the action' do
-        result = described_class.find_with_details({ action: '_lic1_yesterday' })
+    context 'with action filter' do
+      it 'returns only logs matching the exact action' do
+        exact_action_to_test = 'ACTION_USER1_LIC1_YESTERDAY'
+        expected_log_pk = log_entry1_user1_lic1_yesterday_plus_10s.pk
+
+        result = described_class.find_with_details({ action: exact_action_to_test })
         log_pks = result[:logs].map(&:pk)
-        expect(log_pks).to match_array([log_entry1_user1_lic1_yesterday_plus_10s.pk,
-                                        log_entry4_user2_lic1_yesterday.pk])
-        expect(result[:total_entries]).to eq(2)
+        expect(log_pks).to match_array([expected_log_pk])
+        expect(result[:total_entries]).to eq(1)
       end
     end
 
