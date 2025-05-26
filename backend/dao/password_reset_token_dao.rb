@@ -28,11 +28,11 @@ module PasswordResetTokenDAO
     active_tokens = DB[:password_reset_tokens].where(Sequel.lit('expires_at > ?', Time.now)).all
 
     active_tokens.each do |token_record|
-      if BCrypt::Password.new(token_record[:token_hash]) == klartext_token
-        user = UserDAO.find_by_id(token_record[:user_id])
+      next unless BCrypt::Password.new(token_record[:token_hash]) == klartext_token
 
-        return { user: user, token_record_id: token_record[:id] } if user
-      end
+      user = UserDAO.find_by_id(token_record[:user_id])
+
+      return { user: user, token_record_id: token_record[:id] } if user
     end
     nil
   end
