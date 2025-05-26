@@ -21,13 +21,14 @@ class LicenseService
   def self.activate_license_for_user(assignment_id, user)
     _authorize_user_for_activation(user)
     assignment = _find_assignment_or_fail(assignment_id)
+    assignment_owner = UserDAO.find_by_id(assignment.user_id)
 
     license = _find_license_or_fail(assignment.license_id)
     _ensure_license_is_active_for_activation(license)
 
     DB.transaction do
       _ensure_license_has_available_seats(license)
-      _ensure_user_does_not_have_license_active(license, user)
+      _ensure_user_does_not_have_license_active(license, assignment_owner)
 
       LicenseAssignmentDAO.activate(assignment_id)
 
