@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative '../helpers/auth_form_helpers'
-require_relative '../services/auth_service' # Den neuen Service einbinden
+require_relative '../services/auth_service'
 
 # Module for routes within auth context
 module AuthRoutes # rubocop:disable Metrics/ModuleLength
@@ -22,7 +22,7 @@ module AuthRoutes # rubocop:disable Metrics/ModuleLength
 
       begin
         authenticated_user = AuthService.login(email, password, ip_address: ip_address)
-        establish_session(authenticated_user) # establish_session ist eine Helper-Methode in deinen Routen
+        establish_session(authenticated_user)
         redirect '/' # Erfolgreicher Login
       rescue AuthService::InvalidInputError => e
         render_login_error(e.message)
@@ -51,7 +51,7 @@ module AuthRoutes # rubocop:disable Metrics/ModuleLength
     end
 
     app.post '/register' do
-      validation_error = validate_registration_params # Deine bestehende Helper-Methode
+      validation_error = validate_registration_params
       if validation_error
         @error = validation_error
         return erb :'auth/register', layout: :'layouts/auth'
@@ -96,7 +96,6 @@ module AuthRoutes # rubocop:disable Metrics/ModuleLength
         puts "UNEXPECTED ERROR during password reset request for #{email}: #{e.class} - #{e.message}\n#{e.backtrace.join("\n")}"
       end
 
-      # Immer die gleiche generische Nachricht
       flash[:notice] =
         'If an account with this email address exists and is active, a password reset link has been sent. Please check your inbox and spam folder.'
       redirect '/login'
@@ -112,7 +111,7 @@ module AuthRoutes # rubocop:disable Metrics/ModuleLength
 
       # Validierung, ob der Token überhaupt existiert, bevor das Formular angezeigt wird.
       # AuthService könnte hier eine Methode `validate_reset_token` haben.
-      token_data = PasswordResetTokenDAO.find_user_by_token(token) # Behalte dies vorerst für die UI
+      token_data = PasswordResetTokenDAO.find_user_by_token(token)
 
       if token_data && token_data[:user]
         @token_for_form = token
@@ -170,7 +169,6 @@ module AuthRoutes # rubocop:disable Metrics/ModuleLength
 
       # Deine bestehende `validate_registration_params` Methode hier oder in AuthFormHelpers
       def validate_registration_params
-        # ... deine Validierungslogik ...
         # gibt Fehlermeldung (String) oder nil zurück
         return 'Username is required.' if params[:username].nil? || params[:username].strip.empty?
         return 'Email is required.' if params[:email].nil? || params[:email].strip.empty?
