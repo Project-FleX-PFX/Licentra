@@ -75,7 +75,7 @@ RSpec.describe 'User Registration' do
       register_user('newuser', 'existing@example.com')
 
       expect(last_response).to be_ok
-      expect(last_response.body).to include('already registered')
+      expect(last_response.body).to include('already taken')
     end
 
     it 'rejects registration with mismatched passwords' do
