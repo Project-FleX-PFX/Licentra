@@ -123,14 +123,14 @@
                        <%
                         action_display = log.action.gsub('_', ' ').capitalize
                         badge_bg_class = case log.action.downcase
-                                         when /admin-assigned|assigned-by-admin|admin activated license|admin approved assignment/
+                                         when AssignmentLogDAO::Actions::ADMIN_ACTIVATED, AssignmentLogDAO::Actions::USER_ACTIVATED
                                            'bg-success'
-                                         when /admin-unassigned|revoked-by-admin|unassigned-by-admin|admin deactivated license|admin canceled assignment/
+                                         when AssignmentLogDAO::Actions::ADMIN_CANCELED
                                            'bg-danger'
-                                         when /self-assigned|user-activated|user activated license/
+                                         when AssignmentLogDAO::Actions::ADMIN_APPROVED
                                            'bg-primary'
-                                         when /user-deactived|self-returned|user deactivated license/
-                                           'bg-warning text-dark'
+                                         when AssignmentLogDAO::Actions::ADMIN_DEACTIVATED, AssignmentLogDAO::Actions::USER_DEACTIVATED
+                                           'bg-warning text-dark' 
                                          else
                                            'bg-secondary'
                                          end
@@ -299,14 +299,16 @@
                       <%
                         action_display = log.action.gsub('_', ' ').capitalize
                         badge_bg_class = case log.action.downcase
-                                         when /success|created|changed|approved/
+                                         when SecurityLogDAO::Actions::LOGIN_SUCCESS, SecurityLogDAO::Actions::USER_CREATED, SecurityLogDAO::Actions::PRODUCT_CREATED, SecurityLogDAO::Actions::LICENSE_CREATED
                                            'bg-success'
-                                         when /failure|deleted|revoked|locked|canceled/
+                                         when SecurityLogDAO::Actions::LOGIN_FAILURE, SecurityLogDAO::Actions::USER_DELETED, SecurityLogDAO::Actions::PRODUCT_DELETED, SecurityLogDAO::Actions::LICENSE_DELETED
                                            'bg-danger'
-                                         when /request|updated/
+                                         when SecurityLogDAO::Actions::PASSWORD_CHANGED, SecurityLogDAO::Actions::USER_UPDATED, SecurityLogDAO::Actions::PRODUCT_UPDATED, SecurityLogDAO::Actions::LICENSE_UPDATED
+                                           'bg-primary'
+                                         when SecurityLogDAO::Actions::PASSWORD_RESET_REQUEST, SecurityLogDAO::Actions::USER_LOCKED
                                            'bg-warning text-dark'
                                          else
-                                           'bg-info'
+                                           'bg-secondary'
                                          end
                       %>
                       <span class="badge <%= badge_bg_class %>"><%= action_display %></span>
@@ -356,67 +358,4 @@
   </div>
 </div>
 
-<script type="module">
-  function convertTimestampsToLocal() {
-    document.querySelectorAll('time.local-timestamp').forEach(function(timeElement) {
-      const utcTimestamp = timeElement.getAttribute('datetime');
-      if (utcTimestamp) {
-        const localDate = new Date(utcTimestamp);
-        const formattedLocalDate = localDate.getFullYear() + '-' +
-                                 ('0' + (localDate.getMonth() + 1)).slice(-2) + '-' +
-                                 ('0' + localDate.getDate()).slice(-2) + ' ' +
-                                 ('0' + localDate.getHours()).slice(-2) + ':' +
-                                 ('0' + localDate.getMinutes()).slice(-2) + ':' +
-                                 ('0' + localDate.getSeconds()).slice(-2) + ' Local';
-        timeElement.textContent = formattedLocalDate;
-        timeElement.setAttribute('title', `Original: ${timeElement.textContent.replace(' Local', ' UTC')}`);
-      }
-    });
-  }
-  document.addEventListener('DOMContentLoaded', convertTimestampsToLocal);
-
-  const historyTabs = document.getElementById('historyTabs');
-  if (historyTabs) {
-    historyTabs.addEventListener('shown.bs.tab', function (event) {
-       convertTimestampsToLocal();
-    });
-  }
-
-  document.addEventListener('DOMContentLoaded', function() {
-    function setupExportButton(buttonId, formId, exportUrlPath) {
-      const exportButton = document.getElementById(buttonId);
-      const filterForm = document.getElementById(formId);
-
-      if (exportButton && filterForm) {
-        exportButton.addEventListener('click', function(event) {
-          event.preventDefault();
-          const formData = new FormData(filterForm);
-          const params = new URLSearchParams();
-
-          if (formId === 'assignmentFilterForm') {
-            if (formData.get('assignment_user_id_filter')) params.append('assignment_user_id_filter', formData.get('assignment_user_id_filter'));
-            if (formData.get('assignment_license_id_filter')) params.append('assignment_license_id_filter', formData.get('assignment_license_id_filter'));
-            if (formData.get('assignment_action_filter')) params.append('assignment_action_filter', formData.get('assignment_action_filter'));
-            if (formData.get('assignment_details_filter')) params.append('assignment_details_filter', formData.get('assignment_details_filter'));
-            if (formData.get('assignment_date_from_filter')) params.append('assignment_date_from_filter', formData.get('assignment_date_from_filter'));
-            if (formData.get('assignment_date_to_filter')) params.append('assignment_date_to_filter', formData.get('assignment_date_to_filter'));
-          }
-          else if (formId === 'securityFilterForm') {
-            if (formData.get('security_user_id_filter')) params.append('security_user_id_filter', formData.get('security_user_id_filter'));
-            if (formData.get('security_action_filter')) params.append('security_action_filter', formData.get('security_action_filter'));
-            if (formData.get('security_object_filter')) params.append('security_object_filter', formData.get('security_object_filter'));
-            if (formData.get('security_details_filter')) params.append('security_details_filter', formData.get('security_details_filter'));
-            if (formData.get('security_date_from_filter')) params.append('security_date_from_filter', formData.get('security_date_from_filter'));
-            if (formData.get('security_date_to_filter')) params.append('security_date_to_filter', formData.get('security_date_to_filter'));
-          }
-
-          const exportUrl = `${exportUrlPath}?${params.toString()}`;
-          window.open(exportUrl, '_blank');
-        });
-      }
-    }
-
-    setupExportButton('exportAssignmentsPdf', 'assignmentFilterForm', '/history/assignments/export.pdf');
-    setupExportButton('exportSecurityPdf', 'securityFilterForm', '/history/security/export.pdf');
-  });
-</script>
+<script type="module" src="/js/features/history/historyPageHandler.js"></script>
