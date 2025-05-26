@@ -381,7 +381,10 @@ RSpec.describe UserDAO do
       end
 
       it 'logs the lock event' do
-        expect(UserDAO).to receive(:log_info).with("Locked account for user #{user.email}")
+        expect(SecurityLogDAO).to receive(:log_user_locked).with(
+          locked_user: user,
+          acting_user: SecurityLogDAO._system_user_for_logging
+        )
         UserDAO.lock_user(user)
       end
 

@@ -1,12 +1,12 @@
 # frozen_string_literal: true
 
-require_relative '../models/user' # Notwendig für User-Objekte
+require_relative '../models/user'
 require_relative '../dao/user_dao'
 require_relative '../dao/role_dao'
 require_relative '../dao/security_log_dao'
 require_relative '../dao/password_reset_token_dao'
-require_relative '../dao/user_credential_dao' # Für Passwort-Updates
-require_relative 'mail_service' # Für E-Mail-Versand
+require_relative '../dao/user_credential_dao'
+require_relative 'mail_service'
 
 # Service class which handles auth and related logging
 class AuthService
@@ -47,7 +47,7 @@ class AuthService
         raise AuthenticationError, 'Invalid email or password.'
       end
 
-      UserDAO.lock_user(updated_user) # lock_user sollte auch loggen via SecurityLogDAO.log_user_locked
+      UserDAO.lock_user(updated_user)
       raise AccountLockedError,
             "Incorrect password. Your account has been blocked due to too many failed attempts. Please try again in #{UserDAO::LOCKOUT_DURATION / 60} minutes."
 

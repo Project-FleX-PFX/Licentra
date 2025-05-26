@@ -103,8 +103,9 @@ class SecurityLogDAO < BaseDAO
                        details: details)
     end
 
-    def log_user_locked(acting_user:, locked_user:, reason: 'Account locked due to too many invalid login attempts.')
-      details = "User '#{locked_user.username}' (ID: #{locked_user.user_id}) was locked by '#{@_system_user_for_logging.username}' (ID: #{@_system_user_for_logging.user_id}). Reason: #{reason}."
+    def log_user_locked(locked_user:, acting_user:,
+                        reason: 'Account locked due to too many invalid login attempts.')
+      details = "User '#{locked_user.username}' (ID: #{locked_user.user_id}) was locked by '#{acting_user.username}' (ID: #{acting_user.user_id}). Reason: #{reason}."
       create_log_entry(action: Actions::USER_LOCKED, object: Objects::ALL_OBJECTS[1], acting_user: acting_user,
                        details: details)
     end

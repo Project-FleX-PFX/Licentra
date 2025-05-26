@@ -7,6 +7,7 @@ require_relative 'user_logging'
 require_relative 'user_error_handling'
 require_relative 'role_dao'
 require_relative 'user_role_dao'
+require_relative 'security_log_dao'
 
 # Data Access Object for User entities, handling database operations
 class UserDAO < BaseDAO
@@ -56,10 +57,11 @@ class UserDAO < BaseDAO
 
     def find_by_id(id_value)
       return nil if id_value.nil?
+
       context = "finding user by ID #{id_value}"
 
       with_error_handling(context) do
-        user = find_one_by(self.primary_key => id_value)
+        user = find_one_by(primary_key => id_value)
         log_info("User lookup by ID: #{id_value}, Found: #{!user.nil?}") if user
         user
       end
@@ -119,7 +121,10 @@ class UserDAO < BaseDAO
 
       updated_user = _perform_atomic_user_update(user, update_payload, action_description)
 
-      log_info("Locked account for user #{updated_user.email}") if updated_user
+      if updated_user
+        log_info("Locked account for user #{updated_user.email}")
+        SecurityLogDAO.log_user_locked(locked_user: updated_user, acting_user: SecurityLogDAO._system_user_for_logging)
+      end
       updated_user
     end
 

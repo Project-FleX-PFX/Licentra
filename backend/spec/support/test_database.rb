@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 DB = Sequel.connect('sqlite:///:memory:')
+DB.loggers << Logger.new($stdout)
 puts "Running tests with database: #{DB.adapter_scheme} (In-Memory)"
 
 DB.extension :pagination
