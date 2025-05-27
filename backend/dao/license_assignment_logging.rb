@@ -69,4 +69,8 @@ module LicenseAssignmentLogging
   def log_assignment_deactivated(assignment)
     log_info("License Assignment deactivated: ID #{assignment.pk}")
   end
+
+  def log_detailed_assignments_for_user_fetched(user_id, count)
+    log_info("Fetched #{count} detailed assignments for user ID #{user_id}.")
+  end
 end

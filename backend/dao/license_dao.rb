@@ -3,6 +3,7 @@
 require_relative '../models/license'
 require_relative '../models/product'
 require_relative 'base_dao'
+require_relative 'license_assignment_dao'
 require_relative 'concerns/crud_operations'
 require_relative 'license_logging'
 require_relative 'license_error_handling'
@@ -117,6 +118,29 @@ class LicenseDAO < BaseDAO
       licenses_with_potential = model_class.where(Sequel.lit('expire_date IS NULL OR expire_date >= ?', Date.today))
                                            .all
       licenses_with_potential.select { |lic| lic.available_seats.positive? }
+    end
+
+    def find_available_for_user_assignment(user_id)
+      context = "finding available licenses for assignment to user ID #{user_id}"
+      with_error_handling(context) do
+        assigned_license_ids_for_user = LicenseAssignmentDAO.model_class
+                                                            .where(user_id: user_id)
+                                                            .select_map(:license_id)
+                                                            .uniq
+
+        candidate_licenses = model_class.dataset
+                                        .left_join(:products, product_id: :product_id)
+                                        .where(Sequel.lit('licenses.expire_date IS NULL OR licenses.expire_date >= ?',
+                                                          Date.today))
+                                        .select_all(:licenses)
+                                        .select_append(Sequel[:products][:product_name].as(:product_name))
+
+        available = candidate_licenses.all.select do |lic|
+          lic.available_seats.positive? && !assigned_license_ids_for_user.include?(lic.license_id)
+        end
+        log_info("Found #{available.size} licenses available for user ID #{user_id}.")
+        available
+      end
     end
   end
 end

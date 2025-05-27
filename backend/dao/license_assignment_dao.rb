@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 require_relative '../models/license_assignment'
+require_relative '../models/license'
+require_relative '../models/product'
 require_relative '../models/assignment_log'
 
 require_relative 'base_dao'
@@ -28,7 +30,7 @@ class LicenseAssignmentDAO < BaseDAO
   class << self
     def create(attributes)
       attributes[:assignment_date] ||= Time.now
-      attributes[:is_active] = true if attributes[:is_active].nil?
+      attributes[:is_active] = false if attributes[:is_active].nil?
 
       super
     end
@@ -42,6 +44,27 @@ class LicenseAssignmentDAO < BaseDAO
         log_assignments_for_license_fetched(license_id, assignments.size)
         assignments
       end
+    end
+
+    def find_detailed_by_user(user_id, options = {})
+      context = "finding detailed assignments for user ID #{user_id}"
+      with_error_handling(context) do
+        dataset = model_class.where(user_id: user_id)
+
+        dataset = dataset.eager(license: :product)
+
+        order_criteria = options.fetch(:order, [Sequel.desc(:is_active), Sequel.desc(:assignment_date)])
+        order_criteria = Array(order_criteria)
+        dataset = dataset.order(*order_criteria) unless order_criteria.empty?
+
+        assignments = dataset.all
+
+        log_detailed_assignments_for_user_fetched(user_id, assignments.size)
+        assignments
+      end
+    rescue StandardError => e
+      log_error("Error in find_detailed_by_user for user_id #{user_id}: #{e.message}")
+      raise
     end
 
     def count_by_license(license_id)
@@ -102,7 +125,7 @@ class LicenseAssignmentDAO < BaseDAO
 
         # Prüfen, ob die Lizenz genügend freie Plätze hat
         if license.available_seats <= 0
-          raise StandardError, "Cannot activate assignment: License has no available seats"
+          raise StandardError, 'Cannot activate assignment: License has no available seats'
         end
 
         # Zuweisung aktivieren
@@ -111,7 +134,6 @@ class LicenseAssignmentDAO < BaseDAO
         assignment
       end
     end
-
 
     def deactivate(id)
       context = "deactivating license assignment ID #{id}"
@@ -123,15 +145,11 @@ class LicenseAssignmentDAO < BaseDAO
     end
 
     def find_active_for_user_with_details(user_id)
-      model_class.where(user_id: user_id, is_active: true)
-                 .eager(license: :product)
-                 .all
+      find_detailed_by_user(user_id).select(&:is_active?)
     end
 
     def find_inactive_for_user_with_details(user_id)
-      model_class.where(user_id: user_id, is_active: false)
-                 .eager(license: :product)
-                 .all
+      find_detailed_by_user(user_id).reject(&:is_active?)
     end
   end
 end
