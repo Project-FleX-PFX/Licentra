@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative '../models/user'
+require_relative '../models/role'
 require_relative 'base_dao'
 require_relative 'concerns/crud_operations'
 require_relative 'user_logging'
@@ -31,6 +32,63 @@ class UserDAO < BaseDAO
 
   class << self
     # User lookup methods
+    def all_with_roles(options = {})
+      context = 'fetching all users with their roles'
+      with_error_handling(context) do
+        dataset = model_class.dataset.eager(:roles)
+
+        dataset = dataset.where(options[:where]) if options[:where]
+
+        order_criteria = options[:order]
+        if order_criteria
+          order_criteria = Array(order_criteria)
+          dataset = dataset.order(*order_criteria)
+        else
+          dataset = dataset.order(:username)
+        end
+
+        users = dataset.all
+        log_info("Fetched #{users.size} users with roles.")
+        users
+      end
+    end
+
+    def find_by_id_with_roles!(user_id)
+      context = "finding user ID #{user_id} with roles"
+      with_error_handling(context) do
+        user = model_class
+               .dataset
+               .where(primary_key => user_id)
+               .eager(:roles)
+               .first
+
+        raise DAO::RecordNotFound, "User (ID: #{user_id}) not found." unless user
+
+        log_user_fetched_with_roles(user)
+        user
+      end
+    end
+
+    def find_by_id_with_roles(user_id)
+      find_by_id_with_roles!(user_id)
+    rescue DAO::RecordNotFound
+      nil
+    end
+
+    def username_exists_for_other_user?(username, current_user_id)
+      return false if username.nil? || username.strip.empty?
+
+      existing_user = find_by_username(username)
+      existing_user && existing_user.user_id != current_user_id
+    end
+
+    def email_exists_for_other_user?(email, current_user_id)
+      return false if email.nil? || email.strip.empty?
+
+      existing_user = find_by_email(email)
+      existing_user && existing_user.user_id != current_user_id
+    end
+
     def find_by_username(username)
       return nil if username.nil? || username.empty?
 
@@ -207,6 +265,11 @@ class UserDAO < BaseDAO
     end
 
     private
+
+    def log_user_fetched_with_roles(user)
+      role_names = user.roles.map(&:role_name).join(', ')
+      log_info("Fetched user with roles: ID=#{user.pk}, Username=#{user.username}, Roles=[#{role_names}]")
+    end
 
     # Helper methods to reduce complexity
     def build_query_from_criteria(criteria)

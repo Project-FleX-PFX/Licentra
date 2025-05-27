@@ -1,0 +1,268 @@
+<% @title ||= "License Management" %>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="text-start mb-0">License Management</h1>
+</div>
+<p class="page-description text-start">Manage your licenses and their details.</p>
+
+<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 mt-3">
+  <% if @licenses && !@licenses.empty? %>
+    <% @licenses.each do |license| %>
+      <div class="col">
+        <div class="card license-card h-100 shadow-sm"
+             data-license-id="<%= license.license_id %>"
+             data-license-name="<%= license.license_name %>"
+             data-license-key="<%= license.license_key %>"
+             data-seat-count="<%= license.seat_count %>"
+             data-product-id="<%= license.product_id %>"
+             data-product-name="<%= license.product&.product_name %>"
+             data-license-type-id="<%= license.license_type_id %>"
+             data-purchase-date="<%= license.purchase_date ? license.purchase_date.strftime('%Y-%m-%d') : '' %>"
+             data-expire-date="<%= license.expire_date ? license.expire_date.strftime('%Y-%m-%d') : '' %>"
+             data-cost="<%= license.cost.to_s %>"
+             data-currency="<%= license.currency %>"
+             data-vendor="<%= license.vendor %>"
+             data-notes="<%= license.notes %>">
+          <div class="card-body d-flex flex-column">
+            <h2 class="card-title h5"><%= license.license_name %></h2>
+            <p class="card-text"><strong>Product:</strong> <%= license.product&.product_name || 'N/A' %></p>
+            <p class="card-text flex-grow-1"><strong>Seats:</strong> <%= license.seat_count %></p>
+            <% if license.cost && license.currency %>
+                <p class="card-text small"><strong>Cost:</strong>
+                    <%= license.currency == 'EUR' ? '€' : '$' %><%= '%.2f' % license.cost %>
+                </p>
+            <% end %>
+            <div class="mt-auto d-flex justify-content-end">
+              <button type="button" class="btn btn-outline-primary btn-sm license-configure-btn">
+                <i class="fas fa-cog me-1"></i> Configure
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    <% end %>
+  <% else %>
+    <div class="col-12"><p class="text-muted">No licenses found.</p></div>
+  <% end %>
+
+  <div class="col">
+    <div class="card add-license-card h-100 text-center shadow-sm" id="addLicenseCardBtn" style="cursor: pointer;">
+      <div class="card-body d-flex flex-column justify-content-center align-items-center">
+        <i class="fas fa-plus-circle fa-3x text-primary mb-2"></i>
+        <h2 class="card-title h5">Add New License</h2>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="editLicenseModal" tabindex="-1" aria-labelledby="editLicenseModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="editLicenseModalLabel">License Configuration</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="editLicenseForm" method="post" action="">
+          <input type="hidden" name="_method" value="PATCH" id="editFormMethodField">
+          <%# license_id wird in der action URL sein, nicht zwingend im Body nötig für PATCH %>
+          <%# <input type="hidden" name="license[license_id]" id="editLicenseIdField"> %>
+
+          <div class="mb-3">
+            <label for="editLicenseNameField" class="form-label">License Name <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" name="license[license_name]" id="editLicenseNameField" required>
+          </div>
+          <div class="mb-3">
+            <label for="editLicenseKeyField" class="form-label">License Key</label>
+            <input type="text" class="form-control" name="license[license_key]" id="editLicenseKeyField">
+          </div>
+          <div class="row g-3">
+            <div class="col-md-6 mb-3">
+              <label for="editSeatCountField" class="form-label">Seat Count <span class="text-danger">*</span></label>
+              <input type="number" class="form-control" name="license[seat_count]" id="editSeatCountField" min="1" required>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="editProductIdField" class="form-label">Product <span class="text-danger">*</span></label>
+              <select class="form-select" name="license[product_id]" id="editProductIdField" required>
+                <% @products.each do |product| %>
+                  <option value="<%= product.product_id %>"><%= product.product_name %></option>
+                <% end %>
+              </select>
+            </div>
+          </div>
+          <div class="row g-3">
+            <div class="col-md-6 mb-3">
+              <label for="editLicenseTypeIdField" class="form-label">License Type <span class="text-danger">*</span></label>
+              <select class="form-select" name="license[license_type_id]" id="editLicenseTypeIdField" required>
+                <% if @license_types && !@license_types.empty? %>
+                    <% @license_types.each do |type| %>
+                    <option value="<%= type.license_type_id %>"><%= type.type_name %></option>
+                    <% end %>
+                <% else %>
+                    <option value="" disabled>No license types available</option>
+                <% end %>
+              </select>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="editPurchaseDateField" class="form-label">Purchase Date</label>
+              <input type="date" class="form-control" name="license[purchase_date]" id="editPurchaseDateField">
+            </div>
+          </div>
+          <div class="row g-3">
+            <div class="col-md-6 mb-3">
+              <label for="editExpireDateField" class="form-label">Expire Date (optional)</label>
+              <input type="date" class="form-control" name="license[expire_date]" id="editExpireDateField">
+            </div>
+            <div class="col-md-4 mb-3">
+              <label for="editCostField" class="form-label">Cost</label>
+              <div class="input-group">
+                <span class="input-group-text" id="editCostCurrencySymbol">€</span>
+                <input type="number" class="form-control" name="license[cost]" id="editCostField" step="0.01" min="0" max="9999999.99" placeholder="0.00">
+              </div>
+            </div>
+            <div class="col-md-2 mb-3">
+              <label for="editCurrencyField" class="form-label">Currency</label>
+              <select class="form-select" name="license[currency]" id="editCurrencyField">
+                <option value="EUR">EUR (€)</option>
+                <option value="USD">USD ($)</option>
+              </select>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label for="editVendorField" class="form-label">Vendor</label>
+            <input type="text" class="form-control" name="license[vendor]" id="editVendorField">
+          </div>
+          <div class="mb-3">
+            <label for="editNotesField" class="form-label">Notes</label>
+            <textarea class="form-control" name="license[notes]" id="editNotesField" rows="3"></textarea>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer justify-content-between">
+        <div>
+          <button type="button" id="deleteLicenseBtnInModal" class="btn btn-danger" style="display: none;">Delete License</button>
+        </div>
+        <div>
+          <button type="button" id="editLicenseToggleBtn" class="btn btn-secondary">Edit</button>
+          <button type="submit" form="editLicenseForm" id="saveLicenseChangesBtn" class="btn btn-primary" disabled>Save Changes</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="addLicenseModal" tabindex="-1" aria-labelledby="addLicenseModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addLicenseModalLabel">Add New License</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="addLicenseForm" method="post" action="/admin/licenses">
+          <div class="mb-3">
+            <label for="addLicenseNameField" class="form-label">License Name <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" name="license[license_name]" id="addLicenseNameField" required>
+          </div>
+          <div class="mb-3">
+            <label for="addLicenseKeyField" class="form-label">License Key</label>
+            <input type="text" class="form-control" name="license[license_key]" id="addLicenseKeyField">
+          </div>
+          <div class="row g-3">
+            <div class="col-md-6 mb-3">
+              <label for="addSeatCountField" class="form-label">Seat Count <span class="text-danger">*</span></label>
+              <input type="number" class="form-control" name="license[seat_count]" id="addSeatCountField" min="1" value="1" required>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="addProductIdField" class="form-label">Product <span class="text-danger">*</span></label>
+              <select class="form-select" name="license[product_id]" id="addProductIdField" required>
+                <option value="" disabled selected>-- Select Product --</option>
+                <% @products.each do |product| %>
+                  <option value="<%= product.product_id %>"><%= product.product_name %></option>
+                <% end %>
+              </select>
+            </div>
+          </div>
+          <div class="row g-3">
+            <div class="col-md-6 mb-3">
+              <label for="addLicenseTypeIdField" class="form-label">License Type <span class="text-danger">*</span></label>
+              <select class="form-select" name="license[license_type_id]" id="addLicenseTypeIdField" required>
+                <option value="" disabled selected>-- Select Type --</option>
+                <% if @license_types && !@license_types.empty? %>
+                    <% @license_types.each do |type| %>
+                    <option value="<%= type.license_type_id %>"><%= type.type_name %></option>
+                    <% end %>
+                <% else %>
+                    <option value="" disabled>No license types available</option>
+                <% end %>
+              </select>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="addPurchaseDateField" class="form-label">Purchase Date</label>
+              <input type="date" class="form-control" name="license[purchase_date]" id="addPurchaseDateField" value="<%= Date.today.strftime('%Y-%m-%d') %>">
+            </div>
+          </div>
+          <div class="row g-3">
+            <div class="col-md-6 mb-3">
+              <label for="addExpireDateField" class="form-label">Expire Date (optional)</label>
+              <input type="date" class="form-control" name="license[expire_date]" id="addExpireDateField">
+            </div>
+            <div class="col-md-4 mb-3">
+              <label for="addCostField" class="form-label">Cost</label>
+              <div class="input-group">
+                <span class="input-group-text" id="addCostCurrencySymbol">€</span>
+                <input type="number" class="form-control" name="license[cost]" id="addCostField" step="0.01" min="0" max="9999999.99" placeholder="0.00" value="0.00">
+              </div>
+            </div>
+            <div class="col-md-2 mb-3">
+              <label for="addCurrencyField" class="form-label">Currency</label>
+              <select class="form-select" name="license[currency]" id="addCurrencyField">
+                <option value="EUR" selected>EUR (€)</option>
+                <option value="USD">USD ($)</option>
+              </select>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label for="addVendorField" class="form-label">Vendor</label>
+            <input type="text" class="form-control" name="license[vendor]" id="addVendorField">
+          </div>
+          <div class="mb-3">
+            <label for="addNotesField" class="form-label">Notes</label>
+            <textarea class="form-control" name="license[notes]" id="addNotesField" rows="3"></textarea>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="submit" form="addLicenseForm" id="createLicenseSubmitBtn" class="btn btn-primary">Create License</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="deleteLicenseConfirmModal" tabindex="-1" aria-labelledby="deleteLicenseConfirmModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="deleteLicenseConfirmModalLabel">Confirm Deletion</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p>Are you sure you want to delete the license: <strong id="deleteLicenseNameSpan"></strong>?</p>
+        <p class="text-danger small"><i class="fas fa-exclamation-triangle me-1"></i> This action cannot be undone. Active assignments might prevent deletion.</p>
+      </div>
+      <div class="modal-footer">
+        <form id="deleteLicenseForm" method="post" action="">
+            <input type="hidden" name="_method" value="DELETE">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-danger" id="confirmLicenseDeleteSubmitBtn">Delete License</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { initAdminLicenseManagement } from '/js/features/admin/licenseManagementHandler.js';
+  document.addEventListener('DOMContentLoaded', initAdminLicenseManagement);
+</script>

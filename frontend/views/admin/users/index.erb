@@ -1,0 +1,212 @@
+<% @title ||= "User Management" %>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="text-start mb-0">User Management</h1>
+</div>
+<p class="page-description text-start">Manage users, their details, roles, and license assignments.</p>
+
+<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 mt-3">
+  <% if @users && !@users.empty? %>
+    <% @users.each do |user| %>
+      <div class="col">
+        <div class="card user-card h-100 shadow-sm"
+             data-user-id="<%= user.user_id %>"
+             data-username="<%= user.username %>"
+             data-email="<%= user.email %>"
+             data-first-name="<%= user.first_name || '' %>"
+             data-last-name="<%= user.last_name || '' %>"
+             data-is-active="<%= user.is_active.to_s %>"
+             data-locked-at="<%= user.locked_at ? user.locked_at.iso8601 : '' %>"
+             data-role-ids="<%= user.roles.map(&:role_id).join(',') %>">
+          <div class="card-body d-flex flex-column">
+            <h2 class="card-title h5">
+              <%= user.username %>
+              <% if user.locked_at %><span class="badge bg-danger ms-2" title="Account is locked"><i class="fas fa-lock"></i> Locked</span><% end %>
+              <% unless user.is_active %><span class="badge bg-warning text-dark ms-2" title="Account is inactive"><i class="fas fa-ban"></i> Inactive</span><% end %>
+            </h2>
+            <p class="card-text small text-muted"><%= user.email %></p>
+            <p class="card-text small">
+              <% full_name = [user.first_name, user.last_name].compact.join(' ').strip %>
+              <% if !full_name.empty? %>
+                <%= full_name %>
+              <% else %>
+                <em class="text-muted">No full name set</em>
+              <% end %>
+            </p>
+            <div class="card-text flex-grow-1 mb-2">
+              <strong class="small">Roles:</strong><br>
+              <% if user.roles.any? %>
+                <% user.roles.each do |role| %>
+                  <span class="badge bg-info me-1"><%= role.role_name %></span>
+                <% end %>
+              <% else %>
+                <em class="text-muted small">No roles assigned</em>
+              <% end %>
+            </div>
+            <div class="mt-auto d-flex flex-wrap justify-content-between align-items-center pt-2">
+                <div>
+                    <% if user.user_id != current_user.user_id %>
+                        <% if user.locked_at %>
+                            <form class="d-inline-block" method="post" action="/admin/users/<%= user.user_id %>/unlock">
+                                <button type="submit" class="btn btn-sm btn-outline-success" title="Unlock User">
+                                    <i class="fas fa-unlock"></i> Unlock
+                                </button>
+                            </form>
+                        <% else %>
+                            <form class="d-inline-block" method="post" action="/admin/users/<%= user.user_id %>/lock">
+                                 <button type="submit" class="btn btn-sm btn-outline-warning" title="Lock User">
+                                    <i class="fas fa-lock"></i> Lock
+                                </button>
+                            </form>
+                        <% end %>
+                    <% else %>
+                        <span class="btn btn-sm text-muted disabled"><i class="fas fa-ban"></i> Self</span>
+                    <% end %>
+                </div>
+
+                <div class="btn-group btn-group-sm">
+                    <a href="/admin/users/<%= user.user_id %>/assignments" class="btn btn-outline-info" title="Manage Licenses for this user">
+                        <i class="fas fa-id-card-alt me-1"></i> Licenses
+                    </a>
+                    <button type="button" class="btn btn-primary user-configure-btn">
+                        <i class="fas fa-edit me-1"></i> Configure
+                    </button>
+                </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    <% end %>
+  <% else %>
+    <div class="col-12"><p class="text-muted">No users found.</p></div>
+  <% end %>
+
+  <div class="col">
+    <div class="card add-user-card h-100 text-center shadow-sm" id="addUserCardBtn" style="cursor: pointer;">
+      <div class="card-body d-flex flex-column justify-content-center align-items-center">
+        <i class="fas fa-user-plus fa-3x text-primary mb-2"></i>
+        <h2 class="card-title h5">Add New User</h2>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="userModal" tabindex="-1" aria-labelledby="userModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="userModalLabel">User Configuration</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="userForm" method="post" action="" novalidate>
+          <input type="hidden" name="_method" value="" id="userFormMethodField">
+
+          <div class="row g-3">
+            <div class="col-md-6 mb-3">
+              <label for="userFirstNameField" class="form-label">First Name</label>
+              <input type="text" class="form-control" name="user[first_name]" id="userFirstNameField">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="userLastNameField" class="form-label">Last Name</label>
+              <input type="text" class="form-control" name="user[last_name]" id="userLastNameField">
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label for="userUsernameField" class="form-label">Username <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" name="user[username]" id="userUsernameField" required>
+          </div>
+
+          <div class="mb-3">
+            <label for="userEmailField" class="form-label">Email <span class="text-danger">*</span></label>
+            <input type="email" class="form-control" name="user[email]" id="userEmailField" required>
+          </div>
+
+          <div class="mb-3">
+            <label for="userPasswordField" class="form-label">Password</label>
+            <input type="password" class="form-control" name="user[new_password]" id="userPasswordField" autocomplete="new-password">
+            <div class="form-text" id="passwordHelpText">Leave blank to keep current password (for edits). Required for new users.</div>
+            
+            <div id="password-strength" class="mt-2" style="display: none;">
+              <h6 class="small">Password must contain:</h6>
+              <p id="length" class="small text-danger mb-1"><i class="fas fa-times-circle me-1"></i>At least 10 characters</p>
+              <p id="letter" class="small text-danger mb-1"><i class="fas fa-times-circle me-1"></i>At least one lowercase letter</p>
+              <p id="capital" class="small text-danger mb-1"><i class="fas fa-times-circle me-1"></i>At least one uppercase letter</p>
+              <p id="number" class="small text-danger mb-1"><i class="fas fa-times-circle me-1"></i>At least one number</p>
+              <p id="special" class="small text-danger mb-1"><i class="fas fa-times-circle me-1"></i>At least one special character</p>
+              <p id="forbidden" class="small text-danger mb-1"><i class="fas fa-times-circle me-1"></i>Must not contain parts of username/email or "password"</p>
+            </div>
+          </div>
+
+          <div class="mb-3" id="passwordConfirmationGroup" style="display: none;">
+            <label for="userPasswordConfirmationField" class="form-label">Confirm Password</label>
+            <input type="password" class="form-control" name="user[password_confirmation]" id="userPasswordConfirmationField" autocomplete="new-password">
+            <p id="match" class="small text-danger mt-2" style="display: none;"><i class="fas fa-times-circle me-1"></i>Passwords do not match</p>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Roles <span class="text-danger">*</span></label>
+            <div id="rolesContainer" class="border p-2 rounded bg-light">
+              <% if @roles && !@roles.empty? %>
+                <% @roles.each do |role| %>
+                  <div class="form-check form-check-inline">
+                    <input class="form-check-input user-role-checkbox" type="checkbox" name="user_role_ids[]" value="<%= role.role_id %>" id="user_role_<%= role.role_id %>">
+                    <label class="form-check-label" for="user_role_<%= role.role_id %>"><%= role.role_name %></label>
+                  </div>
+                <% end %>
+              <% else %>
+                <p class="text-muted small m-0">No roles available to assign.</p>
+              <% end %>
+            </div>
+            <div id="rolesError" class="text-danger small mt-1" style="display: none;">Please select at least one role.</div>
+          </div>
+          
+          <div class="form-check mb-3">
+            <input class="form-check-input" type="checkbox" name="user[is_active]" value="true" id="userIsActiveField" checked>
+            <label class="form-check-label" for="userIsActiveField">
+              User is Active
+            </label>
+            <div class="form-text">Inactive users cannot log in.</div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer justify-content-between">
+        <div>
+          <button type="button" id="deleteUserBtnInModal" class="btn btn-danger" style="display: none;">Delete User</button>
+        </div>
+        <div>
+          <button type="button" id="editUserToggleBtn" class="btn btn-secondary">Edit</button>
+          <button type="submit" form="userForm" id="saveUserChangesBtn" class="btn btn-primary" disabled>Save Changes</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="deleteUserConfirmModal" tabindex="-1" aria-labelledby="deleteUserConfirmModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="deleteUserConfirmModalLabel">Confirm Deletion</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p>Are you sure you want to delete the user: <strong id="deleteConfirmUserNameSpan"></strong>?</p> <%# ID geändert %>
+        <p class="text-danger small"><i class="fas fa-exclamation-triangle me-1"></i> This action cannot be undone and will remove all associated data, including license assignments.</p>
+      </div>
+      <div class="modal-footer">
+        <form id="deleteUserForm" method="post" action=""> <%# Action wird von JS gesetzt %>
+            <input type="hidden" name="_method" value="DELETE">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-danger" id="confirmUserDeleteSubmitBtn">Delete User</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { initAdminUserManagement } from '/js/features/admin/userManagementHandler.js';
+  document.addEventListener('DOMContentLoaded', initAdminUserManagement);
+</script>
