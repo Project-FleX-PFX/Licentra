@@ -18,6 +18,17 @@ class License < Sequel::Model
     'Expired'
   end
 
+  def to_api_hash
+    {
+      license_id: license_id,
+      license_name: license_name,
+      license_key: license_key,
+      product_id: product_id,
+      product_name: product&.product_name,
+      available_seats: available_seats
+    }
+  end
+
   def validate
     super
     validates_presence %i[product_id license_type_id seat_count]

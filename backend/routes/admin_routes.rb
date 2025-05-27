@@ -208,49 +208,95 @@ module AdminRoutes # rubocop:disable Metrics/ModuleLength
     end
 
     # --- License Assignment Management by Admin ---
-    app.post '/admin/assignments/approve' do
-      license_id = params[:license_id].to_i
+    app.get '/admin/users/:user_id/assignments' do
+      @user_for_assignments_id = params[:user_id].to_i
+      begin
+        @user = UserDAO.find_by_id_with_roles!(@user_for_assignments_id)
+        @title = "Manage License Assignments for #{@user.username}"
+        @assignments = LicenseAssignmentDAO.find_detailed_by_user(@user_for_assignments_id)
+        erb :'admin/users/assignments', layout: :'layouts/application'
+      rescue DAO::RecordNotFound
+        flash[:error] = "User (ID: #{@user_for_assignments_id}) not found."
+        redirect '/admin/users'
+      end
+    end
+
+    app.get '/admin/users/:user_id/available_licenses' do
+      content_type :json
+      user_id = params[:user_id].to_i
+      begin
+        UserDAO.find!(user_id)
+        available_licenses = LicenseDAO.find_available_for_user_assignment(user_id)
+        available_licenses.map(&:to_api_hash).to_json
+      rescue DAO::RecordNotFound
+        halt 404, { error: "User (ID: #{user_id}) not found." }.to_json
+      rescue StandardError => e
+        puts "ERROR fetching available licenses: #{e.message}"
+        halt 500, { error: "Failed to load available licenses: #{e.message}" }.to_json
+      end
+    end
+
+    app.post '/admin/users/:user_id/assignments' do
       target_user_id = params[:user_id].to_i
+      license_id = params[:license_id].to_i
       begin
         LicenseService.approve_assignment_for_user(license_id, target_user_id, current_user)
-        flash[:success] = 'License assignment approved.'
+        flash[:success] = 'License assignment created successfully. It may need to be activated.'
       rescue LicenseService::ServiceError => e
         flash[:error] = e.message
       end
-      redirect request.referrer || '/admin/licenses'
+      redirect back
     end
 
-    app.post '/admin/assignments/:id/activate' do
-      assignment_id = params[:id].to_i
+    app.put '/admin/users/:user_id/assignments/:assignment_id/activate' do
+      user_id_param = params[:user_id].to_i
+      assignment_id = params[:assignment_id].to_i
       begin
+        assignment = LicenseAssignmentDAO.find!(assignment_id)
+        if assignment.user_id != user_id_param
+          raise LicenseService::NotAuthorizedError, 'Assignment does not belong to the specified user.'
+        end
+
         LicenseService.activate_license_for_user(assignment_id, current_user)
         flash[:success] = "License assignment (ID: #{assignment_id}) activated."
       rescue LicenseService::ServiceError => e
         flash[:error] = e.message
       end
-      redirect request.referrer || '/admin/licenses'
+      redirect back
     end
 
-    app.post '/admin/assignments/:id/deactivate' do
-      assignment_id = params[:id].to_i
+    app.put '/admin/users/:user_id/assignments/:assignment_id/deactivate' do
+      user_id_param = params[:user_id].to_i
+      assignment_id = params[:assignment_id].to_i
       begin
+        assignment = LicenseAssignmentDAO.find!(assignment_id)
+        if assignment.user_id != user_id_param
+          raise LicenseService::NotAuthorizedError, 'Assignment does not belong to the specified user.'
+        end
+
         LicenseService.deactivate_license_for_user(assignment_id, current_user)
         flash[:success] = "License assignment (ID: #{assignment_id}) deactivated."
       rescue LicenseService::ServiceError => e
         flash[:error] = e.message
       end
-      redirect request.referrer || '/admin/licenses'
+      redirect back
     end
 
-    app.delete '/admin/assignments/:id/cancel' do
-      assignment_id = params[:id].to_i
+    app.delete '/admin/users/:user_id/assignments/:assignment_id' do
+      user_id_param = params[:user_id].to_i
+      assignment_id = params[:assignment_id].to_i
       begin
+        assignment = LicenseAssignmentDAO.find!(assignment_id)
+        if assignment.user_id != user_id_param
+          raise LicenseService::NotAuthorizedError, 'Assignment does not belong to the specified user.'
+        end
+
         LicenseService.cancel_assignment_as_admin(assignment_id, current_user)
-        flash[:success] = "License assignment (ID: #{assignment_id}) canceled."
+        flash[:success] = "License assignment (ID: #{assignment_id}) canceled/deleted."
       rescue LicenseService::ServiceError => e
         flash[:error] = e.message
       end
-      redirect request.referrer || '/admin/licenses'
+      redirect back
     end
 
     # --- Special Routes ---

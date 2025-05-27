@@ -2,7 +2,7 @@
 
 <div class="d-flex justify-content-between align-items-center mb-3">
   <h1 class="text-start mb-0">License Assignments for: <strong><%= @user.username %></strong></h1>
-  <a href="/user_management" class="btn btn-outline-secondary">
+  <a href="/admin/users" class="btn btn-outline-secondary">
     <i class="fas fa-arrow-left me-1"></i> Back to User Management
   </a>
 </div>
@@ -90,7 +90,6 @@
         <div id="licenseSelectionContainer" style="display: none;">
           <p>Select a license to assign to <strong><%= @user.username %></strong>:</p>
           <div id="availableLicensesList" class="list-group">
-            <%# Populated dynamically via JS %>
           </div>
         </div>
         <div id="noLicensesAvailable" class="alert alert-warning" style="display: none;">
@@ -130,4 +129,3 @@
   import { initAdminUserAssignments } from '/js/features/admin/userAssignmentsHandler.js';
   document.addEventListener('DOMContentLoaded', () => initAdminUserAssignments('<%= @user.user_id %>'));
 </script>
-
