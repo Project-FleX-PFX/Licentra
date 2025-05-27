@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative '../models/license'
+require_relative '../models/product'
 require_relative 'base_dao'
 require_relative 'concerns/crud_operations'
 require_relative 'license_logging'
@@ -24,6 +25,67 @@ class LicenseDAO < BaseDAO
   end
 
   class << self
+    def all_with_details(options = {})
+      context = 'fetching all licenses with their associated products'
+      with_error_handling(context) do
+        dataset = model_class.dataset
+
+        order_criteria = options[:order] || [Sequel.asc(Sequel[:products][:product_name]),
+                                             Sequel.asc(Sequel[:licenses][:license_name])]
+        order_criteria = Array(order_criteria)
+
+        dataset = dataset.left_join(:products, product_id: :product_id)
+                         .select_all(:licenses)
+                         .order(*order_criteria)
+                         .eager(:product)
+
+        licenses_with_product = dataset.all
+
+        log_info("Fetched #{licenses_with_product.size} licenses with product details.")
+        licenses_with_product
+      end
+    end
+
+    def find_with_details!(id)
+      context = "finding license ID #{id} with product details"
+      with_error_handling(context) do
+        license_with_product = model_class
+                               .dataset
+                               .where(Sequel[:licenses][:license_id] => id)
+                               .eager(:product)
+                               .first
+
+        raise DAO::RecordNotFound, "License (ID: #{id}) not found." unless license_with_product
+
+        log_license_fetched_with_details(license_with_product)
+        license_with_product
+      end
+    end
+
+    def find_with_details(id)
+      find_with_details!(id)
+    rescue DAO::RecordNotFound
+      nil
+    end
+
+    def delete(id)
+      context = "deleting license with ID #{id}"
+      with_error_handling(context) do
+        license = find_with_details!(id)
+        active_assignments = DB[:license_assignments].where(license_id: id, is_active: true).count
+        if active_assignments.positive?
+          raise LicenseManagementError,
+                "Cannot delete license '#{license.license_name}' (ID: #{id}): #{active_assignments} active assignments exist."
+        end
+
+        deleted_count = model_class.where(primary_key => id).delete
+        raise DAO::RecordNotFound, "License (ID: #{id}) could not be deleted or was not found." if deleted_count.zero?
+
+        log_license_deleted(license)
+        true
+      end
+    end
+
     def find_by_product(product_id)
       context = "finding licenses for product ID #{product_id}"
       with_error_handling(context) do
@@ -48,19 +110,6 @@ class LicenseDAO < BaseDAO
         licenses = where(license_type_id: license_type_id)
         log_licenses_for_type_fetched(license_type_id, licenses.size)
         licenses
-      end
-    end
-
-    def delete(id)
-      context = "deleting license with ID #{id}"
-      with_error_handling(context) do
-        find!(id)
-        active_assignments = DB[:license_assignments].where(license_id: id, is_active: true).count
-        if active_assignments.positive?
-          raise DatabaseError, "Cannot delete license ID #{id}: #{active_assignments} active assignments exist."
-        end
-
-        super(id)
       end
     end
 

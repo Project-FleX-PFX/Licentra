@@ -49,4 +49,13 @@ module LicenseLogging
   def log_licenses_for_type_fetched(type_id, count)
     log_info("Fetched #{count} licenses for Type ID #{type_id}")
   end
+
+  def log_license_fetched_with_details(license)
+    product_name_for_log = license.product ? license.product.product_name : 'N/A'
+    log_info("Fetched license with details: ID=#{license.license_id}, Name=#{license.license_name}, Product=#{product_name_for_log}")
+  end
+
+  def log_license_deleted(license)
+    log_info("License deleted: ID #{license.pk} Name #{license&.license_name}, Product ID #{license.product_id}, Type ID #{license.license_type_id}, Seats #{license.seat_count}")
+  end
 end

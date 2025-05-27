@@ -61,7 +61,7 @@ class SecurityLogDAO < BaseDAO
     # --- Specific Log Creation Methods ---
 
     def log_login_success(user:)
-      details = "User '#{user.username}' (ID: #{user.id}) successfully logged in."
+      details = "User '#{user.username}' (ID: #{user.user_id}) successfully logged in."
       create_log_entry(action: Actions::LOGIN_SUCCESS, object: Objects::ALL_OBJECTS[0], acting_user: user,
                        details: details)
     end
@@ -74,31 +74,31 @@ class SecurityLogDAO < BaseDAO
     end
 
     def log_password_reset_request(user_making_request:, target_email:)
-      details = "Password reset requested for email '#{target_email}' by user '#{user_making_request.username}' (ID: #{user_making_request.id})."
+      details = "Password reset requested for email '#{target_email}' by user '#{user_making_request.username}' (ID: #{user_making_request.user_id})."
       create_log_entry(action: Actions::PASSWORD_RESET_REQUEST, object: Objects::ALL_OBJECTS[1],
                        acting_user: user_making_request, details: details)
     end
 
     def log_password_changed(user_who_changed_password:)
-      details = "Password changed for user '#{user_who_changed_password.username}' (ID: #{user_who_changed_password.id})."
+      details = "Password changed for user '#{user_who_changed_password.username}' (ID: #{user_who_changed_password.user_id})."
       create_log_entry(action: Actions::PASSWORD_CHANGED, object: Objects::ALL_OBJECTS[1],
                        acting_user: user_who_changed_password, details: details)
     end
 
     def log_user_created(acting_user:, created_user:)
-      details = "User '#{created_user.username}' (ID: #{created_user.id}) was created by '#{acting_user.username}' (ID: #{acting_user.id})."
+      details = "User '#{created_user.username}' (ID: #{created_user.user_id}) was created by '#{acting_user.username}' (ID: #{acting_user.user_id})."
       create_log_entry(action: Actions::USER_CREATED, object: Objects::ALL_OBJECTS[1], acting_user: acting_user,
                        details: details)
     end
 
     def log_user_updated(acting_user:, updated_user:, changes_description: 'details updated')
-      details = "User '#{updated_user.username}' (ID: #{updated_user.id}) was updated by '#{acting_user.username}' (ID: #{acting_user.id}). Changes: #{changes_description}."
+      details = "User '#{updated_user.username}' (ID: #{updated_user.user_id}) was updated by '#{acting_user.username}' (ID: #{acting_user.user_id}). Changes: #{changes_description}."
       create_log_entry(action: Actions::USER_UPDATED, object: Objects::ALL_OBJECTS[1], acting_user: acting_user,
                        details: details)
     end
 
     def log_user_deleted(acting_user:, deleted_user_username:, deleted_user_id:)
-      details = "User '#{deleted_user_username}' (ID: #{deleted_user_id}) was deleted by '#{acting_user.username}' (ID: #{acting_user.id})."
+      details = "User '#{deleted_user_username}' (ID: #{deleted_user_id}) was deleted by '#{acting_user.username}' (ID: #{acting_user.user_id})."
       create_log_entry(action: Actions::USER_DELETED, object: Objects::ALL_OBJECTS[1], acting_user: acting_user,
                        details: details)
     end
@@ -111,37 +111,37 @@ class SecurityLogDAO < BaseDAO
     end
 
     def log_product_created(acting_user:, product:)
-      details = "Product '#{product.product_name}' (ID: #{product.id}) was created by '#{acting_user.username}' (ID: #{acting_user.id})."
+      details = "Product '#{product.product_name}' (ID: #{product.id}) was created by '#{acting_user.username}' (ID: #{acting_user.user_id})."
       create_log_entry(action: Actions::PRODUCT_CREATED, object: Objects::ALL_OBJECTS[2], acting_user: acting_user,
                        details: details)
     end
 
     def log_product_updated(acting_user:, product:, changes_description: 'details updated')
-      details = "Product '#{product.product_name}' (ID: #{product.id}) was updated by '#{acting_user.username}' (ID: #{acting_user.id}). Changes: #{changes_description}."
+      details = "Product '#{product.product_name}' (ID: #{product.id}) was updated by '#{acting_user.username}' (ID: #{acting_user.user_id}). Changes: #{changes_description}."
       create_log_entry(action: Actions::PRODUCT_UPDATED, object: Objects::ALL_OBJECTS[2], acting_user: acting_user,
                        details: details)
     end
 
     def log_product_deleted(acting_user:, deleted_product_name:, deleted_product_id:)
-      details = "Product '#{deleted_product_name}' (ID: #{deleted_product_id}) was deleted by '#{acting_user.username}' (ID: #{acting_user.id})."
+      details = "Product '#{deleted_product_name}' (ID: #{deleted_product_id}) was deleted by '#{acting_user.username}' (ID: #{acting_user.user_id})."
       create_log_entry(action: Actions::PRODUCT_DELETED, object: Objects::ALL_OBJECTS[2], acting_user: acting_user,
                        details: details)
     end
 
     def log_license_created(acting_user:, license:)
-      details = "License '#{license.license_name}' (ID: #{license.id}) for product '#{license.product&.product_name}' was created by '#{acting_user.username}' (ID: #{acting_user.id})."
+      details = "License '#{license.license_name}' (ID: #{license.id}) for product '#{license.product&.product_name}' was created by '#{acting_user.username}' (ID: #{acting_user.user_id})."
       create_log_entry(action: Actions::LICENSE_CREATED, object: Objects::ALL_OBJECTS[3], acting_user: acting_user,
                        details: details)
     end
 
     def log_license_updated(acting_user:, license:, changes_description: 'details updated')
-      details = "License '#{license.license_name}' (ID: #{license.id}) was updated by '#{acting_user.username}' (ID: #{acting_user.id}). Changes: #{changes_description}."
+      details = "License '#{license.license_name}' (ID: #{license.id}) was updated by '#{acting_user.username}' (ID: #{acting_user.user_id}). Changes: #{changes_description}."
       create_log_entry(action: Actions::LICENSE_UPDATED, object: Objects::ALL_OBJECTS[3], acting_user: acting_user,
                        details: details)
     end
 
     def log_license_deleted(acting_user:, deleted_license_name:, deleted_license_id:)
-      details = "License '#{deleted_license_name}' (ID: #{deleted_license_id}) was deleted by '#{acting_user.username}' (ID: #{acting_user.id})."
+      details = "License '#{deleted_license_name}' (ID: #{deleted_license_id}) was deleted by '#{acting_user.username}' (ID: #{acting_user.user_id})."
       create_log_entry(action: Actions::LICENSE_DELETED, object: Objects::ALL_OBJECTS[3], acting_user: acting_user,
                        details: details)
     end

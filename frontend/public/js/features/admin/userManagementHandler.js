@@ -1,370 +1,447 @@
 // frontend/public/js/features/admin/userManagementHandler.js
-import { initPasswordMatcher } from '../../components/passwordMatcher.js';
-import { initPasswordStrengthChecker } from '../../components/passwordStrengthChecker.js';
+import { initPasswordMatcher } from "../../components/passwordMatcher.js";
+import { initPasswordStrengthChecker } from "../../components/passwordStrengthChecker.js";
 import {
   initializeModal,
   showModal,
   hideModal,
-  setFormFieldsDisabled as utilSetFormFieldsDisabled,
-  populateForm as utilPopulateForm,
-  resetAndClearForm as utilResetAndClearForm,
-  handleFormSubmit,
-  handleDelete,
+  setText,
   showElement,
   hideElement,
-  setText,
-} from './adminUtils.js';
+} from "./adminUtils.js";
 
-// Module-specific state variables
 let userModalInstance = null;
-let deleteConfirmModalInstance = null;
-let activeCardElement = null;
-let isCurrentlyEditingForm = false;
-let currentModalMode = 'view'; // 'add', 'view', 'edit'
+let deleteUserConfirmModalInstance = null;
+
+let activeCardDataset = {};
+let currentUserId = null;
+let currentModalMode = "view";
+
 let passwordMatcherInstance = null;
 let passwordStrengthCheckerInstance = null;
 
 /**
- * Enables or disables password fields and associated validation indicators
- * @param {HTMLFormElement} formElement - The form element
- * @param {boolean} enable - True to enable fields and validation
- * @param {string} mode - 'add', 'edit', or 'view' - controls placeholder and behavior
+ * Setzt den Disabled-Status für Formularfelder, außer für bestimmte IDs.
  */
-function enableUserPasswordFieldsAndValidation(formElement, enable, mode = 'view') {
-  const passwordField = formElement.password;
-  const confirmPasswordField = formElement.password_confirmation;
-  const passwordConfirmationGroup = document.getElementById('passwordConfirmationGroup');
-  const strengthIndicator = document.getElementById('password-strength');
-  const matchIndicator = document.getElementById('match');
-  const passwordHelpText = document.getElementById('passwordHelpText');
+function setFormFieldsDisabled(formElement, disabled, exceptIds = []) {
+  Array.from(formElement.elements).forEach((element) => {
+    if (element.type !== "hidden" && !exceptIds.includes(element.id)) {
+      element.disabled = disabled;
+    }
+  });
+}
+
+/**
+ * Steuert die Passwortfelder und deren Validierungsanzeigen.
+ */
+function enablePasswordFields(formElement, enable, mode) {
+  const passwordField = formElement.elements["user[new_password]"];
+  const confirmField = formElement.elements["user[password_confirmation]"];
+  const strengthIndicator = document.getElementById("password-strength");
+  const confirmGroup = document.getElementById("passwordConfirmationGroup");
+  const helpText = document.getElementById("passwordHelpText");
+  const matchIndicator = document.getElementById("match");
 
   if (passwordField) passwordField.disabled = !enable;
-  if (confirmPasswordField) confirmPasswordField.disabled = !enable;
-
-  if (passwordHelpText) {
-    if (enable) {
-      if (mode === 'add') {
-        setText(passwordHelpText, 'Password is required. Please choose a strong password.');
-        if (passwordField) passwordField.placeholder = 'Enter password';
-      } else if (mode === 'edit') {
-        setText(passwordHelpText, 'Enter new password to change it. Leave blank to keep current password.');
-        if (passwordField) passwordField.placeholder = 'Enter new password (optional)';
-      } else {
-        setText(passwordHelpText, 'Password field.');
-      }
-    } else {
-      if (mode === 'view') {
-        setText(passwordHelpText, 'Password is not displayed. Click \'Edit\' to change.');
-        if (passwordField) passwordField.placeholder = '********';
-      } else {
-        setText(passwordHelpText, 'Password will be set.');
-      }
-    }
-  }
+  if (confirmField) confirmField.disabled = !enable;
 
   if (enable) {
-    if (passwordConfirmationGroup) showElement(passwordConfirmationGroup);
-    if (strengthIndicator) strengthIndicator.hidden = false;
-
+    showElement(strengthIndicator);
+    showElement(confirmGroup);
+    if (mode === "add") {
+      setText(
+        helpText,
+        "Password is required. Please choose a strong password."
+      );
+      if (passwordField) {
+        passwordField.placeholder = "Enter password";
+        passwordField.required = true;
+      }
+      if (confirmField) {
+        confirmField.placeholder = "Confirm password";
+        confirmField.required = true;
+      }
+    } else {
+      // edit mode
+      setText(
+        helpText,
+        "Enter new password to change it. Leave blank to keep current."
+      );
+      if (passwordField) {
+        passwordField.placeholder = "New password (optional)";
+        passwordField.required = false;
+      }
+      if (confirmField) {
+        confirmField.placeholder = "Confirm new password";
+        confirmField.required = false;
+      }
+    }
     if (!passwordStrengthCheckerInstance) {
-      passwordStrengthCheckerInstance = initPasswordStrengthChecker({ passwordInputId: 'password' });
+      passwordStrengthCheckerInstance = initPasswordStrengthChecker({
+        passwordInputId: "userPasswordField",
+      });
     }
     if (!passwordMatcherInstance) {
-      passwordMatcherInstance = initPasswordMatcher({ passwordInputId: 'password', confirmInputId: 'password_confirmation' });
+      passwordMatcherInstance = initPasswordMatcher({
+        passwordInputId: "userPasswordField",
+        confirmInputId: "userPasswordConfirmationField",
+      });
     }
+    // Trigger validation if fields have values (e.g. browser autofill)
+    if (passwordField && passwordField.value)
+      passwordStrengthCheckerInstance?.validate();
+    if (confirmField && confirmField.value) passwordMatcherInstance?.check();
   } else {
-    if (passwordConfirmationGroup) hideElement(passwordConfirmationGroup);
-    if (strengthIndicator) strengthIndicator.hidden = true;
+    // View mode or password fields not active in edit
+    hideElement(strengthIndicator);
+    hideElement(confirmGroup);
     if (matchIndicator) matchIndicator.hidden = true;
-    
-    // Clear password fields when disabled (except in pure view mode before edit)
-    if (mode !== 'view' || isCurrentlyEditingForm) {
-      if (passwordField) passwordField.value = '';
-      if (confirmPasswordField) confirmPasswordField.value = '';
-    } else if (mode === 'view' && !isCurrentlyEditingForm) {
-      if (passwordField) passwordField.placeholder = '********';
+    if (passwordField) {
+      passwordField.value = "";
+      passwordField.required = false;
+      passwordField.placeholder =
+        mode === "view" && currentModalMode !== "add"
+          ? "********"
+          : "Leave blank to keep current password";
     }
+    if (confirmField) {
+      confirmField.value = "";
+      confirmField.required = false;
+    }
+    if (helpText && mode === "view" && currentModalMode !== "add")
+      setText(
+        helpText,
+        'Password is not displayed. Click "Edit" to enable password change.'
+      );
   }
 }
 
 /**
- * Populates the user form with data or resets it
- * Uses the generic populateForm from adminUtils
- * @param {HTMLFormElement} formElement - The form element
- * @param {Object} userData - User data (from card.dataset)
- * @param {string} mode - 'add', 'edit', or 'view' for initial state in edit mode
+ * Befüllt das User-Formular mit Daten.
  */
-function populateUserModalForm(formElement, userData = {}, mode = 'view') {
-  if (!formElement) return;
+function populateUserForm(formElement, userData) {
+  formElement.reset();
 
-  // Mapping for populateForm, as data-* attributes are kebab-case
-  const fieldMappings = {
-    'user_id': 'userId',
-    'first_name': 'firstName',
-    'last_name': 'lastName',
-    'username': 'username',
-    'email': 'email',
-  };
-  
-  // Use the generic function. It should call formElement.reset() internally.
-  utilPopulateForm(formElement, userData, fieldMappings);
-  
-  // Explicitly set user_id as populateForm might not find it as 'userId'
-  formElement.user_id.value = (mode !== 'add' && userData.userId) ? userData.userId : '';
+  formElement.elements["user[username]"].value = userData.username || "";
+  formElement.elements["user[email]"].value = userData.email || "";
+  formElement.elements["user[first_name]"].value = userData.firstName || "";
+  formElement.elements["user[last_name]"].value = userData.lastName || "";
 
-  // Always clear password fields when populating/resetting
-  if (formElement.password) formElement.password.value = '';
-  if (formElement.password_confirmation) formElement.password_confirmation.value = '';
+  const isActiveCheckbox = formElement.elements["user[is_active]"];
+  if (isActiveCheckbox) {
+    isActiveCheckbox.checked =
+      userData.isActive === "true" ||
+      (currentModalMode === "add" && userData.isActive === undefined);
+  }
 
-  // Set role checkboxes specially as populateForm can't handle this
-  const roleCheckboxes = formElement.querySelectorAll('input[name="roles[]"]');
-  roleCheckboxes.forEach(checkbox => checkbox.checked = false);
-  
-  if (mode !== 'add' && userData.roleIds) {
-    const userRoleIds = userData.roleIds.split(',');
-    userRoleIds.forEach(roleId => {
-      const checkbox = formElement.querySelector(`input[name="roles[]"][value="${roleId.trim()}"]`);
+  const roleCheckboxes = formElement.querySelectorAll(".user-role-checkbox");
+  roleCheckboxes.forEach((cb) => (cb.checked = false));
+  if (userData.roleIds) {
+    const selectedRoleIds = userData.roleIds.split(",");
+    selectedRoleIds.forEach((roleId) => {
+      const checkbox = formElement.querySelector(
+        `.user-role-checkbox[value="${roleId.trim()}"]`
+      );
       if (checkbox) checkbox.checked = true;
     });
   }
-  
-  hideElement('rolesError');
-
-  // Show/hide "Manage Licenses" section
-  const licenseSection = document.getElementById('licenseManagementSection');
-  const manageLicensesBtn = document.getElementById('manageLicensesBtn');
-
-  if (mode !== 'add' && userData.userId) {
-    showElement(licenseSection);
-    if (manageLicensesBtn) {
-      // Reset event listener to avoid stale closures
-      const newBtn = manageLicensesBtn.cloneNode(true);
-      manageLicensesBtn.parentNode.replaceChild(newBtn, manageLicensesBtn);
-      newBtn.addEventListener('click', () => {
-        window.location.href = `/user_management/${userData.userId}/assignments`;
-      });
-    }
-  } else {
-    hideElement(licenseSection);
-  }
+  hideElement("rolesError");
 }
 
 /**
- * Opens the user modal in the specified mode
- * @param {string} mode - 'add' (new user) or 'view' (view/edit existing user)
- * @param {HTMLElement|null} cardElement - The user card element (only for 'view')
+ * Konfiguriert und öffnet das User-Modal.
  */
-function openUserModal(mode, cardElement = null) {
-  const formElement = document.getElementById('userForm');
-  const modalTitleElement = document.getElementById('userModalLabel');
-  const editButton = document.getElementById('editUserBtn');
-  const saveButton = document.getElementById('saveUserBtn');
-  const deleteButton = document.getElementById('deleteUserBtn');
-  
+function setupModalForMode(mode, cardDataset = {}) {
+  const form = document.getElementById("userForm");
+  const modalLabel = document.getElementById("userModalLabel");
+  const editBtn = document.getElementById("editUserToggleBtn");
+  const saveBtn = document.getElementById("saveUserChangesBtn");
+  const deleteBtn = document.getElementById("deleteUserBtnInModal");
+  const formMethodField = document.getElementById("userFormMethodField");
+
   currentModalMode = mode;
-  activeCardElement = cardElement;
-  isCurrentlyEditingForm = (mode === 'add');
+  activeCardDataset = { ...cardDataset };
+  currentUserId = cardDataset.userId || null;
 
-  const cardData = cardElement ? { ...cardElement.dataset } : {};
+  populateUserForm(form, activeCardDataset);
 
-  populateUserModalForm(formElement, cardData, mode);
+  if (mode === "add") {
+    setText(modalLabel, "Add New User");
+    form.action = "/admin/users";
+    formMethodField.value = "";
+    setFormFieldsDisabled(form, false, ["saveUserChangesBtn"]);
+    enablePasswordFields(form, true, "add");
 
-  if (mode === 'add') {
-    setText(modalTitleElement, 'Add New User');
-    utilSetFormFieldsDisabled(formElement, false, ['deleteUserBtn', 'manageLicensesBtn', 'editUserBtn']);
-    enableUserPasswordFieldsAndValidation(formElement, true, 'add');
-    hideElement(editButton);
-    hideElement(deleteButton);
-    if (saveButton) { 
-      saveButton.disabled = false; 
-      setText(saveButton, 'Add User'); 
-    }
-    const firstFocusableInput = formElement.querySelector('input:not([type="hidden"]):not([disabled]), select:not([disabled]), textarea:not([disabled])');
-    if (firstFocusableInput) firstFocusableInput.focus();
+    hideElement(editBtn);
+    hideElement(deleteBtn);
+    showElement(saveBtn);
+    setText(saveBtn, "Add User");
+    saveBtn.disabled = false;
+    form.elements["user[username]"].focus();
   } else {
-    setText(modalTitleElement, `User: ${cardData.username || 'Details'}`);
-    utilSetFormFieldsDisabled(formElement, true, ['editUserBtn', 'deleteUserBtn', 'saveUserBtn', 'manageLicensesBtn']);
-    enableUserPasswordFieldsAndValidation(formElement, false, 'view');
-    showElement(editButton); 
-    setText(editButton, 'Edit'); 
-    editButton.classList.remove('btn-warning'); 
-    editButton.disabled = false;
-    showElement(deleteButton); 
-    deleteButton.disabled = false;
-    if (saveButton) { 
-      saveButton.disabled = true; 
-      setText(saveButton, 'Save Changes'); 
+    // 'view' (initialer Zustand für Bearbeiten)
+    setText(modalLabel, `User: ${activeCardDataset.username || "Details"}`);
+    form.action = `/admin/users/${currentUserId}`;
+    formMethodField.value = "PATCH";
+    setFormFieldsDisabled(form, true, [
+      "editUserToggleBtn",
+      "saveUserChangesBtn",
+      "deleteUserBtnInModal",
+    ]); // Alles gesperrt
+    enablePasswordFields(form, false, "view");
+
+    showElement(editBtn);
+    setText(editBtn, "Edit");
+    editBtn.classList.remove("btn-warning");
+    if (currentUserId) {
+      showElement(deleteBtn);
+    } else {
+      hideElement(deleteBtn);
     }
+    showElement(saveBtn);
+    setText(saveBtn, "Save Changes");
+    saveBtn.disabled = true;
   }
   showModal(userModalInstance);
 }
 
 /**
- * Initializes the user management functionality
+ * Schaltet den Bearbeitungsmodus des Formulars um.
  */
-export function initAdminUserManagement() {
-  userModalInstance = initializeModal('userModal');
-  deleteConfirmModalInstance = initializeModal('deleteConfirmModal');
+function toggleEditState() {
+  const form = document.getElementById("userForm");
+  const editBtn = document.getElementById("editUserToggleBtn");
+  const saveBtn = document.getElementById("saveUserChangesBtn");
+  const isCurrentlyViewMode = form.elements["user[username]"].disabled;
 
-  // Event listeners for "Edit User" buttons on cards
-  document.querySelectorAll('.user-card .user-edit-btn').forEach(button => {
-    button.addEventListener('click', (event) => {
-      event.stopPropagation();
-      openUserModal('view', button.closest('.user-card'));
-    });
-  });
-
-  // Event listener for "Add User" button
-  const addUserButton = document.getElementById('addUserBtn');
-  if (addUserButton) {
-    addUserButton.addEventListener('click', () => openUserModal('add'));
-  }
-
-  const editUserButton = document.getElementById('editUserBtn');
-  const saveUserButton = document.getElementById('saveUserBtn');
-  const userForm = document.getElementById('userForm');
-
-  if (editUserButton && saveUserButton && userForm) {
-    editUserButton.addEventListener('click', () => {
-      isCurrentlyEditingForm = !isCurrentlyEditingForm;
-      
-      utilSetFormFieldsDisabled(
-        userForm, 
-        !isCurrentlyEditingForm, 
-        ['editUserBtn', 'deleteUserBtn', 'saveUserBtn', 'manageLicensesBtn', 'password', 'password_confirmation']
-      );
-      enableUserPasswordFieldsAndValidation(userForm, isCurrentlyEditingForm, 'edit');
-      saveUserButton.disabled = !isCurrentlyEditingForm;
-
-      if (isCurrentlyEditingForm) {
-        setText(editUserButton, 'Cancel'); 
-        editUserButton.classList.add('btn-warning');
-        const firstFocusableInput = userForm.querySelector('input:not([type="hidden"]):not([disabled]), select:not([disabled]), textarea:not([disabled])');
-        if (firstFocusableInput) firstFocusableInput.focus();
-      } else {
-        setText(editUserButton, 'Edit'); 
-        editUserButton.classList.remove('btn-warning');
-        if (activeCardElement && currentModalMode === 'view') {
-          populateUserModalForm(userForm, activeCardElement.dataset, 'view');
-        }
-        hideElement('rolesError');
-      }
-    });
-  }
-
-  // Form submit handler
-  if (userForm) {
-    userForm.addEventListener('submit', async (event) => {
-      const rolesCheckboxes = userForm.querySelectorAll('input[name="roles[]"]');
-      const atLeastOneRoleSelected = Array.from(rolesCheckboxes).some(checkbox => checkbox.checked);
-      const rolesError = document.getElementById('rolesError');
-
-      if (!atLeastOneRoleSelected) {
-        if (rolesError) {
-          setText(rolesError, 'Please select at least one role.');
-          showElement(rolesError);
-          rolesError.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-        event.preventDefault();
-        return;
-      } else {
-        if (rolesError) hideElement(rolesError);
-      }
-      
-      // Client-side password validation
-      const passwordField = userForm.password;
-      if (!passwordField.disabled && passwordField.value.trim() !== '') {
-        if (passwordStrengthCheckerInstance && !passwordStrengthCheckerInstance.validate()) {
-          alert('Password does not meet the requirements. Please check the indicators.');
-          passwordField.focus();
-          event.preventDefault(); 
-          return;
-        }
-        if (passwordMatcherInstance && !passwordMatcherInstance.check()) {
-          alert('Passwords do not match.');
-          userForm.password_confirmation.focus();
-          event.preventDefault(); 
-          return;
-        }
-      }
-
-      // HTML5 form validation
-      if (!userForm.checkValidity()) {
-        userForm.reportValidity();
-        event.preventDefault();
-        return;
-      }
-
-      const userId = userForm.user_id.value;
-
-      handleFormSubmit({
-        event,
-        formElement: userForm,
-        itemId: userId,
-        baseUrl: '/user_management',
-      });
-    });
-  }
-
-  // Delete user button in modal
-  const deleteUserButtonInModal = document.getElementById('deleteUserBtn');
-  if (deleteUserButtonInModal) {
-    deleteUserButtonInModal.addEventListener('click', () => {
-      if (activeCardElement) {
-        const username = activeCardElement.dataset.username || 'this user';
-        setText('deleteUserNameSpan', username);
-        showModal(deleteConfirmModalInstance);
-      }
-    });
-  }
-
-  // Confirm delete button
-  const confirmDeleteActualButton = document.getElementById('confirmDeleteBtn');
-  if (confirmDeleteActualButton) {
-    confirmDeleteActualButton.addEventListener('click', async () => {
-      if (activeCardElement) {
-        const userId = activeCardElement.dataset.userId;
-        if (userId) {
-          handleDelete({
-            itemId: userId,
-            baseUrl: '/user_management',
-            modalToDeleteInstance: deleteConfirmModalInstance,
-          });
-          if (userModalInstance) hideModal(userModalInstance);
-        }
-      }
-    });
-  }
-
-  // Event listener for closing the main modal
-  const userModalElement = document.getElementById('userModal');
-  if (userModalElement) {
-    userModalElement.addEventListener('hidden.bs.modal', function () {
-      const form = document.getElementById('userForm');
-      if (form) {
-        populateUserModalForm(form, {}, 'add');
-        utilSetFormFieldsDisabled(form, true, ['editUserBtn', 'saveUserBtn', 'deleteUserBtn', 'manageLicensesBtn']);
-        enableUserPasswordFieldsAndValidation(form, false, 'view');
-      }
-      
-      const editBtn = document.getElementById('editUserBtn');
-      if (editBtn) { 
-        setText(editBtn, 'Edit'); 
-        editBtn.classList.remove('btn-warning'); 
-      }
-      const saveBtn = document.getElementById('saveUserBtn');
-      if (saveBtn) {
-        saveBtn.disabled = true; 
-        setText(saveBtn, 'Save Changes');
-      }
-      
-      hideElement('rolesError');
-      
-      document.querySelectorAll('.user-card.border-primary').forEach(c => c.classList.remove('border-primary', 'border-3'));
-      activeCardElement = null;
-      isCurrentlyEditingForm = false;
-      currentModalMode = 'view';
-    });
+  if (isCurrentlyViewMode) {
+    setFormFieldsDisabled(form, false, ["saveUserChangesBtn"]);
+    enablePasswordFields(form, true, "edit");
+    setText(editBtn, "Cancel");
+    editBtn.classList.add("btn-warning");
+    saveBtn.disabled = false;
+    form.elements["user[username]"].focus();
+  } else {
+    populateUserForm(form, activeCardDataset);
+    setFormFieldsDisabled(form, true, [
+      "editUserToggleBtn",
+      "saveUserChangesBtn",
+      "deleteUserBtnInModal",
+    ]);
+    enablePasswordFields(form, false, "view");
+    setText(editBtn, "Edit");
+    editBtn.classList.remove("btn-warning");
+    saveBtn.disabled = true;
+    hideElement("rolesError");
   }
 }
 
+/**
+ * Behandelt das Absenden des User-Formulars (Add oder Edit).
+ */
+async function handleUserFormSubmit(event) {
+  event.preventDefault();
+  const form = event.target;
+
+  const roleCheckboxes = form.querySelectorAll(".user-role-checkbox");
+  const atLeastOneRoleSelected = Array.from(roleCheckboxes).some(
+    (checkbox) => checkbox.checked
+  );
+  const rolesErrorEl = document.getElementById("rolesError");
+  if (!atLeastOneRoleSelected) {
+    showElement(rolesErrorEl);
+    return;
+  } else {
+    hideElement(rolesErrorEl);
+  }
+
+  const passwordField = form.elements["user[new_password]"];
+  const confirmField = form.elements["user[password_confirmation]"];
+
+  if (
+    currentModalMode === "add" ||
+    (!passwordField.disabled && passwordField.value.trim() !== "")
+  ) {
+    if (
+      passwordStrengthCheckerInstance &&
+      !passwordStrengthCheckerInstance.validate()
+    ) {
+      passwordField.focus();
+      return;
+    }
+    if (passwordMatcherInstance && !passwordMatcherInstance.check()) {
+      confirmField.focus();
+      return;
+    }
+    if (
+      currentModalMode === "add" &&
+      (passwordField.value.trim() === "" || confirmField.value.trim() === "")
+    ) {
+      alert("Password and confirmation are required for new users.");
+      passwordField.focus();
+      return;
+    }
+  }
+
+  // HTML5-Validierung für andere Felder
+  if (!form.checkValidity()) {
+    form.reportValidity();
+    return;
+  }
+
+  const formData = new FormData(form);
+  const selectedRoleIds = Array.from(roleCheckboxes)
+    .filter((cb) => cb.checked)
+    .map((cb) => cb.value);
+
+  // Entferne das Standard-FormData-Verhalten für Checkbox-Arrays
+  formData.delete("user_role_ids[]");
+  selectedRoleIds.forEach((id) => formData.append("user_role_ids[]", id));
+
+  if (currentModalMode !== "add" && passwordField.value.trim() === "") {
+    formData.delete("user[new_password]");
+    formData.delete("user[password_confirmation]");
+  }
+  if (!formData.has("user[is_active]")) {
+    formData.append("user[is_active]", "false");
+  }
+
+  const methodForFetch =
+    form.elements.userFormMethodField.value === "PATCH" ? "PATCH" : "POST";
+  const url = form.action;
+
+  const saveButton = document.getElementById("saveUserChangesBtn");
+  if (saveButton) {
+    saveButton.disabled = true;
+    setText(saveButton, "Saving...");
+  }
+
+  // DEBUG: Logge Formulardaten
+  console.log(`Submitting user form to ${url} via ${methodForFetch}`);
+  const debugData = {};
+  formData.forEach((value, key) => {
+    if (debugData[key]) {
+      if (!Array.isArray(debugData[key])) {
+        debugData[key] = [debugData[key]];
+      }
+      debugData[key].push(value);
+    } else {
+      debugData[key] = value;
+    }
+  });
+  console.log("Payload:", debugData);
+
+  try {
+    const response = await fetch(url, {
+      method: methodForFetch,
+      body: new URLSearchParams(formData),
+      headers: {
+        "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]')
+          ?.content,
+      },
+    });
+
+    if (response.ok || response.redirected) {
+      window.location.reload();
+    } else {
+      console.error(
+        "Server responded with an error:",
+        response.status,
+        response.statusText
+      );
+      response
+        .json()
+        .then((err) => console.error("Error details:", err))
+        .catch(() => {});
+      window.location.reload();
+    }
+  } catch (error) {
+    console.error("Form submission error:", error);
+    window.location.reload();
+  }
+}
+
+export function initAdminUserManagement() {
+  userModalInstance = initializeModal("userModal");
+  deleteUserConfirmModalInstance = initializeModal("deleteUserConfirmModal");
+
+  document.querySelectorAll(".user-configure-btn").forEach((button) => {
+    button.addEventListener("click", (event) => {
+      event.stopPropagation();
+      const card = button.closest(".user-card");
+      setupModalForMode("view", card.dataset);
+    });
+  });
+
+  const addUserCard = document.getElementById("addUserCardBtn");
+  if (addUserCard) {
+    addUserCard.addEventListener("click", () => {
+      setupModalForMode("add");
+    });
+  }
+
+  const editToggleButton = document.getElementById("editUserToggleBtn");
+  if (editToggleButton) {
+    editToggleButton.addEventListener("click", toggleEditState);
+  }
+
+  const userFormElement = document.getElementById("userForm");
+  if (userFormElement) {
+    userFormElement.addEventListener("submit", handleUserFormSubmit);
+  }
+
+  const deleteBtnInModal = document.getElementById("deleteUserBtnInModal");
+  if (deleteBtnInModal) {
+    deleteBtnInModal.addEventListener("click", () => {
+      if (currentUserId && activeCardDataset.username) {
+        setText("deleteConfirmUserNameSpan", activeCardDataset.username);
+        const deleteForm = document.getElementById("deleteUserForm");
+        if (deleteForm) deleteForm.action = `/admin/users/${currentUserId}`;
+        showModal(deleteUserConfirmModalInstance);
+      }
+    });
+  }
+
+  const userModalElement = document.getElementById("userModal");
+  if (userModalElement) {
+    userModalElement.addEventListener("shown.bs.modal", () => {
+      if (currentModalMode === "add") {
+        enablePasswordFields(document.getElementById("userForm"), true, "add");
+      } else if (
+        document.getElementById("userPasswordField")?.disabled === false
+      ) {
+        enablePasswordFields(document.getElementById("userForm"), true, "edit");
+      } else {
+        enablePasswordFields(
+          document.getElementById("userForm"),
+          false,
+          "view"
+        );
+      }
+    });
+
+    userModalElement.addEventListener("hidden.bs.modal", () => {
+      const form = document.getElementById("userForm");
+      populateUserForm(form, {});
+      setFormFieldsDisabled(form, true, [
+        "editUserToggleBtn",
+        "saveUserChangesBtn",
+        "deleteUserBtnInModal",
+      ]);
+      enablePasswordFields(form, false, "view");
+      setText("editUserToggleBtn", "Edit");
+      document
+        .getElementById("editUserToggleBtn")
+        .classList.remove("btn-warning");
+      const saveBtn = document.getElementById("saveUserChangesBtn");
+      setText(saveBtn, "Save Changes");
+      saveBtn.disabled = true;
+      hideElement("rolesError");
+      hideElement("password-strength");
+      document.getElementById("match").hidden = true;
+      activeCardDataset = {};
+      currentUserId = null;
+      currentModalMode = "view";
+    });
+  }
+}

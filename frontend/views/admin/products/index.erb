@@ -1,0 +1,103 @@
+<% @title ||= "Product Management" %>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="text-start mb-0">Product Management</h1>
+</div>
+<p class="page-description text-start">Manage your products.</p>
+
+<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 mt-3">
+  <% if @products && !@products.empty? %>
+    <% @products.each do |p| %>
+      <div class="col">
+        <div class="card product-card h-100 shadow-sm"
+             data-product-id="<%= p.product_id %>"
+             data-product-name="<%= p.product_name %>"
+             data-license-count="<%= p.licenses_dataset.count %>">
+          <div class="card-body d-flex flex-column">
+            <h2 class="card-title h5"><%= p.product_name %></h2>
+            <p class="card-text flex-grow-1"><strong>Licenses:</strong> <%= p.licenses_dataset.count %></p>
+            <div class="mt-auto d-flex justify-content-end">
+              <button type="button" class="btn btn-outline-primary btn-sm product-configure-btn">
+                <i class="fas fa-cog me-1"></i> Configure
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    <% end %>
+  <% else %>
+    <div class="col-12">
+      <p class="text-muted">No products found.</p>
+    </div>
+  <% end %>
+
+  <div class="col">
+    <div class="card add-product-card h-100 text-center shadow-sm" id="addProductCard" style="cursor: pointer;">
+      <div class="card-body d-flex flex-column justify-content-center align-items-center">
+        <i class="fas fa-plus-circle fa-3x text-primary mb-2"></i>
+        <h2 class="card-title h5">Add New Product</h2>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="productModal" tabindex="-1" aria-labelledby="productModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="productModalLabel">Product Configuration</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="productForm" method="post" action="">
+          <input type="hidden" name="_method" value="" id="formMethodField">
+
+          <div class="mb-3">
+            <label for="productNameField" class="form-label">Product Name <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" name="product[product_name]" id="productNameField" required>
+          </div>
+
+          <div id="licenseInfoContainer" class="mb-3" style="display: none;">
+            <p class="mb-0"><strong>Number of associated licenses:</strong> <span id="licenseCountDisplay" class="badge bg-info">0</span></p>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer justify-content-between">
+        <div>
+          <button type="button" id="deleteProductBtnInModal" class="btn btn-danger" style="display: none;">Delete Product</button>
+        </div>
+        <div>
+          <button type="button" id="editProductBtnInModal" class="btn btn-secondary">Edit</button>
+          <button type="submit" form="productForm" id="saveProductBtnInModal" class="btn btn-primary" disabled>Save Changes</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="deleteProductConfirmModal" tabindex="-1" aria-labelledby="deleteProductConfirmModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="deleteProductConfirmModalLabel">Confirm Deletion</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p>Are you sure you want to delete the product: <strong id="deleteProductNameSpan"></strong>?</p>
+        <p class="text-danger small"><i class="fas fa-exclamation-triangle me-1"></i> This action cannot be undone. Deleting a product with associated licenses might fail or cause issues.</p>
+      </div>
+      <div class="modal-footer">
+        <form id="deleteProductForm" method="post" action="">
+          <input type="hidden" name="_method" value="DELETE">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" id="confirmProductDeleteBtn" class="btn btn-danger">Delete Product</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { initAdminProductManagement } from '/js/features/admin/productManagementHandler.js';
+  document.addEventListener('DOMContentLoaded', initAdminProductManagement);
+</script>
