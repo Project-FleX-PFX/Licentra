@@ -131,6 +131,7 @@ module AdminRoutes # rubocop:disable Metrics/ModuleLength
           unless new_password_value == user_params_for_details[:password_confirmation]
             raise UserService::UserManagementError, 'Passwords do not match.'
           end
+
           UserService.reset_user_password_as_admin(target_user_id, new_password_value, current_user)
         end
 
@@ -159,7 +160,6 @@ module AdminRoutes # rubocop:disable Metrics/ModuleLength
       end
       status 200
     end
-
 
     app.delete '/admin/users/:id' do
       target_user_id = params[:id].to_i
@@ -223,7 +223,7 @@ module AdminRoutes # rubocop:disable Metrics/ModuleLength
         end
 
         LicenseService.activate_license_for_user(assignment_id, current_user)
-        flash[:success] = "License assignment activated successfully."
+        flash[:success] = 'License assignment activated successfully.'
       end
       status 200
     end
@@ -239,7 +239,7 @@ module AdminRoutes # rubocop:disable Metrics/ModuleLength
         end
 
         LicenseService.deactivate_license_for_user(assignment_id, current_user)
-        flash[:success] = "License assignment deactivated successfully."
+        flash[:success] = 'License assignment deactivated successfully.'
       end
       status 200
     end
@@ -255,7 +255,7 @@ module AdminRoutes # rubocop:disable Metrics/ModuleLength
         end
 
         LicenseService.cancel_assignment_as_admin(assignment_id, current_user)
-        flash[:success] = "License assignment canceled successfully."
+        flash[:success] = 'License assignment canceled successfully.'
       end
       status 200
     end

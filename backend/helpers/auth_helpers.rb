@@ -31,8 +31,8 @@ module AuthHelpers
     require_login
     return if role?(role_name)
 
-    halt 403, erb(:'errors/403', 
-                   locals: { message: "You don't have permission to access this page." }, 
-                   layout: :'layouts/application')
+    halt 403, erb(:'errors/403',
+                  locals: { message: "You don't have permission to access this page." },
+                  layout: :'layouts/application')
   end
 end

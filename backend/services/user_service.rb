@@ -276,8 +276,6 @@ class UserService
     raise UserManagementError, "An unexpected error occurred while deleting the user: #{e.message}"
   end
 
-  private_class_method
-
   def self._authorize_admin(user)
     raise NotAuthorizedError, 'Admin privileges required.' unless user&.admin?
   end

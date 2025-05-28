@@ -12,7 +12,8 @@ class ProfileService
   class ProfileUpdateError < StandardError; end
 
   class << self
-    def update_profile(user_performing_update, field, value) # user umbenannt für Klarheit
+    # user umbenannt für Klarheit
+    def update_profile(user_performing_update, field, value)
       raise ProfileUpdateError, 'Invalid field' unless ALLOWED_FIELDS.include?(field)
 
       # Der user_performing_update ist hier immer current_user,
@@ -85,7 +86,7 @@ class ProfileService
       { success: true, message: 'Email updated successfully.' }
     end
 
-    def update_password(user_performing_update, target_user, new_password)
+    def update_password(_user_performing_update, target_user, new_password)
       # UserCredentialDAO.update_password sollte Passwort-Policy-Prüfungen durchführen
       # und ggf. UserCredential::PasswordPolicyError oder Sequel::ValidationFailed werfen.
       raise ProfileUpdateError, 'Password cannot be empty.' if new_password.nil? || new_password.empty?

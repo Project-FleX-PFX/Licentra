@@ -47,6 +47,5 @@ class ProductDAO < BaseDAO
         super(id)
       end
     end
-
   end
 end

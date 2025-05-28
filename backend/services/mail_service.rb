@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'mail'
 
 module MailService
@@ -8,31 +10,30 @@ module MailService
     smtp_settings = AppConfigDAO.get_smtp_settings
 
     unless smtp_settings && smtp_settings[:server] && smtp_settings[:port] && smtp_settings[:username] && smtp_settings[:password]
-      raise ConfigurationError, "SMTP settings are not fully configured. Please check admin settings."
+      raise ConfigurationError, 'SMTP settings are not fully configured. Please check admin settings.'
     end
 
-    required_keys = [:server, :port, :username, :password]
+    required_keys = %i[server port username password]
     missing_keys = []
     invalid_values = {}
 
     required_keys.each do |key|
       value = smtp_settings[key]
-      if value.nil? || (value.is_a?(String) && value.empty?)
-        missing_keys << key
-      end
+      missing_keys << key if value.nil? || (value.is_a?(String) && value.empty?)
     end
 
     unless missing_keys.empty?
-      raise ConfigurationError, "SMTP settings are incomplete. Missing or empty: #{missing_keys.join(', ')}. Please check admin settings."
+      raise ConfigurationError,
+            "SMTP settings are incomplete. Missing or empty: #{missing_keys.join(', ')}. Please check admin settings."
     end
 
     # Spezifische Port-Validierung
     port = smtp_settings[:port]
-    unless port.is_a?(Integer) && port > 0 && port <= 65535
+    unless port.is_a?(Integer) && port.positive? && port <= 65_535
       # Versuche, den Port zu einem Integer zu konvertieren, falls er als String vorliegt
       begin
         port_as_int = Integer(port)
-        if port_as_int > 0 && port_as_int <= 65535
+        if port_as_int.positive? && port_as_int <= 65_535
           smtp_settings[:port] = port_as_int # Korrigierten Wert verwenden
         else
           invalid_values[:port] = "must be a valid port number (1-65535), got '#{port}'"
@@ -54,9 +55,9 @@ module MailService
     # Security-Typ könnte auf gültige Werte geprüft werden
     valid_security_types = ['SSL', 'TLS', 'NONE', nil, ''] # nil oder leer für Auto-Detection oder Default
     unless valid_security_types.include?(smtp_settings[:security]&.upcase)
-      invalid_values[:security] = "must be one of #{valid_security_types.compact.join(', ')}, got '#{smtp_settings[:security]}'"
+      invalid_values[:security] =
+        "must be one of #{valid_security_types.compact.join(', ')}, got '#{smtp_settings[:security]}'"
     end
-
 
     unless invalid_values.empty?
       error_details = invalid_values.map { |k, v| "#{k} #{v}" }.join('; ')
@@ -66,11 +67,11 @@ module MailService
     # --- ENDE VALIDIERUNG ---
 
     delivery_options = {
-      address:        smtp_settings[:server],
-      port:           smtp_settings[:port].to_i,
-      domain:         smtp_settings[:username].split('@').last,
-      user_name:      smtp_settings[:username],
-      password:       smtp_settings[:password],
+      address: smtp_settings[:server],
+      port: smtp_settings[:port].to_i,
+      domain: smtp_settings[:username].split('@').last,
+      user_name: smtp_settings[:username],
+      password: smtp_settings[:password],
       authentication: 'plain'
     }
 
@@ -94,7 +95,7 @@ module MailService
 
     options_for_log = delivery_options.dup # Erstelle eine Kopie
     if options_for_log.key?(:password) && options_for_log[:password].is_a?(String) && !options_for_log[:password].empty?
-      options_for_log[:password] = "[FILTERED]" # Maskiere das Passwort
+      options_for_log[:password] = '[FILTERED]' # Maskiere das Passwort
     end
     puts "DEBUG: Mail delivery_options (filtered): #{options_for_log.inspect}"
 
@@ -105,7 +106,7 @@ module MailService
     # Dieser Fehler beinhaltet bereits, dass die Konfiguration (wahrscheinlich wegen Entschlüsselung) fehlgeschlagen ist.
     # Wir wandeln ihn in einen EmailService-spezifischen Konfigurationsfehler um.
     raise ConfigurationError, "Failed to configure mailer due to an issue with SMTP settings: #{e.message}"
-  rescue => e # Andere unerwartete Fehler während der Konfiguration selbst
+  rescue StandardError => e # Andere unerwartete Fehler während der Konfiguration selbst
     raise ConfigurationError, "Unexpected error during mailer configuration: #{e.message}"
   end
 
@@ -119,7 +120,6 @@ module MailService
       to       recipient_email
       subject  'Licentra - SMTP Test Email'
       body     "This is a test email sent from your Licentra application using the configured SMTP settings.\n\nTime: #{Time.now}"
-
     end
 
     puts "DEBUG: Attempting to send test email to #{recipient_email} from #{from_address}"
@@ -130,17 +130,18 @@ module MailService
     # Dieser Fehler kommt von configure_mailer! oder direkt von hier, falls get_smtp_settings fehlschlägt
     puts "ERROR (Configuration) in send_test_email: #{e.message}"
     raise SendError, "Cannot send email: Mailer configuration failed. #{e.message}" # Bessere Nachricht
-  rescue Net::SMTPAuthenticationError, Net::SMTPServerBusy, Net::SMTPFatalError, Net::SMTPSyntaxError, Timeout::Error => e
+  rescue Net::SMTPAuthenticationError, Net::SMTPServerBusy, Net::SMTPFatalError, Net::SMTPSyntaxError,
+         Timeout::Error => e
     error_message = "SMTP Error while sending test email to #{recipient_email}: #{e.class} - #{e.message}"
     puts "ERROR (SMTP) in send_test_email: #{error_message}"
     raise SendError, error_message
-  rescue => e # Alle anderen Fehler (z.B. SocketError, etc.)
+  rescue StandardError => e # Alle anderen Fehler (z.B. SocketError, etc.)
     error_message = "Generic error while sending test email to #{recipient_email}: #{e.class} - #{e.message}\n#{e.backtrace.join("\n")}"
     puts "ERROR (Generic) in send_test_email: #{error_message}"
     raise SendError, error_message
   end
 
-  def self.send_password_reset_email(recipient_email, klartext_token, user_id)
+  def self.send_password_reset_email(recipient_email, klartext_token, _user_id)
     configure_mailer! # Stellt sicher, dass Mailer konfiguriert ist
 
     from_address = AppConfigDAO.get_smtp_settings[:username]
@@ -174,11 +175,12 @@ module MailService
   rescue ConfigurationError => e
     puts "ERROR (Configuration) sending reset mail: #{e.message}"
     raise SendError, e.message
-  rescue Net::SMTPAuthenticationError, Net::SMTPServerBusy, Net::SMTPFatalError, Net::SMTPSyntaxError, Timeout::Error => e
+  rescue Net::SMTPAuthenticationError, Net::SMTPServerBusy, Net::SMTPFatalError, Net::SMTPSyntaxError,
+         Timeout::Error => e
     error_message = "SMTP Error while sending reset email to #{recipient_email}: #{e.class} - #{e.message}"
     puts "ERROR (SMTP) sending reset mail: #{error_message}"
     raise SendError, error_message
-  rescue => e
+  rescue StandardError => e
     error_message = "Generic error while sending reset email to #{recipient_email}: #{e.class} - #{e.message}"
     puts "ERROR (Generic) sending reset mail: #{error_message}"
     raise SendError, error_message

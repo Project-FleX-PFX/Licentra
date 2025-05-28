@@ -8,7 +8,7 @@ module IntegrationHelpers
 
   def setup_roles
     @admin_role ||= Fabricate(:role, role_name: 'Admin')
-    @user_role  ||= Fabricate(:role, role_name: 'User')
+    @setup_roles ||= Fabricate(:role, role_name: 'User')
   end
 
   def create_admin_user(username: 'admin_test_user', email: 'admin_test@example.com', password: DEFAULT_PASSWORD)

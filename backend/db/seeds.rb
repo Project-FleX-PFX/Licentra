@@ -176,7 +176,7 @@ DB.transaction(rollback: :reraise) do
     is_active: true
   )
 
-  ass_alice_suite_expired = LicenseAssignment.create(
+  LicenseAssignment.create(
     license: lic_suite_expired,
     user: alice,
     assignment_date: Time.now - (60 * 60 * 24 * 200),
