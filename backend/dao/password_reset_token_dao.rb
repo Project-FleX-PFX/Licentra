@@ -40,4 +40,11 @@ module PasswordResetTokenDAO
   def self.delete_token(token_record_id)
     DB[:password_reset_tokens].where(id: token_record_id).delete
   end
+
+  def self.delete_by_user(user_id)
+    DB[:password_reset_tokens].where(user_id: user_id).delete
+  rescue Sequel::DatabaseError => e
+    puts "Database error while deleting password reset tokens for user #{user_id}: #{e.message}"
+    0
+  end
 end
