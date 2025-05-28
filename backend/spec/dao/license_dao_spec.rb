@@ -181,9 +181,9 @@ RSpec.describe LicenseDAO do
       end
 
       it 'logs the deletion' do
-        allow(described_class).to receive(:log_deleted)
+        allow(described_class).to receive(:log_license_deleted)
         described_class.delete(license_id)
-        expect(described_class).to have_received(:log_deleted).with(license_to_delete)
+        expect(described_class).to have_received(:log_license_deleted).with(license_to_delete)
       end
     end
 

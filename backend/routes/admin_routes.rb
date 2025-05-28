@@ -112,7 +112,7 @@ module AdminRoutes # rubocop:disable Metrics/ModuleLength
         created_user = UserService.create_user_as_admin(service_params, current_user)
         flash[:success] = "User '#{created_user.username}' created successfully."
       end
-      status 200
+      status 201
     end
 
     app.patch '/admin/users/:id' do
@@ -182,7 +182,7 @@ module AdminRoutes # rubocop:disable Metrics/ModuleLength
         erb :'admin/users/assignments', layout: :'layouts/application'
       rescue DAO::RecordNotFound
         flash[:error] = "User (ID: #{@user_for_assignments_id}) not found."
-        redirect '/admin/users'
+        halt 404, { error: "User (ID: #{@user_for_assignments_id}) not found." }.to_json
       end
     end
 

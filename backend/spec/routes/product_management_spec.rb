@@ -7,11 +7,11 @@ RSpec.describe 'Product Management API' do
   let!(:regular_user) { create_regular_user }
 
   def create_product_via_api(name)
-    post '/admin/products', { product_name: name }
+    post '/admin/products', { product: { product_name: name } }
   end
 
   def update_product_via_api(id, name)
-    put "/admin/products/#{id}", { product_name: name }
+    patch "/admin/products/#{id}", { product: { product_name: name } }
   end
 
   before(:each) do
