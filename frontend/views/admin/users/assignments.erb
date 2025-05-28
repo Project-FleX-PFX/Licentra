@@ -8,7 +8,7 @@
 </div>
 <p class="page-description text-start">Manage license assignments for this user.</p>
 
-<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 mt-3">
+<div class="row row-cols-1 row-cols-lg-2 row-cols-xxl-3 g-4 mt-3">
   <% @assignments.each do |assignment| %>
     <div class="col">
       <div class="card assignment-card h-100 <%= assignment.is_active? ? 'border-success' : 'border-warning' %>"

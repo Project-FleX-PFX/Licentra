@@ -108,15 +108,11 @@ module AdminRoutes # rubocop:disable Metrics/ModuleLength
       role_ids_from_form = params[:user_role_ids].is_a?(Array) ? params[:user_role_ids].map(&:to_i) : []
       service_params = user_params_from_form.merge(role_ids: role_ids_from_form)
 
-      begin
-        UserService.create_user_as_admin(service_params, current_user)
-        flash[:success] = 'User created successfully.'
-      rescue UserService::AdminProtectionError => e
-        flash[:error] = e.message
-      rescue UserService::UserManagementError => e
-        flash[:error] = "Failed to create user: #{e.message}"
+      handle_user_service_errors do
+        created_user = UserService.create_user_as_admin(service_params, current_user)
+        flash[:success] = "User '#{created_user.username}' created successfully."
       end
-      redirect '/admin/users'
+      status 200
     end
 
     app.patch '/admin/users/:id' do
@@ -124,7 +120,10 @@ module AdminRoutes # rubocop:disable Metrics/ModuleLength
       user_params_for_details = params[:user] || {}
       role_ids_from_form = params[:user_role_ids].is_a?(Array) ? params[:user_role_ids].map(&:to_i) : []
 
-      begin
+      handle_user_service_errors(user_id: target_user_id) do
+        # Hole User für Success-Message, bevor Updates
+        user = UserDAO.find_by_id_with_roles!(target_user_id)
+
         UserService.update_user_details_as_admin(target_user_id, user_params_for_details, current_user)
 
         new_password_value = user_params_for_details[:new_password].to_s
@@ -132,54 +131,45 @@ module AdminRoutes # rubocop:disable Metrics/ModuleLength
           unless new_password_value == user_params_for_details[:password_confirmation]
             raise UserService::UserManagementError, 'Passwords do not match.'
           end
-
           UserService.reset_user_password_as_admin(target_user_id, new_password_value, current_user)
         end
 
         UserService.manage_user_roles_as_admin(target_user_id, role_ids_from_form, current_user)
-
-        flash[:success] = "User (ID: #{target_user_id}) updated successfully."
-      rescue UserService::AdminProtectionError => e
-        flash[:error] = e.message
-      rescue UserService::UserManagementError => e
-        flash[:error] = "Failed to update user: #{e.message}"
-      rescue UserService::NotFoundError => e
-        flash[:error] = e.message
+        flash[:success] = "User '#{user.username}' updated successfully."
       end
-      redirect '/admin/users'
+      status 200
     end
 
     app.post '/admin/users/:id/lock' do
       target_user_id = params[:id].to_i
-      begin
+      handle_user_service_errors(user_id: target_user_id) do
+        user = UserDAO.find_by_id_with_roles!(target_user_id)
         UserService.lock_user_as_admin(target_user_id, current_user)
-        flash[:success] = "User (ID: #{target_user_id}) locked successfully."
-      rescue UserService::UserManagementError, UserService::NotFoundError => e
-        flash[:error] = e.message
+        flash[:success] = "User '#{user.username}' locked successfully."
       end
-      redirect request.referrer || '/admin/users'
+      status 200
     end
 
     app.post '/admin/users/:id/unlock' do
       target_user_id = params[:id].to_i
-      begin
+      handle_user_service_errors(user_id: target_user_id) do
+        user = UserDAO.find_by_id_with_roles!(target_user_id)
         UserService.unlock_user_as_admin(target_user_id, current_user)
-        flash[:success] = "User (ID: #{target_user_id}) unlocked successfully."
-      rescue UserService::UserManagementError, UserService::NotFoundError => e
-        flash[:error] = e.message
+        flash[:success] = "User '#{user.username}' unlocked successfully."
       end
-      redirect request.referrer || '/admin/users'
+      status 200
     end
+
 
     app.delete '/admin/users/:id' do
       target_user_id = params[:id].to_i
-      begin
+      handle_user_service_errors(user_id: target_user_id) do
+        # Hole User für Success-Message, bevor er gelöscht wird
+        user = UserDAO.find_by_id_with_roles!(target_user_id)
         UserService.delete_user_as_admin(target_user_id, current_user)
-        flash[:success] = "User (ID: #{target_user_id}) deleted successfully."
-      rescue UserService::UserManagementError, UserService::NotFoundError => e
-        flash[:error] = e.message
+        flash[:success] = "User '#{user.username}' deleted successfully."
       end
-      redirect '/admin/users'
+      status 200
     end
 
     # --- License Assignment Management by Admin ---
