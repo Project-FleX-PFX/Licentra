@@ -24,13 +24,9 @@ module AdminRoutes # rubocop:disable Metrics/ModuleLength
 
     app.post '/admin/products' do
       product_params = params[:product] || {}
-      begin
-        ProductService.create_product_as_admin(product_params, current_user)
-        flash[:success] = 'Product created successfully.'
-        redirect '/admin/products'
-      rescue ProductService::ProductManagementError => e
-        flash[:error] = e.message
-        redirect '/admin/products'
+      handle_product_service_errors do
+        created_product = ProductService.create_product_as_admin(product_params, current_user)
+        flash[:success] = "Product '#{created_product.product_name}' created successfully."
       end
     end
 
@@ -38,28 +34,19 @@ module AdminRoutes # rubocop:disable Metrics/ModuleLength
       product_id = params[:id].to_i
       product_params_from_form = params[:product] || {}
 
-      begin
-        ProductService.update_product_as_admin(product_id, product_params_from_form, current_user)
-        flash[:success] = "Product (ID: #{product_id}) updated successfully."
-        redirect '/admin/products'
-      rescue ProductService::ProductManagementError => e
-        flash[:error] = "Failed to update product: #{e.message}"
-        redirect '/admin/products'
-      rescue ProductService::NotFoundError => e
-        flash[:error] = e.message
-        redirect '/admin/products'
+      handle_product_service_errors do
+        updated_product = ProductService.update_product_as_admin(product_id, product_params_from_form, current_user)
+        flash[:success] = "Product '#{updated_product.product_name}' updated successfully."
       end
     end
 
     app.delete '/admin/products/:id' do
       product_id = params[:id].to_i
-      begin
+      handle_product_service_errors(product_id: product_id) do
+        product = ProductDAO.find!(product_id)
         ProductService.delete_product_as_admin(product_id, current_user)
-        flash[:success] = "Product (ID: #{product_id}) deleted successfully."
-      rescue ProductService::ProductManagementError, ProductService::NotFoundError => e
-        flash[:error] = e.message
+        flash[:success] = "Product '#{product.product_name}' deleted successfully."
       end
-      redirect '/admin/products'
     end
 
     # --- License Management ---
