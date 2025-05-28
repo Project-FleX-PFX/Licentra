@@ -41,11 +41,12 @@ class ProductDAO < BaseDAO
       with_error_handling(context) do
         product = find!(id)
         if product.licenses_dataset.any?
-          raise DatabaseError, "Cannot delete product #{id} because it still has associated licenses."
+          raise ProductManagementError, "Cannot delete product #{id} because it still has associated licenses."
         end
 
         super(id)
       end
     end
+
   end
 end

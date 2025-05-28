@@ -111,13 +111,13 @@ class SecurityLogDAO < BaseDAO
     end
 
     def log_product_created(acting_user:, product:)
-      details = "Product '#{product.product_name}' (ID: #{product.id}) was created by '#{acting_user.username}' (ID: #{acting_user.user_id})."
+      details = "Product '#{product.product_name}' (ID: #{product.product_id}) was created by '#{acting_user.username}' (ID: #{acting_user.user_id})."
       create_log_entry(action: Actions::PRODUCT_CREATED, object: Objects::ALL_OBJECTS[2], acting_user: acting_user,
                        details: details)
     end
 
     def log_product_updated(acting_user:, product:, changes_description: 'details updated')
-      details = "Product '#{product.product_name}' (ID: #{product.id}) was updated by '#{acting_user.username}' (ID: #{acting_user.user_id}). Changes: #{changes_description}."
+      details = "Product '#{product.product_name}' (ID: #{product.product_id}) was updated by '#{acting_user.username}' (ID: #{acting_user.user_id}). Changes: #{changes_description}."
       create_log_entry(action: Actions::PRODUCT_UPDATED, object: Objects::ALL_OBJECTS[2], acting_user: acting_user,
                        details: details)
     end
@@ -129,13 +129,13 @@ class SecurityLogDAO < BaseDAO
     end
 
     def log_license_created(acting_user:, license:)
-      details = "License '#{license.license_name}' (ID: #{license.id}) for product '#{license.product&.product_name}' was created by '#{acting_user.username}' (ID: #{acting_user.user_id})."
+      details = "License '#{license.license_name}' (ID: #{license.license_id}) for product '#{license.product&.product_name}' was created by '#{acting_user.username}' (ID: #{acting_user.user_id})."
       create_log_entry(action: Actions::LICENSE_CREATED, object: Objects::ALL_OBJECTS[3], acting_user: acting_user,
                        details: details)
     end
 
     def log_license_updated(acting_user:, license:, changes_description: 'details updated')
-      details = "License '#{license.license_name}' (ID: #{license.id}) was updated by '#{acting_user.username}' (ID: #{acting_user.user_id}). Changes: #{changes_description}."
+      details = "License '#{license.license_name}' (ID: #{license.license_id}) was updated by '#{acting_user.username}' (ID: #{acting_user.user_id}). Changes: #{changes_description}."
       create_log_entry(action: Actions::LICENSE_UPDATED, object: Objects::ALL_OBJECTS[3], acting_user: acting_user,
                        details: details)
     end

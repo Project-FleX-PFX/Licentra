@@ -38,6 +38,7 @@ class LicentraApp < Sinatra::Base
   end
 
   helpers AdminDataHelpers
+  helpers AdminRoutesErrorHelpers
   helpers AuthHelpers
   helpers AuthFormHelpers
   helpers ApplicationHelpers
