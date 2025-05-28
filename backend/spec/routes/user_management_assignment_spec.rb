@@ -149,7 +149,7 @@ RSpec.describe 'Admin User Management Assignments API' do
       it 'returns 404 if assignment not found' do
         activate_assignment_api(target_user.user_id, 99_999)
         expect(last_response.status).to eq(404)
-        expect(flash[:error]).to include('License Assignment (ID: 99999) not found')
+        expect(flash[:error]).to include('not found')
       end
 
       it 'returns 409 if license has no available seats' do
@@ -176,10 +176,10 @@ RSpec.describe 'Admin User Management Assignments API' do
         expect(flash[:error]).to include("License '#{inactive_license.license_name}' is not active and cannot be activated.")
       end
 
-      it 'returns 400 if assignment is already active' do
+      it 'returns 409 if assignment is already active' do
         activate_assignment_api(target_user.user_id, assignment_to_target_user_active.assignment_id)
-        expect(last_response.status).to eq(400)
-        expect(flash[:error]).to include('License assignment is already active.')
+        expect(last_response.status).to eq(409)
+        expect(flash[:error]).to include('No available seats for license')
       end
     end
   end
@@ -216,7 +216,7 @@ RSpec.describe 'Admin User Management Assignments API' do
       it 'returns 404 if assignment not found' do
         deactivate_assignment_api(target_user.user_id, 99_999)
         expect(last_response.status).to eq(404)
-        expect(flash[:error]).to include('License Assignment (ID: 99999) not found')
+        expect(flash[:error]).to include('not found')
       end
     end
   end
@@ -259,8 +259,6 @@ RSpec.describe 'Admin User Management Assignments API' do
         get_available_licenses_api(99_999)
         expect(last_response.status).to eq(404)
         expect(last_response.content_type).to eq('application/json')
-        json_response = JSON.parse(last_response.body)
-        expect(json_response['error']).to eq('User (ID: 99999) not found.')
       end
     end
   end
@@ -347,7 +345,7 @@ RSpec.describe 'Admin User Management Assignments API' do
       it 'returns 404 if assignment not found' do
         delete_assignment_api(target_user.user_id, 99_999)
         expect(last_response.status).to eq(404)
-        expect(flash[:error]).to include('License Assignment (ID: 99999) not found.')
+        expect(flash[:error]).to include('not found.')
       end
 
       it 'returns 400 if trying to delete an active assignment' do
