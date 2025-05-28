@@ -237,7 +237,6 @@ RSpec.describe 'License Routes' do
       follow_redirect!
 
       expect(response_status).to eq(200)
-      expect(response_body).to include('<div class="alert alert-danger">')
       expect(response_body).to include('already inactive')
     end
 

@@ -48,12 +48,12 @@ class UserService
     new_user = nil
     DB.transaction do
       new_user = UserDAO.create(user_attributes)
-      unless new_user&.persisted? && new_user.valid?
+      unless new_user && !new_user.new? && new_user.valid?
         error_messages = new_user&.errors&.full_messages&.join(', ') || 'Unknown reason.'
         raise UserManagementError, "Failed to create user base record: #{error_messages}"
       end
 
-      UserCredentialDAO.create_for_user(new_user.user_id, password_val)
+      UserCredentialDAO.create({ user_id: new_user.user_id, password: password_val })
       UserRoleDAO.set_user_roles(new_user.user_id, role_ids_from_form)
       new_user.refresh
     end
