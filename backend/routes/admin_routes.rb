@@ -204,64 +204,60 @@ module AdminRoutes # rubocop:disable Metrics/ModuleLength
     app.post '/admin/users/:user_id/assignments' do
       target_user_id = params[:user_id].to_i
       license_id = params[:license_id].to_i
-      begin
+
+      handle_license_assignment_service_errors(user_id: target_user_id) do
         LicenseService.approve_assignment_for_user(license_id, target_user_id, current_user)
         flash[:success] = 'License assignment created successfully. It may need to be activated.'
-      rescue LicenseService::ServiceError => e
-        flash[:error] = e.message
       end
-      redirect back
+      status 200
     end
 
     app.put '/admin/users/:user_id/assignments/:assignment_id/activate' do
       user_id_param = params[:user_id].to_i
       assignment_id = params[:assignment_id].to_i
-      begin
+
+      handle_license_assignment_service_errors(user_id: user_id_param, assignment_id: assignment_id) do
         assignment = LicenseAssignmentDAO.find!(assignment_id)
         if assignment.user_id != user_id_param
           raise LicenseService::NotAuthorizedError, 'Assignment does not belong to the specified user.'
         end
 
         LicenseService.activate_license_for_user(assignment_id, current_user)
-        flash[:success] = "License assignment (ID: #{assignment_id}) activated."
-      rescue LicenseService::ServiceError => e
-        flash[:error] = e.message
+        flash[:success] = "License assignment activated successfully."
       end
-      redirect back
+      status 200
     end
 
     app.put '/admin/users/:user_id/assignments/:assignment_id/deactivate' do
       user_id_param = params[:user_id].to_i
       assignment_id = params[:assignment_id].to_i
-      begin
+
+      handle_license_assignment_service_errors(user_id: user_id_param, assignment_id: assignment_id) do
         assignment = LicenseAssignmentDAO.find!(assignment_id)
         if assignment.user_id != user_id_param
           raise LicenseService::NotAuthorizedError, 'Assignment does not belong to the specified user.'
         end
 
         LicenseService.deactivate_license_for_user(assignment_id, current_user)
-        flash[:success] = "License assignment (ID: #{assignment_id}) deactivated."
-      rescue LicenseService::ServiceError => e
-        flash[:error] = e.message
+        flash[:success] = "License assignment deactivated successfully."
       end
-      redirect back
+      status 200
     end
 
     app.delete '/admin/users/:user_id/assignments/:assignment_id' do
       user_id_param = params[:user_id].to_i
       assignment_id = params[:assignment_id].to_i
-      begin
+
+      handle_license_assignment_service_errors(user_id: user_id_param, assignment_id: assignment_id) do
         assignment = LicenseAssignmentDAO.find!(assignment_id)
         if assignment.user_id != user_id_param
           raise LicenseService::NotAuthorizedError, 'Assignment does not belong to the specified user.'
         end
 
         LicenseService.cancel_assignment_as_admin(assignment_id, current_user)
-        flash[:success] = "License assignment (ID: #{assignment_id}) canceled/deleted."
-      rescue LicenseService::ServiceError => e
-        flash[:error] = e.message
+        flash[:success] = "License assignment canceled successfully."
       end
-      redirect back
+      status 200
     end
 
     # --- Special Routes ---

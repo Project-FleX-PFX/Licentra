@@ -37,4 +37,19 @@ module AdminRoutesErrorHelpers
     logger.error log_message
     flash[:error] = 'An unexpected application error occurred.'
   end
+
+  def handle_license_assignment_service_errors(user_id: nil, assignment_id: nil)
+    yield
+  rescue LicenseService::ServiceError, LicenseService::NotAuthorizedError => e
+    flash[:error] = e.message
+  rescue DAO::RecordNotFound => e
+    flash[:error] = e.message
+  rescue StandardError => e
+    log_message = "Unexpected error"
+    log_message += " with user (ID: #{user_id})" if user_id
+    log_message += " assignment (ID: #{assignment_id})" if assignment_id
+    log_message += ": #{e.message}\n#{e.backtrace.join("\n")}"
+    logger.error log_message
+    flash[:error] = 'An unexpected application error occurred.'
+  end
 end
