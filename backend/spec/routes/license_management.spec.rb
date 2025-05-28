@@ -49,10 +49,10 @@ RSpec.describe 'License Management Routes' do
     end
   end
 
-  describe 'GET /license_management' do
-    let(:path) { '/license_management' }
+  describe 'GET /admin/licenses' do
+    let(:path) { '/admin/licenses' }
 
-    include_examples 'admin access only', :get, '/license_management'
+    include_examples 'admin access only', :get, '/admin/licenses'
 
     context 'when logged in as admin' do
       before do
@@ -79,10 +79,10 @@ RSpec.describe 'License Management Routes' do
     end
   end
 
-  describe 'POST /license_management' do
-    let(:path) { '/license_management' }
+  describe 'POST /admin/licenses' do
+    let(:path) { '/admin/licenses' }
 
-    include_examples 'admin access only', :post, '/license_management', { license_key: 'test' }
+    include_examples 'admin access only', :post, '/admin/licenses', { license_key: 'test' }
 
     context 'when logged in as admin' do
       before { login_as(admin_user) }
@@ -147,12 +147,12 @@ RSpec.describe 'License Management Routes' do
     end
   end
 
-  describe 'PUT /license_management/:id' do
+  describe 'PUT /admin/licenses/:id' do
     let!(:existing_license) { create_license_via_dao(valid_license_attributes) }
-    let(:path_proc) { -> { "/license_management/#{existing_license.id}" } } # Proc für lazy evaluation
+    let(:path_proc) { -> { "/admin/licenses/#{existing_license.id}" } } # Proc für lazy evaluation
 
     include_examples 'admin access only', :put, lambda {
-      "/license_management/#{existing_license.id}"
+      "/admin/licenses/#{existing_license.id}"
     }, { license_name: 'updated' }
 
     context 'when logged in as admin' do
@@ -242,11 +242,11 @@ RSpec.describe 'License Management Routes' do
     end
   end
 
-  describe 'DELETE /license_management/:id' do
+  describe 'DELETE /admin/licenses/:id' do
     let!(:license_to_delete) { create_license_via_dao(valid_license_attributes) }
-    let(:path_proc) { -> { "/license_management/#{license_to_delete.id}" } }
+    let(:path_proc) { -> { "/admin/licenses/#{license_to_delete.id}" } }
 
-    include_examples 'admin access only', :delete, -> { "/license_management/#{license_to_delete.id}" }
+    include_examples 'admin access only', :delete, -> { "/admin/licenses/#{license_to_delete.id}" }
 
     context 'when logged in as admin' do
       before { login_as(admin_user) }
@@ -321,12 +321,12 @@ RSpec.describe 'License Management Routes' do
 
         it 'returns a 500 status (oder 404, je nach Fehlerbehandlung in der Route)' do
           # Die aktuelle Route fängt DAO::RecordNotFound nicht explizit ab, daher wird es als StandardError behandelt => 500
-          delete '/license_management/nonexistentid'
+          delete '/admin/licenses/nonexistentid'
           expect(last_response.status).to eq(500)
         end
 
         it 'sets an error flash message' do
-          delete '/license_management/nonexistentid'
+          delete '/admin/licenses/nonexistentid'
           expect(flash[:error]).to include('Error deleting license: License not found')
         end
       end

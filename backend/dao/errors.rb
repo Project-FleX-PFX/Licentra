@@ -19,4 +19,8 @@ module DAO
   class DatabaseError < DAOError; end
 
   class AdminProtectionError < DAOError; end
+
+  class ProductManagementError < DAOError; end
+
+  class LicenseManagementError < DAOError; end
 end

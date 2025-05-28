@@ -201,10 +201,10 @@ RSpec.describe LicenseDAO do
         end.not_to change(License, :count)
       end
 
-      it 'raises a DatabaseError' do
+      it 'raises a LicenseManagementError' do
         expect do
           described_class.delete(license_id)
-        end.to raise_error(DAO::DatabaseError, /active assignments exist/i)
+        end.to raise_error(DAO::LicenseManagementError, /active assignments exist/i)
       end
     end
 
