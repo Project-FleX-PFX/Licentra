@@ -46,6 +46,7 @@ class LicentraApp < Sinatra::Base
   get '/' do
     require_login
     @user = current_user
+    @my_assignments = LicenseAssignmentDAO.find_active_for_user_with_details(@user.user_id)
     erb :home, layout: :'layouts/application'
   end
 
