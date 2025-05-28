@@ -33,11 +33,13 @@ module PdfExporters
             { content: 'Details', font_style: :bold }
           ]
         ]
+
         logs.each do |log|
           assignment_id_match = log.details.match(/Assignment ID: (\d+)/)
           assignment_id = assignment_id_match ? assignment_id_match[1] : 'N/A'
+
           table_data << [
-            log.log_timestamp.strftime('%Y-%m-%d %H:%M:%S UTC'),
+            log.log_timestamp.getlocal.strftime('%Y-%m-%d %H:%M:%S %Z'),
             "#{log.username} (ID: #{log.user_id})",
             log.action.gsub('_', ' ').capitalize,
             "#{log.license_name} (ID: #{log.license_id})",
@@ -47,15 +49,13 @@ module PdfExporters
         end
 
         pdf.fill_color BODY_TEXT_COLOR
-        pdf.table(table_data, header: true, width: pdf.bounds.width,
-                              cell_style: { size: 8, padding: [3, 5, 3, 5], border_width: 0.5 }) do
+        pdf.table(table_data,
+                  header: true,
+                  width: pdf.bounds.width,
+                  row_colors: [ROW_COLOR_EVEN, ROW_COLOR_ODD],
+                  cell_style: { size: 8, padding: [3, 5, 3, 5], border_width: 0.5 }) do
           row(0).background_color = BRAND_COLOR
           row(0).text_color = HEADER_TEXT_COLOR
-
-          rows(1..-1).each_with_index do |data_row, i|
-            data_row.background_color = (i.even? ? ROW_COLOR_ODD : ROW_COLOR_EVEN)
-            data_row.text_color = BODY_TEXT_COLOR
-          end
         end
       end
 
@@ -83,9 +83,10 @@ module PdfExporters
             { content: 'Details', font_style: :bold }
           ]
         ]
+
         logs.each do |log|
           table_data << [
-            log.log_timestamp.strftime('%Y-%m-%d %H:%M:%S UTC'),
+            log.log_timestamp.getlocal.strftime('%Y-%m-%d %H:%M:%S %Z'),
             "#{log.username}#{" (ID: #{log.user_id})" if log.user_id}",
             log.action.gsub('_', ' ').capitalize,
             log.object&.capitalize,
@@ -94,15 +95,13 @@ module PdfExporters
         end
 
         pdf.fill_color BODY_TEXT_COLOR
-        pdf.table(table_data, header: true, width: pdf.bounds.width,
-                              cell_style: { size: 8, padding: [3, 5, 3, 5], border_width: 0.5 }) do
+        pdf.table(table_data,
+                  header: true,
+                  width: pdf.bounds.width,
+                  row_colors: [ROW_COLOR_EVEN, ROW_COLOR_ODD],
+                  cell_style: { size: 8, padding: [3, 5, 3, 5], border_width: 0.5 }) do
           row(0).background_color = BRAND_COLOR
           row(0).text_color = HEADER_TEXT_COLOR
-
-          rows(1..-1).each_with_index do |data_row, i|
-            data_row.background_color = (i.even? ? ROW_COLOR_ODD : ROW_COLOR_EVEN)
-            data_row.text_color = BODY_TEXT_COLOR
-          end
         end
       end
 
@@ -138,7 +137,7 @@ module PdfExporters
       pdf.text title, size: 18, style: :bold, align: :center
       pdf.move_down 10
       pdf.text "Exported by: #{current_user_info}", size: 8
-      pdf.text "Exported at: #{Time.now.strftime('%Y-%m-%d %H:%M:%S %Z')}", size: 8
+      pdf.text "Exported at: #{Time.now.getlocal.strftime('%Y-%m-%d %H:%M:%S %Z')}", size: 8
       pdf.text "Filters Applied: #{filters_applied_text.empty? ? 'None' : filters_applied_text}", size: 8
       pdf.move_down 15
     end
@@ -147,6 +146,7 @@ module PdfExporters
       pdf.page_count.times do |i|
         pdf.go_to_page(i + 1)
         pdf.bounding_box([pdf.bounds.left, pdf.bounds.bottom + 25], width: pdf.bounds.width) do
+          pdf.move_down 5
           pdf.fill_color BODY_TEXT_COLOR
           pdf.text "Page #{i + 1} of #{pdf.page_count}", align: :center, size: 8
         end
