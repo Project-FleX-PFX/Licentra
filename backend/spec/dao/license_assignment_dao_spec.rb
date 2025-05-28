@@ -39,7 +39,7 @@ RSpec.describe LicenseAssignmentDAO do
         expect(assignment.license_id).to eq(license.license_id)
         expect(assignment.user_id).to eq(user.user_id)
         expect(assignment.device_id).to be_nil
-        expect(assignment.is_active).to be true
+        expect(assignment.is_active).to be false
         expect(assignment.assignment_date).to be_a(Time)
       end
     end
@@ -49,7 +49,7 @@ RSpec.describe LicenseAssignmentDAO do
         assignment = described_class.create(valid_device_assignment_attributes)
         expect(assignment.device_id).to eq(device.device_id)
         expect(assignment.user_id).to be_nil
-        expect(assignment.is_active).to be true
+        expect(assignment.is_active).to be false
       end
     end
 

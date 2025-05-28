@@ -6,7 +6,8 @@ require_relative 'logger'
 module DaoErrorHandling
   def with_error_handling(context)
     yield
-  rescue ::DAO::ValidationError, ::DAO::RecordNotFound, ::DAO::DatabaseError, ::DAO::AdminProtectionError
+  rescue ::DAO::ValidationError, ::DAO::RecordNotFound, ::DAO::DatabaseError, ::DAO::AdminProtectionError,
+         ::DAO::ProductManagementError, ::DAO::LicenseManagementError
     raise
   rescue Sequel::ValidationFailed => e
     DaoLogger.log_error("Validation error while #{context}: #{e.message}")

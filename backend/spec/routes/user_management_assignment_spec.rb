@@ -55,12 +55,16 @@ RSpec.describe 'Admin User Management Assignments API' do
     )
   end
 
-  def get_user_assignments_page(user_id)
+  def get_user_assignments_page_api(user_id)
     get "/admin/users/#{user_id}/assignments"
   end
 
-  def toggle_assignment_status_api(user_id, assignment_id, is_active)
-    put "/admin/users/#{user_id}/assignments/#{assignment_id}/toggle_status", { is_active: is_active.to_s }
+  def activate_assignment_api(user_id, assignment_id)
+    put "/admin/users/#{user_id}/assignments/#{assignment_id}/activate"
+  end
+
+  def deactivate_assignment_api(user_id, assignment_id)
+    put "/admin/users/#{user_id}/assignments/#{assignment_id}/deactivate"
   end
 
   def get_available_licenses_api(user_id)
@@ -103,7 +107,7 @@ RSpec.describe 'Admin User Management Assignments API' do
 
     context 'when logged in as admin' do
       it 'displays the user assignments page with assignments' do
-        get_user_assignments_page(target_user.user_id)
+        get_user_assignments_page_api(target_user.user_id)
         expect(last_response.status).to eq(200)
         expect(last_response.body).to include("Assignments for #{target_user.username}")
         expect(last_response.body).to include(license1.license_key)
@@ -111,89 +115,108 @@ RSpec.describe 'Admin User Management Assignments API' do
       end
 
       it 'returns 404 if user not found' do
-        get_user_assignments_page(99_999)
+        get_user_assignments_page_api(99_999)
         expect(last_response.status).to eq(404)
       end
     end
   end
 
-  describe 'PUT /admin/users/:user_id/assignments/:assignment_id/toggle_status' do
-    include_examples 'admin assignment access only', :put,
-                     lambda {
-                       "/admin/users/#{target_user.user_id}/assignments/#{assignment_to_target_user_inactive.assignment_id}/toggle_status"
-                     },
-                     { is_active: 'true' }
+  describe 'PUT /admin/users/:user_id/assignments/:assignment_id/activate' do
+    let(:path_proc) do
+      lambda {
+        "/admin/users/#{target_user.user_id}/assignments/#{assignment_to_target_user_inactive.assignment_id}/activate"
+      }
+    end
+    include_examples 'admin assignment access only', :put, -> { instance_exec(&path_proc) }
 
     context 'when logged in as admin' do
-      context 'activating an inactive assignment' do
-        it 'activates the assignment and logs the event' do
-          expect do
-            toggle_assignment_status_api(target_user.user_id, assignment_to_target_user_inactive.assignment_id, true)
-          end.to change { AssignmentLog.count }.by(1)
+      it 'activates the assignment and logs the event' do
+        expect do
+          activate_assignment_api(target_user.user_id, assignment_to_target_user_inactive.assignment_id)
+        end.to change { AssignmentLog.count }.by(1)
 
-          expect(last_response.status).to eq(200)
-          expect(flash[:success]).to eq('License assignment successfully activated')
-          assignment_to_target_user_inactive.reload
-          expect(assignment_to_target_user_inactive.is_active).to be true
+        expect(last_response.status).to eq(200)
+        expect(flash[:success]).to eq('License assignment activated successfully.')
+        assignment_to_target_user_inactive.reload
+        expect(assignment_to_target_user_inactive.is_active).to be true
 
-          log_entry = AssignmentLog.last
-          expect(log_entry.action).to eq(AssignmentLogDAO::Actions::ADMIN_ACTIVATED)
-          expect(log_entry.user_id).to eq(target_user.user_id)
-          expect(log_entry.license_id).to eq(license1.license_id)
-        end
-
-        it 'returns 404 if assignment not found' do
-          toggle_assignment_status_api(target_user.user_id, 99_999, true)
-          expect(last_response.status).to eq(404)
-          expect(flash[:error]).to include('License Assignment (ID: 99999) not found')
-        end
-
-        it 'returns 409 if license has no available seats' do
-          another_user = create_regular_user(username: 'another_seat_user', email: 'another@seat.com')
-          new_inactive_assignment_full_license = create_assignment_via_dao(
-            user: another_user,
-            license: license2,
-            is_active: false
-          )
-
-          toggle_assignment_status_api(another_user.user_id, new_inactive_assignment_full_license.assignment_id, true)
-          expect(last_response.status).to eq(409)
-          expect(flash[:error]).to include("No available seats for license '#{license2.license_name}'")
-        end
-
-        it 'returns 409 if license is not active' do
-          inactive_assignment_for_inactive_license = create_assignment_via_dao(
-            user: target_user,
-            license: inactive_license,
-            is_active: false
-          )
-          toggle_assignment_status_api(target_user.user_id, inactive_assignment_for_inactive_license.assignment_id,
-                                       true)
-          expect(last_response.status).to eq(409)
-          expect(flash[:error]).to include("License '#{inactive_license.license_name}' is not active and cannot be activated.")
-        end
+        log_entry = AssignmentLog.last
+        expect(log_entry.action).to eq(AssignmentLogDAO::Actions::ADMIN_ACTIVATED)
+        expect(log_entry.user_id).to eq(target_user.user_id)
+        expect(log_entry.license_id).to eq(license1.license_id)
       end
 
-      context 'deactivating an active assignment' do
-        it 'deactivates the assignment and logs the event' do
-          expect do
-            toggle_assignment_status_api(target_user.user_id, assignment_to_target_user_active.assignment_id, false)
-          end.to change { AssignmentLog.count }.by(1)
+      it 'returns 404 if assignment not found' do
+        activate_assignment_api(target_user.user_id, 99_999)
+        expect(last_response.status).to eq(404)
+        expect(flash[:error]).to include('License Assignment (ID: 99999) not found')
+      end
 
-          expect(last_response.status).to eq(200)
-          expect(flash[:success]).to eq('License assignment successfully deactivated')
-          assignment_to_target_user_active.reload
-          expect(assignment_to_target_user_active.is_active).to be false
+      it 'returns 409 if license has no available seats' do
+        another_user = create_regular_user(username: 'another_seat_user', email: 'another@seat.com')
+        new_inactive_assignment_full_license = create_assignment_via_dao(
+          user: another_user,
+          license: license2,
+          is_active: false
+        )
 
-          log_entry = AssignmentLog.last
-          expect(log_entry.action).to eq(AssignmentLogDAO::Actions::ADMIN_DEACTIVATED)
-        end
+        activate_assignment_api(another_user.user_id, new_inactive_assignment_full_license.assignment_id)
+        expect(last_response.status).to eq(409)
+        expect(flash[:error]).to include("No available seats for license '#{license2.license_name}'")
+      end
 
-        it 'returns 400 if assignment is already inactive' do
-          toggle_assignment_status_api(target_user.user_id, assignment_to_target_user_inactive.assignment_id, false)
-          expect(last_response.status).to eq(400)
-          expect(flash[:error]).to include("License assignment (ID: #{assignment_to_target_user_inactive.assignment_id}) is already inactive.")
-        end
+      it 'returns 409 if license is not active (e.g., expired)' do
+        inactive_assignment_for_inactive_license = create_assignment_via_dao(
+          user: target_user,
+          license: inactive_license,
+          is_active: false
+        )
+        activate_assignment_api(target_user.user_id, inactive_assignment_for_inactive_license.assignment_id)
+        expect(last_response.status).to eq(409)
+        expect(flash[:error]).to include("License '#{inactive_license.license_name}' is not active and cannot be activated.")
+      end
+
+      it 'returns 400 if assignment is already active' do
+        activate_assignment_api(target_user.user_id, assignment_to_target_user_active.assignment_id)
+        expect(last_response.status).to eq(400)
+        expect(flash[:error]).to include('License assignment is already active.')
+      end
+    end
+  end
+
+  describe 'PUT /admin/users/:user_id/assignments/:assignment_id/deactivate' do
+    let(:path_proc) do
+      lambda {
+        "/admin/users/#{target_user.user_id}/assignments/#{assignment_to_target_user_active.assignment_id}/deactivate"
+      }
+    end
+    include_examples 'admin assignment access only', :put, -> { instance_exec(&path_proc) }
+
+    context 'when logged in as admin' do
+      it 'deactivates the assignment and logs the event' do
+        expect do
+          deactivate_assignment_api(target_user.user_id, assignment_to_target_user_active.assignment_id)
+        end.to change { AssignmentLog.count }.by(1)
+
+        expect(last_response.status).to eq(200)
+        expect(flash[:success]).to eq('License assignment deactivated successfully.')
+        assignment_to_target_user_active.reload
+        expect(assignment_to_target_user_active.is_active).to be false
+
+        log_entry = AssignmentLog.last
+        expect(log_entry.action).to eq(AssignmentLogDAO::Actions::ADMIN_DEACTIVATED)
+      end
+
+      it 'returns 400 if assignment is already inactive' do
+        deactivate_assignment_api(target_user.user_id, assignment_to_target_user_inactive.assignment_id)
+        expect(last_response.status).to eq(400)
+        expect(flash[:error]).to include("License assignment (ID: #{assignment_to_target_user_inactive.assignment_id}) is already inactive.")
+      end
+
+      it 'returns 404 if assignment not found' do
+        deactivate_assignment_api(target_user.user_id, 99_999)
+        expect(last_response.status).to eq(404)
+        expect(flash[:error]).to include('License Assignment (ID: 99999) not found')
       end
     end
   end
@@ -223,6 +246,7 @@ RSpec.describe 'Admin User Management Assignments API' do
         license_names = json_response.map { |l| l['license_name'] }
         expect(license_names).not_to include(license1.license_name)
         expect(license_names).not_to include(license2.license_name)
+
         expect(license_names).to include(unassigned_available_license.license_name)
         expect(license_names).not_to include(unassigned_unavailable_license.license_name)
 
@@ -236,7 +260,7 @@ RSpec.describe 'Admin User Management Assignments API' do
         expect(last_response.status).to eq(404)
         expect(last_response.content_type).to eq('application/json')
         json_response = JSON.parse(last_response.body)
-        expect(json_response['error']).to eq('Resource not found')
+        expect(json_response['error']).to eq('User (ID: 99999) not found.')
       end
     end
   end
@@ -249,7 +273,7 @@ RSpec.describe 'Admin User Management Assignments API' do
 
     include_examples 'admin assignment access only', :post,
                      -> { "/admin/users/#{target_user.user_id}/assignments" },
-                     { license_id: 0 } # Dummy license_id
+                     { license_id: 0 }
 
     context 'when logged in as admin' do
       it 'creates a new inactive assignment and logs the event' do
@@ -258,7 +282,7 @@ RSpec.describe 'Admin User Management Assignments API' do
         end.to change(LicenseAssignment, :count).by(1).and change(AssignmentLog, :count).by(1)
 
         expect(last_response.status).to eq(200)
-        expect(flash[:success]).to eq('License assignment successfully created (inactive)')
+        expect(flash[:success]).to eq('License assignment created successfully. It may need to be activated.')
 
         new_assignment = LicenseAssignment.last
         expect(new_assignment.user_id).to eq(target_user.user_id)
@@ -312,7 +336,7 @@ RSpec.describe 'Admin User Management Assignments API' do
         end.to change(LicenseAssignment, :count).by(-1).and change(AssignmentLog, :count).by(1)
 
         expect(last_response.status).to eq(200)
-        expect(flash[:success]).to eq('License assignment successfully deleted')
+        expect(flash[:success]).to eq('License assignment canceled successfully.')
 
         expect(LicenseAssignment[deletable_assignment.assignment_id]).to be_nil
 

@@ -131,7 +131,7 @@ RSpec.describe ProductDAO do
         end.not_to change(Product, :count)
       end
 
-      it 'raises a DatabaseError' do
+      it 'raises a ProductManagementError' do
         expect do
           described_class.delete(product_with_licenses.pk)
         end.to raise_error(DAO::ProductManagementError, /associated licenses/i)
