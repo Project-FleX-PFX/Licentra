@@ -11,7 +11,6 @@
       <p class="page-description mb-4">
         Here you can manage your profile and licenses. Choose what you want to do:
       </p>
-      <!-- Grid-Klassen bleiben gleich -->
       <div class="row row-cols-1 row-cols-lg-2 g-4">
 
         <!-- My Profile -->
@@ -23,88 +22,9 @@
               <p class="card-text flex-grow-1">View and edit your user information.</p>
               <button class="btn btn-outline-primary mt-auto">Go to Profile</button>
             </div>
-            <!-- All Licenses -->
-            <div class="col">
-              <div class="card home-nav-card h-100" data-target="/licenses" style="cursor:pointer;">
-                <div class="card-body d-flex flex-column align-items-start">
-                  <i class="fas fa-key fa-2x text-success mb-3"></i>
-                  <h5 class="card-title">All Licenses</h5>
-                  <p class="card-text flex-grow-1">Browse all available licenses in the system.</p>
-                  <button class="btn btn-outline-success mt-auto">Show Licenses</button>
-                </div>
-              </div>
-            </div>
-            <!-- My Licenses -->
-            <div class="col">
-              <div class="card home-nav-card h-100" data-target="/my-licenses" style="cursor:pointer;">
-                <div class="card-body d-flex flex-column align-items-start">
-                  <i class="fas fa-id-badge fa-2x text-warning mb-3"></i>
-                  <h5 class="card-title">My Licenses</h5>
-                  <p class="card-text flex-grow-1">See all licenses assigned to you.</p>
-                  <button class="btn btn-outline-warning mt-auto">Show My Licenses</button>
-                </div>
-              </div>
-            </div>
-            <!-- History -->
-            <div class="col">
-              <div class="card home-nav-card h-100" data-target="/history" style="cursor:pointer;">
-                <div class="card-body d-flex flex-column align-items-start">
-                  <i class="fas fa-history fa-2x text-info mb-3"></i>
-                  <h5 class="card-title">History</h5>
-                  <p class="card-text flex-grow-1">Check your license request and usage history.</p>
-                  <button class="btn btn-outline-info mt-auto">Show History</button>
-                </div>
-              </div>
-            </div>
-
-            <% if defined?(admin?) && admin? %>
-              <!-- User Management (Admin) -->
-              <div class="col">
-                <div class="card home-nav-card h-100 border-warning border-2" data-target="/admin/users" style="cursor:pointer;">
-                  <div class="card-body d-flex flex-column align-items-start">
-                    <i class="fas fa-users-cog fa-2x text-warning mb-3"></i>
-                    <h5 class="card-title">User Management</h5>
-                    <p class="card-text flex-grow-1">Manage users and permissions (Admin only).</p>
-                    <button class="btn btn-warning mt-auto">Go to User Management</button>
-                  </div>
-                </div>
-              </div>
-              <!-- Product Management (Admin) -->
-              <div class="col">
-                <div class="card home-nav-card h-100 border-warning border-2" data-target="/admin/products" style="cursor:pointer;">
-                  <div class="card-body d-flex flex-column align-items-start">
-                    <i class="fas fa-box fa-2x text-warning mb-3"></i>
-                    <h5 class="card-title">Product Management</h5>
-                    <p class="card-text flex-grow-1">Add or edit products (Admin only).</p>
-                    <button class="btn btn-warning mt-auto">Go to Product Management</button>
-                  </div>
-                </div>
-              </div>
-              <!-- License Management (Admin) -->
-              <div class="col">
-                <div class="card home-nav-card h-100 border-warning border-2" data-target="/admin/licenses" style="cursor:pointer;">
-                  <div class="card-body d-flex flex-column align-items-start">
-                    <i class="fas fa-key fa-2x text-warning mb-3"></i>
-                    <h5 class="card-title">License Management</h5>
-                    <p class="card-text flex-grow-1">Advanced license management (Admin only).</p>
-                    <button class="btn btn-warning mt-auto">Go to License Management</button>
-                  </div>
-                </div>
-              </div>
-              <!-- SMTP Settings (Admin) -->
-              <div class="col">
-                <div class="card home-nav-card h-100 border-warning border-2" data-target="/admin/settings" style="cursor:pointer;">
-                  <div class="card-body d-flex flex-column align-items-start">
-                    <i class="fas fa-cogs fa-2x text-warning mb-3"></i>
-                    <h5 class="card-title">SMTP Settings</h5>
-                    <p class="card-text flex-grow-1">Configure mail server settings (Admin only).</p>
-                    <button class="btn btn-warning mt-auto">Go to SMTP Settings</button>
-                  </div>
-                </div>
-              </div>
-            <% end %>
           </div>
         </div>
+
         <!-- All Licenses -->
         <div class="col">
           <div class="card home-nav-card h-100" data-target="/licenses" style="cursor:pointer;">
@@ -116,6 +36,7 @@
             </div>
           </div>
         </div>
+
         <!-- My Licenses -->
         <div class="col">
           <div class="card home-nav-card h-100" data-target="/my-licenses" style="cursor:pointer;">
@@ -127,6 +48,7 @@
             </div>
           </div>
         </div>
+
         <!-- History -->
         <div class="col">
           <div class="card home-nav-card h-100" data-target="/history" style="cursor:pointer;">
@@ -151,6 +73,7 @@
               </div>
             </div>
           </div>
+
           <!-- Product Management (Admin) -->
           <div class="col">
             <div class="card home-nav-card h-100 border-warning border-2" data-target="/admin/products" style="cursor:pointer;">
@@ -162,6 +85,7 @@
               </div>
             </div>
           </div>
+
           <!-- License Management (Admin) -->
           <div class="col">
             <div class="card home-nav-card h-100 border-warning border-2" data-target="/admin/licenses" style="cursor:pointer;">
@@ -173,6 +97,7 @@
               </div>
             </div>
           </div>
+
           <!-- SMTP Settings (Admin) -->
           <div class="col">
             <div class="card home-nav-card h-100 border-warning border-2" data-target="/admin/settings" style="cursor:pointer;">
@@ -189,7 +114,6 @@
     </div>
   </div>
 
-  <%# ----- LICENSE OVERVIEW SECTION ----- %>
   <div class="row mt-5">
     <div class="col-xl-8 mx-auto">
       <div class="card shadow-sm rounded-3">
