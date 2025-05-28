@@ -28,6 +28,7 @@ module AdminRoutes # rubocop:disable Metrics/ModuleLength
         created_product = ProductService.create_product_as_admin(product_params, current_user)
         flash[:success] = "Product '#{created_product.product_name}' created successfully."
       end
+      status 200
     end
 
     app.patch '/admin/products/:id' do
@@ -38,6 +39,7 @@ module AdminRoutes # rubocop:disable Metrics/ModuleLength
         updated_product = ProductService.update_product_as_admin(product_id, product_params_from_form, current_user)
         flash[:success] = "Product '#{updated_product.product_name}' updated successfully."
       end
+      status 200
     end
 
     app.delete '/admin/products/:id' do
@@ -47,6 +49,7 @@ module AdminRoutes # rubocop:disable Metrics/ModuleLength
         ProductService.delete_product_as_admin(product_id, current_user)
         flash[:success] = "Product '#{product.product_name}' deleted successfully."
       end
+      status 200
     end
 
     # --- License Management ---
@@ -63,48 +66,33 @@ module AdminRoutes # rubocop:disable Metrics/ModuleLength
 
     app.post '/admin/licenses' do
       license_params = params[:license] || {}
-      begin
-        LicenseService.create_license_as_admin(license_params, current_user)
-        flash[:success] = 'License created successfully.'
-      rescue LicenseService::LicenseManagementError => e
-        flash[:error] = "Failed to create license: #{e.message}"
+      handle_license_service_errors do
+        created_license = LicenseService.create_license_as_admin(license_params, current_user)
+        flash[:success] = "License '#{created_license.license_name}' created successfully."
       end
-      redirect '/admin/licenses'
+      status 200
     end
 
     app.patch '/admin/licenses/:id' do
       license_id = params[:id].to_i
       license_params_from_form = params[:license] || {}
 
-      begin
+      handle_license_service_errors(license_id: license_id) do
         updated_license = LicenseService.update_license_as_admin(license_id, license_params_from_form, current_user)
-
-        if updated_license
-          flash[:success] =
-            "License (ID: #{license_id}) updated successfully. New name: #{updated_license.license_name}"
-        else
-          flash[:error] = "License (ID: #{license_id}) update may have failed (no object returned)."
-        end
-      rescue LicenseService::LicenseManagementError => e
-        flash[:error] = "Failed to update license: #{e.message}"
-      rescue LicenseService::NotFoundError => e
-        flash[:error] = e.message
-      rescue StandardError => e
-        flash[:error] = "An unexpected error occurred: #{e.message}"
-        puts "UNEXPECTED ERROR in PATCH /admin/licenses/#{license_id}: #{e.class} - #{e.message}\n#{e.backtrace.join("\n")}"
+        flash[:success] = "License '#{updated_license.license_name}' updated successfully."
       end
-      redirect '/admin/licenses'
+      status 200
     end
 
     app.delete '/admin/licenses/:id' do
       license_id = params[:id].to_i
-      begin
+      handle_license_service_errors(license_id: license_id) do
+        # Hole die Lizenz für die Success-Message, bevor sie gelöscht wird
+        license = LicenseDAO.find!(license_id)
         LicenseService.delete_license_as_admin(license_id, current_user)
-        flash[:success] = "License (ID: #{license_id}) deleted successfully."
-      rescue LicenseService::LicenseManagementError, LicenseService::NotFoundError => e
-        flash[:error] = e.message
+        flash[:success] = "License '#{license.license_name}' deleted successfully."
       end
-      redirect '/admin/licenses'
+      status 200
     end
 
     # --- User Management by Admin ---

@@ -20,18 +20,13 @@ const CURRENCY_SYMBOLS = {
   USD: "$",
 };
 
-/**
- * Aktualisiert das Währungssymbol neben dem Kostenfeld.
- * @param {string} modalPrefix - 'add' oder 'edit'.
- * @param {string} selectedCurrency - 'EUR' oder 'USD'.
- */
 function updateCostCurrencySymbol(modalPrefix, selectedCurrency) {
   const symbolElement = document.getElementById(
-    `${modalPrefix}CostCurrencySymbol`
+      `${modalPrefix}CostCurrencySymbol`
   );
   if (symbolElement) {
     symbolElement.textContent =
-      CURRENCY_SYMBOLS[selectedCurrency] || selectedCurrency;
+        CURRENCY_SYMBOLS[selectedCurrency] || selectedCurrency;
   }
 }
 
@@ -61,28 +56,27 @@ function populateEditLicenseForm(formElement, licenseData) {
           field.value = "";
         } else if (dataKey === "cost") {
           const numCost = parseFloat(licenseData[dataKey]);
-          field.value = isNaN(numCost) ? "" : numCost.toFixed(2); // Leer lassen, wenn ungültig oder 0 für DB ok
+          field.value = isNaN(numCost) ? "" : numCost.toFixed(2);
         } else if (dataKey === "currency") {
-          field.value = licenseData[dataKey] || "EUR"; // Standard auf EUR, falls nicht gesetzt
-          updateCostCurrencySymbol("edit", field.value); // Symbol initial setzen
+          field.value = licenseData[dataKey] || "EUR";
+          updateCostCurrencySymbol("edit", field.value);
         } else {
           field.value = licenseData[dataKey] || "";
         }
       }
     }
   }
-  // Falls Währung nicht im Dataset war, aber Feld existiert
+
   const currencyField = document.getElementById("editCurrencyField");
   if (currencyField && !currencyField.value) {
     currencyField.value = "EUR";
     updateCostCurrencySymbol("edit", "EUR");
   }
-  // Falls Kosten nicht im Dataset, aber Feld existiert und leer ist
+
   const costField = document.getElementById("editCostField");
   if (costField && costField.value === "") costField.value = "0.00";
 
   currentLicenseDataForEdit = { ...licenseData };
-  // Stelle sicher, dass die gecachten Daten die korrekte Währung für den "Cancel"-Fall haben
   if (currencyField) currentLicenseDataForEdit.currency = currencyField.value;
 }
 
@@ -114,16 +108,16 @@ function openEditLicenseModal(cardElement) {
   const form = document.getElementById("editLicenseForm");
 
   setText(
-    "editLicenseModalLabel",
-    `License: ${licenseData.licenseName || "Details"}`
+      "editLicenseModalLabel",
+      `License: ${licenseData.licenseName || "Details"}`
   );
   populateEditLicenseForm(form, licenseData);
   setEditFormDisabledState(true);
 
   setText("editLicenseToggleBtn", "Edit");
   document
-    .getElementById("editLicenseToggleBtn")
-    .classList.remove("btn-warning");
+      .getElementById("editLicenseToggleBtn")
+      .classList.remove("btn-warning");
   showElement("deleteLicenseBtnInModal");
   document.getElementById("saveLicenseChangesBtn").disabled = true;
 
@@ -135,11 +129,11 @@ function openAddLicenseModal() {
   form.reset();
   document.getElementById("addSeatCountField").value = "1";
   document.getElementById("addPurchaseDateField").value = new Date()
-    .toISOString()
-    .split("T")[0];
+      .toISOString()
+      .split("T")[0];
   document.getElementById("addCostField").value = "0.00";
-  document.getElementById("addCurrencyField").value = "EUR"; // Standardwährung
-  updateCostCurrencySymbol("add", "EUR"); // Symbol initial setzen
+  document.getElementById("addCurrencyField").value = "EUR";
+  updateCostCurrencySymbol("add", "EUR");
 
   document.getElementById("addProductIdField").selectedIndex = 0;
   document.getElementById("addLicenseTypeIdField").selectedIndex = 0;
@@ -148,16 +142,15 @@ function openAddLicenseModal() {
 }
 
 async function handleLicenseFormSubmit(event, formType) {
-  // ... (Logik für saveButton disable/enable bleibt gleich)
   event.preventDefault();
   const form = event.target;
   const formData = new FormData(form);
   let url, method;
 
   const saveButton =
-    formType === "add"
-      ? document.getElementById("createLicenseSubmitBtn")
-      : document.getElementById("saveLicenseChangesBtn");
+      formType === "add"
+          ? document.getElementById("createLicenseSubmitBtn")
+          : document.getElementById("saveLicenseChangesBtn");
 
   if (saveButton) {
     saveButton.disabled = true;
@@ -177,39 +170,51 @@ async function handleLicenseFormSubmit(event, formType) {
       return;
     }
     url = `/admin/licenses/${currentLicenseId}`;
-    method = "PATCH"; // Für die Logik, fetch macht dann POST mit _method
+    method = "POST";
     formData.append("_method", "PATCH");
   }
 
-  // Debugging der gesendeten Daten
-  const formEntries = {};
-  for (let [key, value] of formData.entries()) {
-    formEntries[key] = value;
-  }
-  console.log(`Submitting (${method}) to ${url} with data:`, formEntries);
-
   try {
-    const response = await fetch(url, {
-      method: "POST", // Immer POST, da _method verwendet wird
+    await fetch(url, {
+      method: "POST",
       body: new URLSearchParams(formData),
       headers: {
-        "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]')
-          ?.content,
+        "Content-Type": "application/x-www-form-urlencoded",
+        "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]')?.content,
       },
     });
 
-    if (response.ok || response.redirected) {
-      window.location.reload();
-    } else {
-      console.error(
-        "Server responded with an error:",
-        response.status,
-        response.statusText
-      );
-      window.location.reload();
-    }
+    window.location.reload();
   } catch (error) {
     console.error("Form submission error:", error);
+    window.location.reload();
+  }
+}
+
+async function handleDeleteLicenseFormSubmit(event) {
+  event.preventDefault();
+  const form = event.target;
+  const url = form.action;
+
+  const confirmDeleteButton = form.querySelector('button[type="submit"]');
+  if (confirmDeleteButton) {
+    confirmDeleteButton.disabled = true;
+    setText(confirmDeleteButton, "Deleting...");
+  }
+
+  try {
+    await fetch(url, {
+      method: "POST",
+      body: new URLSearchParams(new FormData(form)),
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]')?.content,
+      },
+    });
+
+    window.location.reload();
+  } catch (error) {
+    console.error("Delete submission error:", error);
     window.location.reload();
   }
 }
@@ -218,7 +223,7 @@ export function initAdminLicenseManagement() {
   editLicenseModalInstance = initializeModal("editLicenseModal");
   addLicenseModalInstance = initializeModal("addLicenseModal");
   deleteLicenseConfirmModalInstance = initializeModal(
-    "deleteLicenseConfirmModal"
+      "deleteLicenseConfirmModal"
   );
 
   document.querySelectorAll(".license-configure-btn").forEach((button) => {
@@ -238,7 +243,7 @@ export function initAdminLicenseManagement() {
     editToggleButton.addEventListener("click", () => {
       const editLicenseForm = document.getElementById("editLicenseForm");
       const isCurrentlyEditable =
-        !editLicenseForm.elements["license[license_name]"].disabled;
+          !editLicenseForm.elements["license[license_name]"].disabled;
       setEditFormDisabledState(isCurrentlyEditable);
       if (!isCurrentlyEditable) {
         setText(editToggleButton, "Cancel");
@@ -255,19 +260,19 @@ export function initAdminLicenseManagement() {
   const addLicenseForm = document.getElementById("addLicenseForm");
   if (addLicenseForm) {
     addLicenseForm.addEventListener("submit", (event) =>
-      handleLicenseFormSubmit(event, "add")
+        handleLicenseFormSubmit(event, "add")
     );
   }
 
   const editLicenseForm = document.getElementById("editLicenseForm");
   if (editLicenseForm) {
     editLicenseForm.addEventListener("submit", (event) =>
-      handleLicenseFormSubmit(event, "edit")
+        handleLicenseFormSubmit(event, "edit")
     );
   }
 
   const deleteBtnInEditModal = document.getElementById(
-    "deleteLicenseBtnInModal"
+      "deleteLicenseBtnInModal"
   );
   if (deleteBtnInEditModal) {
     deleteBtnInEditModal.addEventListener("click", () => {
@@ -281,7 +286,11 @@ export function initAdminLicenseManagement() {
     });
   }
 
-  // Event Listener für Währungsänderung, um Symbol zu aktualisieren
+  const deleteLicenseForm = document.getElementById("deleteLicenseForm");
+  if (deleteLicenseForm) {
+    deleteLicenseForm.addEventListener("submit", handleDeleteLicenseFormSubmit);
+  }
+
   const addCurrencySelect = document.getElementById("addCurrencyField");
   if (addCurrencySelect) {
     addCurrencySelect.addEventListener("change", (event) => {
@@ -295,7 +304,6 @@ export function initAdminLicenseManagement() {
     });
   }
 
-  // Modals beim Schließen zurücksetzen
   const editModalElement = document.getElementById("editLicenseModal");
   if (editModalElement) {
     editModalElement.addEventListener("hidden.bs.modal", () => {
@@ -303,9 +311,9 @@ export function initAdminLicenseManagement() {
       setEditFormDisabledState(true);
       setText("editLicenseToggleBtn", "Edit");
       document
-        .getElementById("editLicenseToggleBtn")
-        .classList.remove("btn-warning");
-      updateCostCurrencySymbol("edit", "EUR"); // Symbol zurücksetzen
+          .getElementById("editLicenseToggleBtn")
+          .classList.remove("btn-warning");
+      updateCostCurrencySymbol("edit", "EUR");
       currentLicenseDataForEdit = {};
       currentLicenseId = null;
     });
@@ -314,16 +322,16 @@ export function initAdminLicenseManagement() {
   if (addModalElement) {
     addModalElement.addEventListener("hidden.bs.modal", () => {
       document.getElementById("addLicenseForm").reset();
-      updateCostCurrencySymbol("add", "EUR"); // Symbol zurücksetzen
+      updateCostCurrencySymbol("add", "EUR");
     });
   }
 
   document.querySelectorAll('input[name="license[cost]"]').forEach((field) => {
     field.addEventListener("keydown", (event) => {
       if (
-        ["e", "E", "+", "-"].includes(event.key) &&
-        event.target.value.includes(event.key) &&
-        event.key !== "-"
+          ["e", "E", "+", "-"].includes(event.key) &&
+          event.target.value.includes(event.key) &&
+          event.key !== "-"
       ) {
         event.preventDefault();
       } else if (["e", "E", "+"].includes(event.key)) {
@@ -335,7 +343,7 @@ export function initAdminLicenseManagement() {
       if (!isNaN(numValue)) {
         event.target.value = numValue.toFixed(2);
       } else if (event.target.value.trim() === "") {
-        event.target.value = ""; // Leer lassen, damit serverseitig nil wird
+        event.target.value = "";
       }
     });
   });
