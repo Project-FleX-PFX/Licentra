@@ -7,7 +7,6 @@ import {
   hideElement,
   setText,
   setHtml,
-  fetchAndReload,
 } from "./adminUtils.js";
 
 let statusConfirmModalInstance = null;
@@ -18,55 +17,61 @@ let currentAssignmentIdToModify = null;
 let currentActionToConfirm = null;
 let currentUserIdForAssignments = null;
 
-/**
- * Opens the status confirmation modal
- * @param {string} assignmentId - ID of the assignment to modify
- * @param {string} action - Action to perform ('activate' or 'deactivate')
- * @param {string} productName - Name of the product to display
- */
 function openStatusConfirmModal(assignmentId, action, productName) {
   currentAssignmentIdToModify = assignmentId;
   currentActionToConfirm = action;
 
   setText(
-    "statusConfirmModalLabel",
-    action === "activate" ? "Activate Assignment" : "Deactivate Assignment"
+      "statusConfirmModalLabel",
+      action === "activate" ? "Activate Assignment" : "Deactivate Assignment"
   );
   setText(
-    "statusModalMessage",
-    `Are you sure you want to ${action} the assignment for ${productName}?`
+      "statusModalMessage",
+      `Are you sure you want to ${action} the assignment for ${productName}?`
   );
 
   const confirmBtn = document.getElementById("confirmStatusBtn");
   if (confirmBtn) {
     setText(confirmBtn, action === "activate" ? "Activate" : "Deactivate");
     confirmBtn.className = `btn ${
-      action === "activate" ? "btn-success" : "btn-warning"
+        action === "activate" ? "btn-success" : "btn-warning"
     }`;
   }
   showModal(statusConfirmModalInstance);
 }
 
-/**
- * Handles the confirmation of status change
- */
 async function handleConfirmStatusChange() {
   if (
-    !currentAssignmentIdToModify ||
-    !currentActionToConfirm ||
-    !currentUserIdForAssignments
+      !currentAssignmentIdToModify ||
+      !currentActionToConfirm ||
+      !currentUserIdForAssignments
   )
     return;
 
   const url = `/admin/users/${currentUserIdForAssignments}/assignments/${currentAssignmentIdToModify}/${currentActionToConfirm}`;
+  const confirmBtn = document.getElementById("confirmStatusBtn");
 
-  await fetchAndReload(url, { method: "PUT" }, statusConfirmModalInstance);
+  if (confirmBtn) {
+    confirmBtn.disabled = true;
+    setText(confirmBtn, "Processing...");
+  }
+
+  try {
+    await fetch(url, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]')?.content,
+      },
+    });
+
+    window.location.reload();
+  } catch (error) {
+    console.error("Status change error:", error);
+    window.location.reload();
+  }
 }
 
-/**
- * Opens the modal for adding a new assignment
- * Loads available licenses for the current user
- */
 async function openAddAssignmentModal() {
   if (!currentUserIdForAssignments) return;
   hideElement("licenseSelectionContainer");
@@ -77,17 +82,17 @@ async function openAddAssignmentModal() {
 
   try {
     const response = await fetch(
-      `/admin/users/${currentUserIdForAssignments}/available_licenses`
+        `/admin/users/${currentUserIdForAssignments}/available_licenses`
     );
     if (!response.ok)
       throw new Error(
-        `HTTP error loading available licenses! Status: ${response.status}`
+          `HTTP error loading available licenses! Status: ${response.status}`
       );
     const licenses = await response.json();
 
     hideElement("licenseLoadingIndicator");
     const licenseListContainer = document.getElementById(
-      "availableLicensesList"
+        "availableLicensesList"
     );
     if (!licenseListContainer) return;
     setHtml(licenseListContainer, "");
@@ -100,30 +105,30 @@ async function openAddAssignmentModal() {
     licenses.forEach((license) => {
       const licenseItem = document.createElement("button");
       licenseItem.className =
-        "list-group-item list-group-item-action d-flex justify-content-between align-items-center";
+          "list-group-item list-group-item-action d-flex justify-content-between align-items-center";
       licenseItem.type = "button";
       licenseItem.dataset.licenseId = license.license_id;
 
       const displayName = `${license.product_name || "N/A Product"} - ${
-        license.license_name || "Unnamed License"
+          license.license_name || "Unnamed License"
       }`;
       const seatsText = license.seat_count
-        ? `Seats: ${license.available_seats} / ${license.seat_count}`
-        : "Seats: N/A";
+          ? `Seats: ${license.available_seats} / ${license.seat_count}`
+          : "Seats: N/A";
       setHtml(
-        licenseItem,
-        `
+          licenseItem,
+          `
         <div>
           <h6 class="mb-1">${displayName}</h6>
           <small class="text-muted">Key: ${
-            license.license_key || "N/A"
+              license.license_key || "N/A"
           } | ${seatsText}</small>
         </div>
         <span class="badge bg-primary rounded-pill">Assign</span>
       `
       );
       licenseItem.addEventListener("click", () =>
-        handleAssignLicense(license.license_id)
+          handleAssignLicense(license.license_id)
       );
       licenseListContainer.appendChild(licenseItem);
     });
@@ -136,58 +141,71 @@ async function openAddAssignmentModal() {
   }
 }
 
-/**
- * Handles the assignment of a license to the current user
- * @param {string} licenseId - ID of the license to assign
- */
 async function handleAssignLicense(licenseId) {
   if (!currentUserIdForAssignments || !licenseId) return;
   const formData = new URLSearchParams();
   formData.append("license_id", licenseId);
 
-  await fetchAndReload(
-    `/admin/users/${currentUserIdForAssignments}/assignments`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: formData,
-    },
-    addAssignmentModalInstance
-  );
+  try {
+    await fetch(
+        `/admin/users/${currentUserIdForAssignments}/assignments`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]')?.content,
+          },
+          body: formData,
+        }
+    );
+
+    window.location.reload();
+  } catch (error) {
+    console.error("Assign license error:", error);
+    window.location.reload();
+  }
 }
 
-/**
- * Opens the confirmation modal for deleting an assignment
- * @param {string} assignmentId - ID of the assignment to delete
- */
 function openDeleteAssignmentConfirmModal(assignmentId) {
   currentAssignmentIdToModify = assignmentId;
   showModal(deleteAssignmentConfirmModalInstance);
 }
 
-/**
- * Handles the confirmation of assignment deletion
- */
 async function handleConfirmDeleteAssignment() {
   if (!currentAssignmentIdToModify || !currentUserIdForAssignments) return;
-  await fetchAndReload(
-    `/admin/users/${currentUserIdForAssignments}/assignments/${currentAssignmentIdToModify}`,
-    { method: "DELETE" },
-    deleteAssignmentConfirmModalInstance
-  );
+
+  const confirmBtn = document.getElementById("confirmAssignmentDeleteBtn");
+  if (confirmBtn) {
+    confirmBtn.disabled = true;
+    setText(confirmBtn, "Deleting...");
+  }
+
+  try {
+    await fetch(
+        `/admin/users/${currentUserIdForAssignments}/assignments/${currentAssignmentIdToModify}`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]')?.content,
+          },
+        }
+    );
+
+    window.location.reload();
+  } catch (error) {
+    console.error("Delete assignment error:", error);
+    window.location.reload();
+  }
 }
 
-/**
- * Initializes the user assignments management functionality
- * @param {string} userId - ID of the user whose assignments are being managed
- */
 export function initAdminUserAssignments(userId) {
   currentUserIdForAssignments = userId;
 
   statusConfirmModalInstance = initializeModal("statusConfirmModal");
   addAssignmentModalInstance = initializeModal("addAssignmentModal");
   deleteAssignmentConfirmModalInstance = initializeModal(
-    "deleteAssignmentConfirmModal"
+      "deleteAssignmentConfirmModal"
   );
 
   document.querySelectorAll(".toggle-status-btn").forEach((btn) => {
@@ -195,9 +213,9 @@ export function initAdminUserAssignments(userId) {
       e.stopPropagation();
       const card = btn.closest(".assignment-card");
       const assignmentId = card.dataset.assignmentId;
-      const action = btn.dataset.action; // 'activate' or 'deactivate'
+      const action = btn.dataset.action;
       const productName =
-        card.querySelector("h2.card-title")?.textContent || "this assignment";
+          card.querySelector("h2.card-title")?.textContent || "this assignment";
       openStatusConfirmModal(assignmentId, action, productName.trim());
     });
   });
@@ -213,27 +231,26 @@ export function initAdminUserAssignments(userId) {
   }
 
   document
-    .querySelectorAll(".delete-assignment-btn:not([disabled])")
-    .forEach((btn) => {
-      btn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        const card = btn.closest(".assignment-card");
-        const assignmentId = card.dataset.assignmentId;
-        openDeleteAssignmentConfirmModal(assignmentId);
+      .querySelectorAll(".delete-assignment-btn:not([disabled])")
+      .forEach((btn) => {
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const card = btn.closest(".assignment-card");
+          const assignmentId = card.dataset.assignmentId;
+          openDeleteAssignmentConfirmModal(assignmentId);
+        });
       });
-    });
 
   const confirmDelAssignBtnEl = document.getElementById(
-    "confirmAssignmentDeleteBtn"
+      "confirmAssignmentDeleteBtn"
   );
   if (confirmDelAssignBtnEl) {
     confirmDelAssignBtnEl.addEventListener(
-      "click",
-      handleConfirmDeleteAssignment
+        "click",
+        handleConfirmDeleteAssignment
     );
   }
 
-  // Reset UI elements when modal is closed
   const addModalEl = document.getElementById("addAssignmentModal");
   if (addModalEl) {
     addModalEl.addEventListener("hidden.bs.modal", () => {
