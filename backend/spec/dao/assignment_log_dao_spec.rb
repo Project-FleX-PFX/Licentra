@@ -248,7 +248,7 @@ RSpec.describe AssignmentLogDAO do
 
       logs.each_cons(2) do |log_a, log_b|
         timestamp_comparison = log_a.log_timestamp <=> log_b.log_timestamp
-        if timestamp_comparison == 0
+        if timestamp_comparison.zero?
           expect(log_a.pk).to be > log_b.pk
         else
           expect(log_a.log_timestamp).to be >= log_b.log_timestamp

@@ -55,7 +55,7 @@ module UserRoleLogging
   end
 
   def log_admin_protection_deleting_admin_role
-    log_warn("Attempt to remove the admin role from all users was prevented")
+    log_warn('Attempt to remove the admin role from all users was prevented')
   end
 
   def log_admin_protection(context)

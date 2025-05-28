@@ -190,8 +190,6 @@ class AuthService
     end
   end
 
-  private_class_method
-
   # Hilfsmethode, die aus der Route hierher verschoben wurde
   def self.credentials_missing?(email, password)
     email.nil? || email.strip.empty? || password.nil? || password.empty?

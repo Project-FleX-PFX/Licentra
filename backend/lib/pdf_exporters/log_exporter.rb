@@ -110,8 +110,6 @@ module PdfExporters
       pdf.render
     end
 
-    private_class_method
-
     def self.setup_fonts(pdf)
       pdf.font_families.update(
         'NotoSans' => {

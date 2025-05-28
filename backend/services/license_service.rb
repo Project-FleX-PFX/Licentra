@@ -358,8 +358,6 @@ class LicenseService
     raise ServiceError, 'An unexpected error occurred while canceling the assignment.'
   end
 
-  private_class_method
-
   def self._authorize_user_for_activation(user)
     return if user.role?('User') || user.admin?
 

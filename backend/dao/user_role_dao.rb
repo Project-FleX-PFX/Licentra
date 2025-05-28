@@ -70,7 +70,6 @@ class UserRoleDAO < BaseDAO
       end
     end
 
-
     # DELETE
     def delete_assignment(user_id, role_id)
       context = "deleting assignment for user_id #{user_id}, role_id #{role_id}"
@@ -145,13 +144,12 @@ class UserRoleDAO < BaseDAO
 
     # Get the ID of the admin role
     def get_admin_role_id
-      context = "getting admin role ID"
+      context = 'getting admin role ID'
       with_error_handling(context) do
         role = RoleDAO.find_by_name('Admin')
-        role ? role.id : nil
+        role&.id
       end
     end
-
 
     # Count the number of users with a specific role
     def count_users_with_role(role_id)
@@ -163,7 +161,7 @@ class UserRoleDAO < BaseDAO
 
     # Count the number of users with admin role
     def count_admins
-      context = "counting admin users (optimized)"
+      context = 'counting admin users (optimized)'
       with_error_handling(context) do
         model_class.dataset # Beginnt mit der user_roles Tabelle
                    .join(:roles, role_id: :role_id)

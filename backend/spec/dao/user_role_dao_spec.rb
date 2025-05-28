@@ -220,7 +220,6 @@ RSpec.describe UserRoleDAO do
         end
       end
 
-
       describe '.delete_assignment' do
         context 'when deleting admin role from last admin' do
           let!(:admin_user) { Fabricate(:user) }
@@ -230,9 +229,9 @@ RSpec.describe UserRoleDAO do
           end
 
           it 'raises AdminProtectionError' do
-            expect {
+            expect do
               described_class.delete_assignment(admin_user.user_id, admin_role.role_id)
-            }.to raise_error(DAO::AdminProtectionError)
+            end.to raise_error(DAO::AdminProtectionError)
           end
 
           it 'logs the protection event' do
@@ -258,9 +257,9 @@ RSpec.describe UserRoleDAO do
           end
 
           it 'allows deleting admin role from one admin' do
-            expect {
+            expect do
               described_class.delete_assignment(admin_user1.user_id, admin_role.role_id)
-            }.to change(UserRole, :count).by(-1)
+            end.to change(UserRole, :count).by(-1)
           end
         end
       end
@@ -275,9 +274,9 @@ RSpec.describe UserRoleDAO do
           end
 
           it 'raises AdminProtectionError' do
-            expect {
+            expect do
               described_class.delete_by_user(admin_user.user_id)
-            }.to raise_error(DAO::AdminProtectionError)
+            end.to raise_error(DAO::AdminProtectionError)
           end
 
           it 'logs the protection event' do
@@ -303,9 +302,9 @@ RSpec.describe UserRoleDAO do
           end
 
           it 'allows deleting all roles from one admin' do
-            expect {
+            expect do
               described_class.delete_by_user(admin_user1.user_id)
-            }.to change(UserRole, :count).by(-1)
+            end.to change(UserRole, :count).by(-1)
           end
         end
       end
@@ -319,9 +318,9 @@ RSpec.describe UserRoleDAO do
           end
 
           it 'raises AdminProtectionError' do
-            expect {
+            expect do
               described_class.delete_by_role(admin_role.role_id)
-            }.to raise_error(DAO::AdminProtectionError)
+            end.to raise_error(DAO::AdminProtectionError)
           end
 
           it 'logs the protection event' do

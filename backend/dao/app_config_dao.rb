@@ -1,10 +1,13 @@
+# frozen_string_literal: true
+
 require_relative '../lib/encryption_service'
 
 # dao/app_config_dao.rb
 module AppConfigDAO
-  SMTP_SETTINGS_KEY = 'smtp_settings'.freeze
+  SMTP_SETTINGS_KEY = 'smtp_settings'
 
   class ConfigLoadError < StandardError; end
+
   def self.save_smtp_settings(settings_from_form_hash)
     current_decrypted_settings = get_smtp_settings || {}
     new_password_input = settings_from_form_hash[:smtp_password_from_form]
@@ -12,17 +15,18 @@ module AppConfigDAO
     settings_to_encrypt.delete(:smtp_password_from_form)
 
     current_decrypted_settings.each do |key, value|
-      settings_to_encrypt[key] = value unless settings_to_encrypt.key?(key) || key == :password || key == :password_placeholder
+      unless settings_to_encrypt.key?(key) || key == :password || key == :password_placeholder
+        settings_to_encrypt[key] =
+          value
+      end
     end
 
     if new_password_input && !new_password_input.empty?
       settings_to_encrypt[:password] = new_password_input # Speichere das neue Klartextpasswort für die Verschlüsselung
+    elsif current_decrypted_settings.key?(:password)
+      settings_to_encrypt[:password] = current_decrypted_settings[:password]
     else
-      if current_decrypted_settings.key?(:password)
-        settings_to_encrypt[:password] = current_decrypted_settings[:password]
-      else
-        settings_to_encrypt.delete(:password)
-      end
+      settings_to_encrypt.delete(:password)
     end
 
     settings_to_encrypt.delete(:password_placeholder)
@@ -34,7 +38,7 @@ module AppConfigDAO
       update: { encrypted_value_package: encrypted_package, updated_at: Time.now }
     ).insert(key: SMTP_SETTINGS_KEY, encrypted_value_package: encrypted_package, updated_at: Time.now)
     true
-  rescue => e
+  rescue StandardError => e
     puts "Error while saving SMTP settings: #{e.message}\n#{e.backtrace.join("\n")}" # Backtrace für mehr Infos
     false
   end
@@ -44,8 +48,8 @@ module AppConfigDAO
     return nil unless record && record[:encrypted_value_package] # Wenn kein Eintrag da ist oder leer
 
     begin
-      decrypted_settings = EncryptionService.decrypt(record[:encrypted_value_package])
-      decrypted_settings # Gibt die entschlüsselten Einstellungen oder nil (falls decrypt nil zurückgibt) zurück
+      EncryptionService.decrypt(record[:encrypted_value_package])
+    # Gibt die entschlüsselten Einstellungen oder nil (falls decrypt nil zurückgibt) zurück
     rescue EncryptionService::DecryptionError => e
       # Spezifischen Entschlüsselungsfehler vom EncryptionService fangen
       error_message = "Failed to load SMTP settings due to a decryption issue: #{e.message}"
@@ -55,7 +59,7 @@ module AppConfigDAO
       raise ConfigLoadError, error_message
       # Option 2: nil zurückgeben und den Aufrufer damit umgehen lassen
       # return nil
-    rescue => e # Andere unerwartete Fehler beim Laden
+    rescue StandardError => e # Andere unerwartete Fehler beim Laden
       error_message = "Unexpected error loading SMTP settings: #{e.class} - #{e.message}"
       puts "AppConfigDAO: #{error_message}"
       raise ConfigLoadError, error_message
