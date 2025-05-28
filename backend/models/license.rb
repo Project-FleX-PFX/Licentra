@@ -25,7 +25,8 @@ class License < Sequel::Model
       license_key: license_key,
       product_id: product_id,
       product_name: product&.product_name,
-      available_seats: available_seats
+      available_seats: available_seats,
+      seat_count: seat_count
     }
   end
 
