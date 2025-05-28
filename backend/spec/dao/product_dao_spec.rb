@@ -134,7 +134,7 @@ RSpec.describe ProductDAO do
       it 'raises a DatabaseError' do
         expect do
           described_class.delete(product_with_licenses.pk)
-        end.to raise_error(DAO::DatabaseError, /associated licenses/i)
+        end.to raise_error(DAO::ProductManagementError, /associated licenses/i)
       end
     end
 

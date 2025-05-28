@@ -11,15 +11,15 @@ RSpec.describe 'User Management API' do
   let!(:test_role) { Fabricate(:role, role_name: 'TestRole') }
 
   def create_user_via_api(user_data)
-    post '/user_management', user_data
+    post '/admin/users', user_data
   end
 
   def update_user_via_api(id, user_data)
-    put "/user_management/#{id}", user_data
+    put "/admin/users/#{id}", user_data
   end
 
   def delete_user_via_api(id)
-    delete "/user_management/#{id}"
+    delete "/admin/users/#{id}"
   end
 
   before(:each) do
@@ -28,29 +28,29 @@ RSpec.describe 'User Management API' do
     login_as(admin_user)
   end
 
-  describe 'GET /user_management' do
+  describe 'GET /admin/users' do
     it 'displays the user management page' do
-      get '/user_management'
+      get '/admin/users'
       expect(response_status).to be(200)
       expect(response_body).to include('User Management')
     end
 
     it 'denies access for unauthenticated users' do
       logout
-      get '/user_management'
+      get '/admin/users'
       expect(response_status).to be(302)
       expect(last_response.location).to include('/login')
     end
 
     it 'displays all existing users' do
-      get '/user_management'
+      get '/admin/users'
       expect(response_status).to eq(200)
       expect(response_body).to include(admin_user.username)
       expect(response_body).to include(regular_user.username)
     end
   end
 
-  describe 'POST /user_management' do
+  describe 'POST /admin/users' do
     it 'creates a new user' do
       user_data = {
         username: 'newuser',
@@ -90,7 +90,7 @@ RSpec.describe 'User Management API' do
     end
   end
 
-  describe 'PUT /user_management/:id' do
+  describe 'PUT /admin/users/:id' do
     let!(:test_user) do
       user = Fabricate(:user,
                        username: 'testuser',
@@ -183,7 +183,7 @@ RSpec.describe 'User Management API' do
     end
   end
 
-  describe 'DELETE /user_management/:id' do
+  describe 'DELETE /admin/users/:id' do
     let!(:user_to_delete) do
       user = Fabricate(:user,
                        username: 'deleteuser',
@@ -217,12 +217,12 @@ RSpec.describe 'User Management API' do
       login_as(regular_user)
     end
 
-    it 'denies regular users access to GET /user_management' do
-      get '/user_management'
+    it 'denies regular users access to GET /admin/users' do
+      get '/admin/users'
       expect(response_status).to eq(403)
     end
 
-    it 'denies regular users to POST /user_management' do
+    it 'denies regular users to POST /admin/users' do
       user_data = {
         username: 'regularattempt',
         email: 'attempt@example.com',
@@ -236,7 +236,7 @@ RSpec.describe 'User Management API' do
       expect(response_status).to eq(403)
     end
 
-    it 'denies regular users to PUT /user_management/:id' do
+    it 'denies regular users to PUT /admin/users/:id' do
       # Erst als Admin einen Benutzer erstellen
       logout
       login_as(admin_user)
@@ -272,7 +272,7 @@ RSpec.describe 'User Management API' do
       expect(response_status).to eq(403)
     end
 
-    it 'denies regular users to DELETE /user_management/:id' do
+    it 'denies regular users to DELETE /admin/users/:id' do
       # Erst als Admin einen Benutzer erstellen
       logout
       login_as(admin_user)

@@ -73,16 +73,16 @@ RSpec.describe 'Authentication, Authorization, and Session Handling' do
       before { login_as(admin_user.email, DEFAULT_PASSWORD) }
 
       it 'can access admin-specific pages' do
-        get '/user_management'
+        get '/admin/users'
         expect(last_response).to be_ok
 
-        get '/product_management'
+        get '/admin/products'
         expect(last_response).to be_ok
 
-        get '/license_management'
+        get '/admin/licenses'
         expect(last_response).to be_ok
 
-        get '/data'
+        get '/admin/data'
         expect(last_response).to be_ok
       end
 
@@ -107,7 +107,7 @@ RSpec.describe 'Authentication, Authorization, and Session Handling' do
       end
 
       it 'cannot access admin-specific pages' do
-        get '/user_management'
+        get '/admin/users'
         expect(last_response.status).to eq(403)
       end
     end
@@ -120,7 +120,7 @@ RSpec.describe 'Authentication, Authorization, and Session Handling' do
       end
 
       it 'redirects to login page when accessing protected admin pages' do
-        get '/user_management'
+        get '/admin/users'
         expect(last_response).to be_redirect
         expect(last_response.location).to include('/login')
       end

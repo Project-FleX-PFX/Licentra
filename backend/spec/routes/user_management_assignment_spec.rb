@@ -56,23 +56,23 @@ RSpec.describe 'Admin User Management Assignments API' do
   end
 
   def get_user_assignments_page(user_id)
-    get "/user_management/#{user_id}/assignments"
+    get "/admin/users/#{user_id}/assignments"
   end
 
   def toggle_assignment_status_api(user_id, assignment_id, is_active)
-    put "/user_management/#{user_id}/assignments/#{assignment_id}/toggle_status", { is_active: is_active.to_s }
+    put "/admin/users/#{user_id}/assignments/#{assignment_id}/toggle_status", { is_active: is_active.to_s }
   end
 
   def get_available_licenses_api(user_id)
-    get "/user_management/#{user_id}/available_licenses"
+    get "/admin/users/#{user_id}/available_licenses"
   end
 
   def create_assignment_api(user_id, license_id)
-    post "/user_management/#{user_id}/assignments", { license_id: license_id }
+    post "/admin/users/#{user_id}/assignments", { license_id: license_id }
   end
 
   def delete_assignment_api(user_id, assignment_id)
-    delete "/user_management/#{user_id}/assignments/#{assignment_id}"
+    delete "/admin/users/#{user_id}/assignments/#{assignment_id}"
   end
 
   before(:each) do
@@ -97,9 +97,9 @@ RSpec.describe 'Admin User Management Assignments API' do
     end
   end
 
-  describe 'GET /user_management/:user_id/assignments' do
+  describe 'GET /admin/users/:user_id/assignments' do
     include_examples 'admin assignment access only', :get,
-                     -> { "/user_management/#{target_user.user_id}/assignments" }
+                     -> { "/admin/users/#{target_user.user_id}/assignments" }
 
     context 'when logged in as admin' do
       it 'displays the user assignments page with assignments' do
@@ -117,10 +117,10 @@ RSpec.describe 'Admin User Management Assignments API' do
     end
   end
 
-  describe 'PUT /user_management/:user_id/assignments/:assignment_id/toggle_status' do
+  describe 'PUT /admin/users/:user_id/assignments/:assignment_id/toggle_status' do
     include_examples 'admin assignment access only', :put,
                      lambda {
-                       "/user_management/#{target_user.user_id}/assignments/#{assignment_to_target_user_inactive.assignment_id}/toggle_status"
+                       "/admin/users/#{target_user.user_id}/assignments/#{assignment_to_target_user_inactive.assignment_id}/toggle_status"
                      },
                      { is_active: 'true' }
 
@@ -198,7 +198,7 @@ RSpec.describe 'Admin User Management Assignments API' do
     end
   end
 
-  describe 'GET /user_management/:user_id/available_licenses' do
+  describe 'GET /admin/users/:user_id/available_licenses' do
     let!(:unassigned_available_license) do
       create_license_via_dao(product: product, license_type: license_type, key: 'UNASSIGNED-AVAIL',
                              name: 'Unassigned Available', seats: 3)
@@ -209,7 +209,7 @@ RSpec.describe 'Admin User Management Assignments API' do
     end
 
     include_examples 'admin assignment access only', :get,
-                     -> { "/user_management/#{target_user.user_id}/available_licenses" }
+                     -> { "/admin/users/#{target_user.user_id}/available_licenses" }
 
     context 'when logged in as admin' do
       it 'returns available licenses for the user as JSON' do
@@ -241,14 +241,14 @@ RSpec.describe 'Admin User Management Assignments API' do
     end
   end
 
-  describe 'POST /user_management/:user_id/assignments' do
+  describe 'POST /admin/users/:user_id/assignments' do
     let!(:assignable_license) do
       create_license_via_dao(product: product, license_type: license_type, key: 'ASSIGNABLE-NEW',
                              name: 'Fresh License', seats: 1)
     end
 
     include_examples 'admin assignment access only', :post,
-                     -> { "/user_management/#{target_user.user_id}/assignments" },
+                     -> { "/admin/users/#{target_user.user_id}/assignments" },
                      { license_id: 0 } # Dummy license_id
 
     context 'when logged in as admin' do
@@ -289,7 +289,7 @@ RSpec.describe 'Admin User Management Assignments API' do
     end
   end
 
-  describe 'DELETE /user_management/:user_id/assignments/:assignment_id' do
+  describe 'DELETE /admin/users/:user_id/assignments/:assignment_id' do
     let!(:deletable_assignment_license) do
       create_license_via_dao(product: product, license_type: license_type, key: 'DELETABLE-LIC',
                              name: 'Deletable License', seats: 1)
@@ -303,7 +303,7 @@ RSpec.describe 'Admin User Management Assignments API' do
     end
 
     include_examples 'admin assignment access only', :delete,
-                     -> { "/user_management/#{target_user.user_id}/assignments/#{deletable_assignment.assignment_id}" }
+                     -> { "/admin/users/#{target_user.user_id}/assignments/#{deletable_assignment.assignment_id}" }
 
     context 'when logged in as admin' do
       it 'deletes an inactive assignment and logs the event' do

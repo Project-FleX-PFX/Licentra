@@ -62,7 +62,7 @@ RSpec.describe SecurityLogDAO do
                     :log_login_success, SecurityLogDAO::Actions::LOGIN_SUCCESS, 'UserSession'
     it 'contains correct details' do
       log = described_class.log_login_success(**params_hash)
-      expect(log.details).to eq("User '#{user1_sl.username}' (ID: #{user1_sl.id}) successfully logged in.")
+      expect(log.details).to eq("User '#{user1_sl.username}' (ID: #{user1_sl.user_id}) successfully logged in.")
     end
   end
 

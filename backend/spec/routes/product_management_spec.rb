@@ -7,11 +7,11 @@ RSpec.describe 'Product Management API' do
   let!(:regular_user) { create_regular_user }
 
   def create_product_via_api(name)
-    post '/product_management', { product_name: name }
+    post '/admin/products', { product_name: name }
   end
 
   def update_product_via_api(id, name)
-    put "/product_management/#{id}", { product_name: name }
+    put "/admin/products/#{id}", { product_name: name }
   end
 
   before(:each) do
@@ -19,16 +19,16 @@ RSpec.describe 'Product Management API' do
     login_as(admin_user)
   end
 
-  describe 'GET /product_management' do
+  describe 'GET /admin/products' do
     it 'displays the product management page' do
-      get '/product_management'
+      get '/admin/products'
       expect(response_status).to be(200)
       expect(response_body).to include('Product Management')
     end
 
     it 'denies access for unauthenticated users' do
       logout
-      get '/product_management'
+      get '/admin/products'
       expect(response_status).to be(302)
       expect(last_response.location).to include('/login')
     end
@@ -37,14 +37,14 @@ RSpec.describe 'Product Management API' do
       product1 = create_product_via_dao(name: 'Test Product Alpha')
       product2 = create_product_via_dao(name: 'Test Product Beta')
 
-      get '/product_management'
+      get '/admin/products'
       expect(response_status).to eq(200)
       expect(response_body).to include(product1.product_name)
       expect(response_body).to include(product2.product_name)
     end
   end
 
-  describe 'POST /product_management' do
+  describe 'POST /admin/products' do
     it 'creates a new product' do
       create_product_via_api('New Shiny Product')
       expect(response_status).to eq(200)
@@ -61,7 +61,7 @@ RSpec.describe 'Product Management API' do
     end
   end
 
-  describe 'PUT /product_management/:id' do
+  describe 'PUT /admin/products/:id' do
     let!(:product) { create_product_via_dao(name: 'Original Product Name') }
 
     it 'updates an existing product' do
@@ -89,17 +89,17 @@ RSpec.describe 'Product Management API' do
       login_as(regular_user)
     end
 
-    it 'denies regular users access to GET /product_management' do
-      get '/product_management'
+    it 'denies regular users access to GET /admin/products' do
+      get '/admin/products'
       expect(response_status).to eq(403)
     end
 
-    it 'denies regular users to POST /product_management' do
+    it 'denies regular users to POST /admin/products' do
       create_product_via_api('User Attempt Product')
       expect(response_status).to eq(403)
     end
 
-    it 'denies regular users to PUT /product_management/:id' do
+    it 'denies regular users to PUT /admin/products/:id' do
       login_as(admin_user)
 
       product_name_by_admin = "Product By Admin #{SecureRandom.hex(4)}"
