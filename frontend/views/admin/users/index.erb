@@ -105,27 +105,27 @@
           <div class="row g-3">
             <div class="col-md-6 mb-3">
               <label for="userFirstNameField" class="form-label">First Name</label>
-              <input type="text" class="form-control" name="user[first_name]" id="userFirstNameField">
+              <input type="text" class="form-control" name="user[first_name]" id="userFirstNameField" maxlength="100" required>
             </div>
             <div class="col-md-6 mb-3">
               <label for="userLastNameField" class="form-label">Last Name</label>
-              <input type="text" class="form-control" name="user[last_name]" id="userLastNameField">
+              <input type="text" class="form-control" name="user[last_name]" id="userLastNameField" maxlength="100" required>
             </div>
           </div>
 
           <div class="mb-3">
             <label for="userUsernameField" class="form-label">Username <span class="text-danger">*</span></label>
-            <input type="text" class="form-control" name="user[username]" id="userUsernameField" required>
+            <input type="text" class="form-control" name="user[username]" id="userUsernameField" maxlength="63" required>
           </div>
 
           <div class="mb-3">
             <label for="userEmailField" class="form-label">Email <span class="text-danger">*</span></label>
-            <input type="email" class="form-control" name="user[email]" id="userEmailField" required>
+            <input type="email" class="form-control" name="user[email]" id="userEmailField" maxlength="254" required>
           </div>
 
           <div class="mb-3">
             <label for="userPasswordField" class="form-label">Password</label>
-            <input type="password" class="form-control" name="user[new_password]" id="userPasswordField" autocomplete="new-password">
+            <input type="password" class="form-control" name="user[new_password]" id="userPasswordField" autocomplete="new-password" maxlength="255">
             <div class="form-text" id="passwordHelpText">Leave blank to keep current password (for edits). Required for new users.</div>
             
             <div id="password-strength" class="mt-2" style="display: none;">

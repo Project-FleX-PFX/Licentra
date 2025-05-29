@@ -4,7 +4,8 @@
   <div class="card shadow-sm rounded-3">
     <div class="card-header bg-primary text-white">
       <h3 class="mb-0">
-        Welcome to Licentra, <%= @user.username %>!
+        <!-- Personalisierte Begrüßung mit first_name und last_name -->
+        Welcome to Licentra, <%= @user.first_name %> <%= @user.last_name %>!
       </h3>
     </div>
     <div class="card-body">
@@ -114,52 +115,50 @@
     </div>
   </div>
 
-  <div class="row mt-5">
-    <div class="col-xl-8 mx-auto">
-      <div class="card shadow-sm rounded-3">
-        <div class="card-header bg-secondary text-white d-flex align-items-center">
-          <i class="fas fa-id-badge me-2"></i>
-          <h4 class="mb-0">Your Active Licenses</h4>
+  <div class="card shadow-sm rounded-3 mt-3">
+    <div class="card-header bg-secondary text-white d-flex align-items-center">
+      <i class="fas fa-id-badge me-2"></i>
+      <h4 class="mb-0">Your Active Licenses</h4>
+    </div>
+    <div class="card-body">
+      <% if @my_assignments.nil? || @my_assignments.empty? %>
+        <div class="alert alert-info mb-0">
+          You do not have any active licenses currently.
         </div>
-        <div class="card-body">
-          <% if @my_assignments.nil? || @my_assignments.empty? %>
-            <div class="alert alert-info mb-0">
-              You do not have any active licenses currently.
-            </div>
-          <% else %>
-            <div class="row row-cols-1 g-4">
-              <% @my_assignments.each do |assignment| %>
-                <% expire_date = assignment.license&.expire_date %>
-                <% days_left = (expire_date && expire_date.to_date > Date.today) ? (expire_date.to_date - Date.today).to_i : nil %>
-                <% is_expiring = days_left && days_left <= 30 && days_left >= 0 %>
-                <div class="col">
-                  <div class="card license-card h-100
-                    <%= 'border border-danger border-2' if is_expiring %>
-                    <%= 'bg-light' if is_expiring %>">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                      <span>
-                        <i class="fas fa-key me-1"></i>
-                        <strong>
-                          <%= assignment.license&.license_name || assignment.license&.product&.product_name || "Unnamed License" %>
-                        </strong>
-                        <% if is_expiring %>
-                          <span class="badge bg-danger ms-2">
-                            <i class="fas fa-exclamation-triangle"></i>
-                            expires in <%= days_left %> days
-                          </span>
-                        <% end %>
+      <% else %>
+        <div class="row row-cols-1 g-4">
+          <% @my_assignments.each do |assignment| %>
+            <% expire_date = assignment.license&.expire_date %>
+            <% days_left = (expire_date && expire_date.to_date > Date.today) ? (expire_date.to_date - Date.today).to_i : nil %>
+            <% is_expiring = days_left && days_left <= 30 && days_left >= 0 %>
+            <div class="col">
+              <div class="card license-card h-100
+                <%= 'border border-danger border-2' if is_expiring %>
+                <%= 'bg-light' if is_expiring %>"
+                   data-target="/my-licenses"
+                   style="cursor:pointer;">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                  <span>
+                    <i class="fas fa-key me-1"></i>
+                    <strong>
+                      <%= assignment.license&.license_name || assignment.license&.product&.product_name || "Unnamed License" %>
+                    </strong>
+                    <% if is_expiring %>
+                      <span class="badge bg-danger ms-2">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        expires in <%= days_left %> days
                       </span>
-                      <span class="badge bg-<%= assignment.is_active ? 'success' : 'danger' %>">
-                        <%= assignment.is_active ? 'Active' : 'Inactive' %>
-                      </span>
-                    </div>
-                  </div>
+                    <% end %>
+                  </span>
+                  <span class="badge bg-<%= assignment.is_active ? 'success' : 'danger' %>">
+                    <%= assignment.is_active ? 'Active' : 'Inactive' %>
+                  </span>
                 </div>
-              <% end %>
+              </div>
             </div>
           <% end %>
         </div>
-      </div>
+      <% end %>
     </div>
   </div>
 </div>

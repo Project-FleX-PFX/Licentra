@@ -12,7 +12,7 @@
             </div>
             <div class="col-12 col-lg-6 mb-2 mb-lg-0">
               <span class="form-control-plaintext" id="username-display"><%= @user.username %></span>
-              <input type="text" class="form-control rounded-3" id="username-input" value="<%= @user.username %>" hidden>
+              <input type="text" class="form-control rounded-3" id="username-input" value="<%= @user.username %>" maxlength="63" hidden>
             </div>
             <div class="col-12 col-lg-3 text-center text-lg-end">
               <button class="btn btn-outline-secondary btn-sm edit-button w-100 w-lg-auto d-inline-flex align-items-center justify-content-center">
@@ -37,7 +37,7 @@
             </div>
             <div class="col-12 col-lg-6 mb-2 mb-lg-0">
               <span class="form-control-plaintext" id="email-display"><%= @user.email %></span>
-              <input type="email" class="form-control rounded-3" id="email-input" value="<%= @user.email %>" hidden>
+              <input type="email" class="form-control rounded-3" id="email-input" value="<%= @user.email %>" maxlength="254" hidden>
             </div>
             <div class="col-12 col-lg-3 text-center text-lg-end">
               <button class="btn btn-outline-secondary btn-sm edit-button w-100 w-lg-auto d-inline-flex align-items-center justify-content-center">
@@ -63,7 +63,7 @@
             <div class="col-12 col-lg-6 mb-2 mb-lg-0">
               <span class="form-control-plaintext" id="password-display">********</span>
               <div class="password-fields" hidden>
-                <input type="password" class="form-control rounded-3 mb-2" id="password" name="password" placeholder="New Password">
+                <input type="password" class="form-control rounded-3 mb-2" id="password" name="password" placeholder="New Password" maxlength="255">
                 <div id="password-strength" class="mt-2 mb-3" hidden>
                   <h6 class="small">Password must contain:</h6>
                   <p id="length" class="small text-danger mb-1"><i class="fas fa-times-circle me-1"></i>At least 10 characters</p>

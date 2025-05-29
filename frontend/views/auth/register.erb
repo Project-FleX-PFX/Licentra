@@ -8,27 +8,27 @@
 <form id="register-form" action="/register" method="post">
   <div class="mb-3">
     <label for="username" class="form-label small mb-1">Username</label>
-    <input type="text" id="username" name="username" value="<%= params[:username] %>" placeholder="Choose a unique username" class="form-control py-2 rounded-3" required>
+    <input type="text" id="username" name="username" value="<%= params[:username] %>" placeholder="Choose a unique username" class="form-control py-2 rounded-3" maxlength="63" required>
   </div>
 
   <div class="mb-3">
     <label for="first_name" class="form-label small mb-1">First Name</label>
-    <input type="text" id="first_name" name="first_name" value="<%= params[:first_name] %>" placeholder="Enter your first name" class="form-control py-2 rounded-3" required>
+    <input type="text" id="first_name" name="first_name" value="<%= params[:first_name] %>" placeholder="Enter your first name" class="form-control py-2 rounded-3" maxlength="100" required>
   </div>
 
   <div class="mb-3">
     <label for="last_name" class="form-label small mb-1">Last Name</label>
-    <input type="text" id="last_name" name="last_name" value="<%= params[:last_name] %>" placeholder="Enter your last name" class="form-control py-2 rounded-3" required>
+    <input type="text" id="last_name" name="last_name" value="<%= params[:last_name] %>" placeholder="Enter your last name" class="form-control py-2 rounded-3" maxlength="100" required>
   </div>
 
   <div class="mb-3">
     <label for="email" class="form-label small mb-1">Email</label>
-    <input type="email" id="email" name="email" value="<%= params[:email] %>" placeholder="example@domain.com" class="form-control py-2 rounded-3" required>
+    <input type="email" id="email" name="email" value="<%= params[:email] %>" placeholder="example@domain.com" class="form-control py-2 rounded-3" maxlength="254" required>
   </div>
 
   <div class="mb-3">
     <label for="password" class="form-label small mb-1">Password</label>
-    <input type="password" id="password" name="password" class="form-control py-2 rounded-3" placeholder="Enter a strong password" required>
+    <input type="password" id="password" name="password" class="form-control py-2 rounded-3" placeholder="Enter a strong password" maxlength="255" required>
     <%# Ihre Passwortstärke-Indikatoren. Stellen Sie sicher, dass die Font Awesome Icons
         entweder global geladen werden oder Sie hier alternative Icons verwenden,
         wenn Font Awesome nicht im layout_auth.erb ist. %>

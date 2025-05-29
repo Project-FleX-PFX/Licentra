@@ -33,6 +33,9 @@ module AdminRoutesErrorHelpers
   rescue LicenseService::NotAuthorizedError => e
     flash[:error] = e.message
     halt 403, { error: e.message }.to_json
+  rescue DAO::ValidationError => e
+    dao_validation_format_creation_error(e)
+    halt 403, { error: e.message }.to_json
   rescue StandardError => e
     log_message = 'Unexpected error'
     log_message += " with license (ID: #{license_id})" if license_id
@@ -47,6 +50,9 @@ module AdminRoutesErrorHelpers
   rescue DAO::RecordNotFound
     flash[:error] = 'The requested resource was not found.'
     halt 404, { error: 'Resource not found.' }.to_json
+  rescue DAO::ValidationError => e
+    dao_validation_format_creation_error(e)
+    halt 403, { error: e.message }.to_json
   rescue UserService::NotFoundError => e
     flash[:error] = e.message
     halt 404, { error: e.message }.to_json
@@ -92,6 +98,9 @@ module AdminRoutesErrorHelpers
   rescue DAO::RecordNotFound
     flash[:error] = 'The requested resource was not found.'
     halt 404, { error: 'Resource not found.' }.to_json
+  rescue DAO::ValidationError => e
+    dao_validation_format_creation_error(e)
+    halt 403, { error: e.message }.to_json
   rescue StandardError => e
     log_message = 'Unexpected error'
     log_message += " with user (ID: #{user_id})" if user_id
