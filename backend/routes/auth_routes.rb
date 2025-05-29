@@ -97,7 +97,7 @@ module AuthRoutes # rubocop:disable Metrics/ModuleLength
       end
 
       flash[:notice] =
-        'If an account with this email address exists and is active, a password reset link has been sent. Please check your inbox and spam folder.'
+        'If an account with this email address exists and is active, a password reset link has been sent. Please check your inbox and spam folder. Note: A new link can only be requested after 24 hours if the current one expires or does not work.'
       redirect '/login'
     end
 

@@ -1,9 +1,9 @@
 <% @title = "SMTP Settings - Licentra" %>
 
 <div class="container py-4">
-  <div class="card shadow-lg border-0 rounded-3 mx-auto">
+  <div class="card shadow-lg border-0 rounded-3 mx-auto mb-4">
     <div class="card-header bg-primary text-white text-center py-3 rounded-top">
-      <h4 class="fw-bold mb-0"><i class="fas fa-cogs me-2"></i> SMTP Configuration</h4>
+      <h4 class="fw-bold mb-0"><i class="fas fa-cogs me-2"></i> Email Server Configuration</h4>
     </div>
     <div class="card-body p-4 p-md-5">
       <% if @form_error %>
@@ -12,39 +12,45 @@
         </div>
       <% end %>
 
+      <div class="alert alert-info rounded-3 mb-4" role="alert">
+        <i class="fas fa-info-circle me-2"></i> <strong>Quick Guide:</strong> Enter your email server details below to send emails like password reset links. Use the "Test Email" section afterward to check if everything works. If unsure, ask your email provider for these details.
+      </div>
+
       <form id="smtp-settings-form" action="/admin/settings" method="post">
         <div class="mb-3">
-          <label for="smtp_server" class="form-label small">SMTP Server</label>
-          <input type="text" id="smtp_server" name="smtp_server" class="form-control py-2 rounded-3" placeholder="e.g., smtp.mail.de" value="<%= @smtp_settings && @smtp_settings[:server] %>" required>
+          <label for="smtp_server" class="form-label small">Email Server Address</label>
+          <input type="text" id="smtp_server" name="smtp_server" class="form-control py-2 rounded-3" placeholder="e.g., smtp.gmail.com" value="<%= @smtp_settings && @smtp_settings[:server] %>" required>
+          <small class="form-text text-muted">The address of your email provider's server. Ask your provider if unsure (e.g., smtp.gmail.com for Gmail).</small>
         </div>
 
         <div class="row">
           <div class="col-md-6 mb-3">
-            <label for="smtp_port" class="form-label small">SMTP Port</label>
-            <input type="number" id="smtp_port" name="smtp_port" class="form-control py-2 rounded-3" placeholder="e.g., 465 or 587" value="<%= @smtp_settings && @smtp_settings[:port] %>" required>
+            <label for="smtp_port" class="form-label small">Server Port</label>
+            <input type="number" id="smtp_port" name="smtp_port" class="form-control py-2 rounded-3" placeholder="e.g., 587" value="<%= @smtp_settings && @smtp_settings[:port] %>" min="1" max="65535" required>
+            <small class="form-text text-muted">Common ports are 587 (recommended) or 465. Your provider can tell you the correct one.</small>
           </div>
           <div class="col-md-6 mb-3">
-            <label for="smtp_security" class="form-label small">Security</label>
+            <label for="smtp_security" class="form-label small">Security Type</label>
             <select id="smtp_security" name="smtp_security" class="form-select py-2 rounded-3" required>
               <option value="" <%= 'selected' if @smtp_settings.nil? || @smtp_settings[:security].nil? %>>Select Security...</option>
-              <option value="SSL" <%= 'selected' if @smtp_settings && @smtp_settings[:security] == 'SSL' %>>SSL</option>
-              <option value="TLS" <%= 'selected' if @smtp_settings && @smtp_settings[:security] == 'TLS' %>>TLS (STARTTLS)</option>
-              <option value="None" <%= 'selected' if @smtp_settings && @smtp_settings[:security] == 'None' %>>None</option>
+              <option value="SSL" <%= 'selected' if @smtp_settings && @smtp_settings[:security] == 'SSL' %>>SSL (Secure, often Port 465)</option>
+              <option value="TLS" <%= 'selected' if @smtp_settings && @smtp_settings[:security] == 'TLS' %>>TLS/STARTTLS (Secure, often Port 587)</option>
+              <option value="None" <%= 'selected' if @smtp_settings && @smtp_settings[:security] == 'None' %>>None (Not recommended)</option>
             </select>
+            <small class="form-text text-muted">TLS/STARTTLS is most common for secure email sending. Match this with your port.</small>
           </div>
         </div>
 
         <div class="mb-3">
-          <label for="smtp_username" class="form-label small">Username (Email Address)</label>
-          <input type="email" id="smtp_username" name="smtp_username" class="form-control py-2 rounded-3" placeholder="e.g., your-email@example.com" value="<%= @smtp_settings && @smtp_settings[:username] %>" required>
+          <label for="smtp_username" class="form-label small">Email Address (Username)</label>
+          <input type="email" id="smtp_username" name="smtp_username" class="form-control py-2 rounded-3" placeholder="e.g., yourname@provider.com" value="<%= @smtp_settings && @smtp_settings[:username] %>" required>
+          <small class="form-text text-muted">The email address you use to log in to your email provider.</small>
         </div>
 
         <div class="mb-4">
           <label for="smtp_password" class="form-label small">Password</label>
           <input type="password" id="smtp_password" name="smtp_password" class="form-control py-2 rounded-3" placeholder="Enter new password (only if changing)">
-          <small class="form-text text-muted">
-            Leave blank to keep the current password. Enter a new password only if you want to change it.
-          </small>
+          <small class="form-text text-muted">Leave blank to keep the current password. Enter a new password only if you want to change it. This is securely stored.</small>
         </div>
 
         <div class="d-flex justify-content-end mt-4">
@@ -58,14 +64,17 @@
 
   <div class="card shadow-lg border-0 rounded-3 mx-auto mt-4">
     <div class="card-header bg-info text-white text-center py-3 rounded-top">
-      <h4 class="fw-bold mb-0"><i class="fas fa-paper-plane me-2"></i> Test SMTP Settings</h4>
+      <h4 class="fw-bold mb-0"><i class="fas fa-paper-plane me-2"></i> Test Email Sending</h4>
     </div>
     <div class="card-body p-4 p-md-5">
+      <div class="alert alert-info rounded-3 mb-4" role="alert">
+        <i class="fas fa-info-circle me-2"></i> <strong>Tip:</strong> After saving your settings, send a test email to confirm everything works. If the email doesn't arrive, check your settings or contact your email provider.
+      </div>
       <form id="test-smtp-form" action="/admin/settings/test_smtp" method="post">
         <div class="mb-3">
           <label for="test_email_recipient" class="form-label small">Send Test Email To:</label>
-          <input type="email" id="test_email_recipient" name="test_email_recipient" class="form-control py-2 rounded-3" placeholder="Enter recipient email address" value="<%= session[:admin_email] || '' %>" required>
-          <small class="form-text text-muted">A test email will be sent to this address using the currently saved SMTP settings.</small>
+          <input type="email" id="test_email_recipient" name="test_email_recipient" class="form-control py-2 rounded-3" placeholder="e.g., yourname@provider.com" value="<%= session[:admin_email] || '' %>" required>
+          <small class="form-text text-muted">Enter an email address to receive a test message using your saved settings.</small>
         </div>
         <div class="d-flex justify-content-end mt-4">
           <button type="submit" id="test-smtp-button" class="btn btn-info btn-lg px-5 rounded-3">
@@ -76,3 +85,5 @@
     </div>
   </div>
 </div>
+
+<script type="module" src="/js/features/admin/settingsFormHandler.js"></script>
