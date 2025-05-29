@@ -231,17 +231,6 @@ class SecurityLogDAO < BaseDAO
       end
     end
 
-    # DELETE
-    def delete(id)
-      context = "deleting security log with ID #{id}"
-      with_error_handling(context) do
-        log_entry = find!(id)
-        log_entry.destroy
-        log_security_log_deleted(log_entry)
-        true
-      end
-    end
-
     # --- SPECIAL QUERIES ---
 
     def find_by_user(user_id, options = {})

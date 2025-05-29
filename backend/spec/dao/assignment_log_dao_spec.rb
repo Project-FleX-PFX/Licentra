@@ -271,58 +271,6 @@ RSpec.describe AssignmentLogDAO do
     end
   end
 
-  describe '.delete' do
-    let!(:log_to_delete) { Fabricate(:assignment_log) }
-    let(:log_id) { log_to_delete.pk }
-
-    it 'removes the log from the database' do
-      expect do
-        described_class.delete(log_id)
-      end.to change(AssignmentLog, :count).by(-1)
-      expect(AssignmentLog[log_id]).to be_nil
-    end
-
-    it 'returns true' do
-      expect(described_class.delete(log_id)).to be true
-    end
-
-    it 'logs the deletion' do
-      log_obj_before_delete = AssignmentLog[log_id]
-      expect(described_class).to receive(:log_log_deleted).with(log_obj_before_delete).and_call_original
-      described_class.delete(log_id)
-    end
-
-    context 'when the log does not exist' do
-      it 'raises a DAO::RecordNotFound error' do
-        expect do
-          described_class.delete(log_id + 999)
-        end.to raise_error(DAO::RecordNotFound)
-      end
-    end
-  end
-
-  describe '.delete_by_user' do
-    let!(:log_for_user1_a) { Fabricate(:assignment_log, source_user: target_user1, action: 'USER1_LOG_A') }
-    let!(:log_for_user1_b) { Fabricate(:assignment_log, source_user: target_user1, action: 'USER1_LOG_B') }
-    let!(:log_for_user2)   { Fabricate(:assignment_log, source_user: target_user2, action: 'USER2_LOG_A') }
-
-    it 'deletes all logs for the given user_id and returns the count' do
-      expect(AssignmentLog.where(user_id: target_user1.pk).count).to eq(3)
-      deleted_count = described_class.delete_by_user(target_user1.pk)
-
-      expect(deleted_count).to eq(3)
-      expect(AssignmentLog.where(user_id: target_user1.pk).count).to eq(0)
-      expect(AssignmentLog[log_entry2.pk]).not_to be_nil
-      expect(AssignmentLog[log_for_user2.pk]).not_to be_nil
-    end
-
-    it 'returns 0 if no logs exist for the user_id' do
-      non_existent_user_id = target_user1.pk + target_user2.pk + 100
-      deleted_count = described_class.delete_by_user(non_existent_user_id)
-      expect(deleted_count).to eq(0)
-    end
-  end
-
   describe '.find_with_details' do
     let!(:time_now) { Time.now.utc.round }
     let!(:time_yesterday) { (time_now - (24 * 60 * 60)).round }

@@ -42,6 +42,9 @@ function enablePasswordFields(formElement, enable, mode) {
   if (enable) {
     showElement(strengthIndicator);
     showElement(confirmGroup);
+    if (matchIndicator) {
+      matchIndicator.style.display = "block"; // Direktes Setzen von display auf block
+    }
     if (mode === "add") {
       setText(
           helpText,
@@ -86,7 +89,9 @@ function enablePasswordFields(formElement, enable, mode) {
   } else {
     hideElement(strengthIndicator);
     hideElement(confirmGroup);
-    if (matchIndicator) matchIndicator.hidden = true;
+    if (matchIndicator) {
+      matchIndicator.style.display = "none"; // Direktes Setzen von display auf none
+    }
     if (passwordField) {
       passwordField.value = "";
       passwordField.required = false;
@@ -106,6 +111,7 @@ function enablePasswordFields(formElement, enable, mode) {
       );
   }
 }
+
 
 function populateUserForm(formElement, userData) {
   formElement.reset();
