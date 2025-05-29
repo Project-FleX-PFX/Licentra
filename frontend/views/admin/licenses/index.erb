@@ -70,16 +70,16 @@
 
           <div class="mb-3">
             <label for="editLicenseNameField" class="form-label">License Name <span class="text-danger">*</span></label>
-            <input type="text" class="form-control" name="license[license_name]" id="editLicenseNameField" required>
+            <input type="text" class="form-control" name="license[license_name]" id="editLicenseNameField" required maxlength="100">
           </div>
           <div class="mb-3">
             <label for="editLicenseKeyField" class="form-label">License Key</label>
-            <input type="text" class="form-control" name="license[license_key]" id="editLicenseKeyField">
+            <input type="text" class="form-control" name="license[license_key]" id="editLicenseKeyField" maxlength="100" required>
           </div>
           <div class="row g-3">
             <div class="col-md-6 mb-3">
               <label for="editSeatCountField" class="form-label">Seat Count <span class="text-danger">*</span></label>
-              <input type="number" class="form-control" name="license[seat_count]" id="editSeatCountField" min="1" required>
+              <input type="number" class="form-control" name="license[seat_count]" id="editSeatCountField" min="1" step="1" max="999999999" required>
             </div>
             <div class="col-md-6 mb-3">
               <label for="editProductIdField" class="form-label">Product <span class="text-danger">*</span></label>
@@ -130,11 +130,11 @@
           </div>
           <div class="mb-3">
             <label for="editVendorField" class="form-label">Vendor</label>
-            <input type="text" class="form-control" name="license[vendor]" id="editVendorField">
+            <input type="text" class="form-control" name="license[vendor]" id="editVendorField" maxlength="50">
           </div>
           <div class="mb-3">
             <label for="editNotesField" class="form-label">Notes</label>
-            <textarea class="form-control" name="license[notes]" id="editNotesField" rows="3"></textarea>
+            <textarea class="form-control" name="license[notes]" id="editNotesField" rows="3" maxlength="500"></textarea>
           </div>
         </form>
       </div>

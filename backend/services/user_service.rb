@@ -66,6 +66,8 @@ class UserService
     raise UserManagementError, "User creation failed due to validation: #{e.errors.full_messages.join(', ')}"
   rescue UserManagementError => e
     raise e
+  rescue DAO::ValidationError => e
+    raise e
   rescue StandardError => e
     puts "ERROR: Unexpected error in create_user_as_admin: #{e.class} - #{e.message}\n#{e.backtrace.join("\n")}"
     raise UserManagementError, "An unexpected error occurred while creating the user: #{e.message}"
@@ -132,7 +134,7 @@ class UserService
     updated_user_object.refresh
   rescue Sequel::ValidationFailed => e
     raise UserManagementError, "User update failed due to validation: #{e.errors.full_messages.join(', ')}"
-  rescue UserManagementError, AdminProtectionError => e
+  rescue UserManagementError, AdminProtectionError, DAO::ValidationError => e
     raise e
   rescue StandardError => e
     puts "ERROR: Unexpected error in update_user_details_as_admin: #{e.class} - #{e.message}\n#{e.backtrace.join("\n")}"
