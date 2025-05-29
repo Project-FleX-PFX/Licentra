@@ -165,7 +165,7 @@ module MailService
       from     from_address
       to       recipient_email
       subject  'Licentra - Password Reset Request'
-      body     "Hello,\n\nPlease click the following link to reset your password:\n#{reset_link}\n\nThis link will expire in #{PasswordResetTokenDAO::TOKEN_VALIDITY_HOURS} hour(s).\n\nIf you did not request this, please ignore this email."
+      body     "Hello,\n\nPlease click the following link to reset your password:\n#{reset_link}\n\nThis link will expire in #{PasswordResetTokenDAO::TOKEN_VALIDITY_HOURS} hour(s).\n\nNote: A new link can only be requested after 24 hours if needed.\n\nIf you did not request this, please ignore this email."
     end
 
     puts "DEBUG: Attempting to send password reset email to #{recipient_email}"
