@@ -206,7 +206,7 @@ class UserService
 
     raise UserManagementError, 'Cannot lock your own admin account.' if user_to_lock.user_id == admin_user.user_id
     raise UserManagementError, 'Account is already locked.' if UserDAO.locked?(user_to_lock)
-    raise UserManagementError, "Failed to lock user account #{target_user_id}." unless UserDAO.lock_user(user_to_lock)
+    raise UserManagementError, "Failed to lock user account #{target_user_id}." unless UserDAO.lock_user_as_admin(user_to_lock, admin_user)
 
     true
   rescue UserManagementError => e

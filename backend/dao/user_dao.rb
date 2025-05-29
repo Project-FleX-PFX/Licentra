@@ -186,6 +186,20 @@ class UserDAO < BaseDAO
       updated_user
     end
 
+    def lock_user_as_admin(user, admin)
+      return nil unless user
+
+      update_payload = { locked_at: Time.now }
+      action_description = 'lock account'
+      updated_user = _perform_atomic_user_update(user, update_payload, action_description)
+
+      if updated_user
+        log_info("Locked account for user #{updated_user.email}")
+        SecurityLogDAO.log_user_locked_by_admin(locked_user: updated_user, acting_user: admin)
+      end
+      updated_user
+    end
+
     def reset_lockout(user)
       return nil unless user
       return user if user.failed_login_attempts.zero? && user.locked_at.nil?
