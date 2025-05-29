@@ -170,14 +170,6 @@ RSpec.describe SecurityLogDAO do
         expect(described_class.find(non_existent_id)).to be_nil
       end
     end
-
-    describe '.delete' do
-      let!(:log_to_delete_local) { Fabricate(:security_log, source_user: user1_sl) }
-      it 'removes the log' do
-        expect { described_class.delete(log_to_delete_local.pk) }.to change(SecurityLog, :count).by(-1)
-        expect(SecurityLog[log_to_delete_local.pk]).to be_nil
-      end
-    end
   end
 
   describe '.all' do

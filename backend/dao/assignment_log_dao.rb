@@ -187,26 +187,7 @@ class AssignmentLogDAO < BaseDAO
       end
     end
 
-    # DELETE
-    def delete(id)
-      context = "deleting assignment log with ID #{id}"
-      with_error_handling(context) do
-        log_entry = find!(id)
-        log_entry.destroy
-        log_log_deleted(log_entry)
-        true
-      end
-    end
-
     # --- SPECIAL QUERIES ---
-
-    def delete_by_user(user_id)
-      context = "deleting logs for user ID #{user_id}"
-      with_error_handling(context) do
-        count = AssignmentLog.where(user_id: user_id).delete
-        count
-      end
-    end
 
     DEFAULT_PER_PAGE = 25
 

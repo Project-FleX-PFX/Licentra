@@ -26,6 +26,7 @@
     <orderEntry type="library" scope="PROVIDED" name="i18n (v1.14.7, Remote: ruby-3.4.2-p28) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="logger (v1.7.0, Remote: ruby-3.4.2-p28) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="mail (v2.8.1, Remote: ruby-3.4.2-p28) [gem]" level="application" />
+    <orderEntry type="library" scope="PROVIDED" name="matrix (v0.4.2, Remote: ruby-3.4.2-p28) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="mini_mime (v1.1.5, Remote: ruby-3.4.2-p28) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="mini_portile2 (v2.8.8, Remote: ruby-3.4.2-p28) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="mustermann (v3.0.3, Remote: ruby-3.4.2-p28) [gem]" level="application" />
