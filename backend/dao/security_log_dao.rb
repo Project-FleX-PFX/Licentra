@@ -25,12 +25,13 @@ class SecurityLogDAO < BaseDAO
     LICENSE_CREATED        = 'license created'
     LICENSE_UPDATED        = 'license updated'
     LICENSE_DELETED        = 'license deleted'
+    LOG_EXPORT             = 'log export'
 
     ALL_ACTIONS = [
       LOGIN_SUCCESS, LOGIN_FAILURE, PASSWORD_RESET_REQUEST, PASSWORD_CHANGED,
       USER_CREATED, USER_UPDATED, USER_DELETED, USER_LOCKED,
       PRODUCT_CREATED, PRODUCT_UPDATED, PRODUCT_DELETED,
-      LICENSE_CREATED, LICENSE_UPDATED, LICENSE_DELETED
+      LICENSE_CREATED, LICENSE_UPDATED, LICENSE_DELETED, LOG_EXPORT
     ].freeze
   end
 
@@ -39,7 +40,8 @@ class SecurityLogDAO < BaseDAO
     USER_ACCOUNT = 'UserAccount'
     PRODUCT = 'Product'
     LICENSE = 'License'
-    ALL_OBJECTS = [USER_SESSION, USER_ACCOUNT, PRODUCT, LICENSE].freeze
+    LOGS = 'LOGS'
+    ALL_OBJECTS = [USER_SESSION, USER_ACCOUNT, PRODUCT, LICENSE, LOGS].freeze
   end
 
   class << self
@@ -110,6 +112,13 @@ class SecurityLogDAO < BaseDAO
                        details: details)
     end
 
+    def log_user_locked_by_admin(locked_user:, acting_user:,
+                                 reason: 'Account locked by admin.')
+      details = "User '#{locked_user.username}' (ID: #{locked_user.user_id}) was locked by '#{acting_user.username}' (ID: #{acting_user.user_id}). Reason: #{reason}."
+      create_log_entry(action: Actions::USER_LOCKED, object: Objects::ALL_OBJECTS[1], acting_user: acting_user,
+                       details: details)
+    end
+
     def log_product_created(acting_user:, product:)
       details = "Product '#{product.product_name}' (ID: #{product.product_id}) was created by '#{acting_user.username}' (ID: #{acting_user.user_id})."
       create_log_entry(action: Actions::PRODUCT_CREATED, object: Objects::ALL_OBJECTS[2], acting_user: acting_user,
@@ -143,6 +152,12 @@ class SecurityLogDAO < BaseDAO
     def log_license_deleted(acting_user:, deleted_license_name:, deleted_license_id:)
       details = "License '#{deleted_license_name}' (ID: #{deleted_license_id}) was deleted by '#{acting_user.username}' (ID: #{acting_user.user_id})."
       create_log_entry(action: Actions::LICENSE_DELETED, object: Objects::ALL_OBJECTS[3], acting_user: acting_user,
+                       details: details)
+    end
+
+    def log_logs_created(acting_user:, logs:)
+      details = "PDF-Export of #{logs} logs was created by '#{acting_user.username}' (ID: #{acting_user.user_id})."
+      create_log_entry(action: Actions::LOG_EXPORT, object: Objects::ALL_OBJECTS[4], acting_user: acting_user,
                        details: details)
     end
 
@@ -311,9 +326,9 @@ class SecurityLogDAO < BaseDAO
 
     private
 
-    def find_or_create_special_user(username, email)
-      user = UserDAO.find_one_by(username: username, email: email)
-      user || UserDAO.create(username: username, email: email)
+    def find_or_create_special_user(username, email, is_active = false)
+      user = UserDAO.find_one_by(username: username, email: email, is_active: is_active)
+      user || UserDAO.create(username: username, email: email, is_active: is_active)
     end
 
     def create_log_entry(action:, object:, acting_user:, details: nil)

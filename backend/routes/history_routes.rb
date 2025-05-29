@@ -28,6 +28,10 @@ module HistoryRoutes
 
     app.get '/history/assignments/export.pdf' do
       require_login
+
+      user = current_user
+      SecurityLogDAO.log_logs_created(acting_user: user, logs: 'assignment')
+
       content_type 'application/pdf'
       attachment "assignment_logs_#{Time.now.strftime('%Y%m%d_%H%M%S')}.pdf"
 
@@ -42,6 +46,11 @@ module HistoryRoutes
 
     app.get '/history/security/export.pdf' do
       require_login
+
+      user = current_user
+      SecurityLogDAO.log_logs_created(acting_user: user, logs: 'security')
+
+
       content_type 'application/pdf'
       attachment "security_logs_#{Time.now.strftime('%Y%m%d_%H%M%S')}.pdf"
 

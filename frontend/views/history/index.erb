@@ -299,7 +299,7 @@
                       <%
                         action_display = log.action.gsub('_', ' ').capitalize
                         badge_bg_class = case log.action.downcase
-                                         when SecurityLogDAO::Actions::LOGIN_SUCCESS, SecurityLogDAO::Actions::USER_CREATED, SecurityLogDAO::Actions::PRODUCT_CREATED, SecurityLogDAO::Actions::LICENSE_CREATED
+                                         when SecurityLogDAO::Actions::LOGIN_SUCCESS, SecurityLogDAO::Actions::USER_CREATED, SecurityLogDAO::Actions::PRODUCT_CREATED, SecurityLogDAO::Actions::LICENSE_CREATED, SecurityLogDAO::Actions::LOG_EXPORT
                                            'bg-success'
                                          when SecurityLogDAO::Actions::LOGIN_FAILURE, SecurityLogDAO::Actions::USER_DELETED, SecurityLogDAO::Actions::PRODUCT_DELETED, SecurityLogDAO::Actions::LICENSE_DELETED
                                            'bg-danger'
