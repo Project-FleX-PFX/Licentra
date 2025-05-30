@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative '../models/license'
+require_relative '../models/license_type'
 require_relative '../models/product'
 require_relative 'base_dao'
 require_relative 'license_assignment_dao'
@@ -27,39 +28,43 @@ class LicenseDAO < BaseDAO
 
   class << self
     def all_with_details(options = {})
-      context = 'fetching all licenses with their associated products'
+      context = 'fetching all licenses with their associated products and types'
       with_error_handling(context) do
         dataset = model_class.dataset
+
+        if options[:product_id]&.positive?
+          dataset = dataset.where(Sequel[:licenses][:product_id] => options[:product_id])
+        end
 
         order_criteria = options[:order] || [Sequel.asc(Sequel[:products][:product_name]),
                                              Sequel.asc(Sequel[:licenses][:license_name])]
         order_criteria = Array(order_criteria)
 
-        dataset = dataset.left_join(:products, product_id: :product_id)
+        dataset = dataset.left_join(:products, product_id: Sequel[:licenses][:product_id])
                          .select_all(:licenses)
                          .order(*order_criteria)
-                         .eager(:product)
+                         .eager(:product, :license_type)
 
-        licenses_with_product = dataset.all
+        licenses_with_details = dataset.all
 
-        log_info("Fetched #{licenses_with_product.size} licenses with product details.")
-        licenses_with_product
+        log_info("Fetched #{licenses_with_details.size} licenses with details (Product ID filter: #{options[:product_id] || 'none'}).")
+        licenses_with_details
       end
     end
 
     def find_with_details!(id)
-      context = "finding license ID #{id} with product details"
+      context = "finding license ID #{id} with product and type details"
       with_error_handling(context) do
-        license_with_product = model_class
+        license_with_details = model_class
                                .dataset
                                .where(Sequel[:licenses][:license_id] => id)
-                               .eager(:product)
+                               .eager(:product, :license_type)
                                .first
 
-        raise DAO::RecordNotFound, "License (ID: #{id}) not found." unless license_with_product
+        raise DAO::RecordNotFound, "License (ID: #{id}) not found." unless license_with_details
 
-        log_license_fetched_with_details(license_with_product)
-        license_with_product
+        log_license_fetched_with_details(license_with_details)
+        license_with_details
       end
     end
 
