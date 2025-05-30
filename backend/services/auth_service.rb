@@ -17,6 +17,7 @@ class AuthService
   class PasswordResetError < StandardError; end
   class PasswordUpdateError < StandardError; end
   class InvalidInputError < StandardError; end
+  INVALID_MESSAGE = 'Invalid email or password. After three attempts, your account will be blocked for 15 minutes.'
 
   # --- LOGIN ---
   def self.login(email, password, ip_address: nil)
@@ -26,13 +27,12 @@ class AuthService
 
     unless user&.is_active
       SecurityLogDAO.log_login_failure(attempted_username: email, ip_address: ip_address)
-      raise AuthenticationError, 'Invalid email or password.'
+      raise AuthenticationError, INVALID_MESSAGE
     end
 
     if UserDAO.locked?(user)
       SecurityLogDAO.log_login_failure(attempted_username: email, ip_address: ip_address) # Erneut loggen, falls versucht wird, sich einzuloggen
-      raise AccountLockedError,
-            "Your account has been blocked due to too many failed login attempts. Please try again in #{UserDAO::LOCKOUT_DURATION / 60} minutes."
+      raise AccountLockedError, INVALID_MESSAGE
     end
 
     if user.authenticate(password) # Direkter Aufruf der authenticate Methode des User-Modells
@@ -44,12 +44,11 @@ class AuthService
       SecurityLogDAO.log_login_failure(attempted_username: email, ip_address: ip_address)
 
       unless updated_user&.failed_login_attempts && updated_user.failed_login_attempts >= UserDAO::MAX_LOGIN_ATTEMPTS
-        raise AuthenticationError, 'Invalid email or password.'
+        raise AuthenticationError, INVALID_MESSAGE
       end
 
       UserDAO.lock_user(updated_user)
-      raise AccountLockedError,
-            "Incorrect password. Your account has been blocked due to too many failed attempts. Please try again in #{UserDAO::LOCKOUT_DURATION / 60} minutes."
+      raise AccountLockedError, INVALID_MESSAGE
 
     end
   end
