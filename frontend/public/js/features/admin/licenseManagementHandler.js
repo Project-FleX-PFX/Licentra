@@ -22,11 +22,11 @@ const CURRENCY_SYMBOLS = {
 
 function updateCostCurrencySymbol(modalPrefix, selectedCurrency) {
   const symbolElement = document.getElementById(
-      `${modalPrefix}CostCurrencySymbol`
+    `${modalPrefix}CostCurrencySymbol`
   );
   if (symbolElement) {
     symbolElement.textContent =
-        CURRENCY_SYMBOLS[selectedCurrency] || selectedCurrency;
+      CURRENCY_SYMBOLS[selectedCurrency] || selectedCurrency;
   }
 }
 
@@ -108,16 +108,16 @@ function openEditLicenseModal(cardElement) {
   const form = document.getElementById("editLicenseForm");
 
   setText(
-      "editLicenseModalLabel",
-      `License: ${licenseData.licenseName || "Details"}`
+    "editLicenseModalLabel",
+    `License: ${licenseData.licenseName || "Details"}`
   );
   populateEditLicenseForm(form, licenseData);
   setEditFormDisabledState(true);
 
   setText("editLicenseToggleBtn", "Edit");
   document
-      .getElementById("editLicenseToggleBtn")
-      .classList.remove("btn-warning");
+    .getElementById("editLicenseToggleBtn")
+    .classList.remove("btn-warning");
   showElement("deleteLicenseBtnInModal");
   document.getElementById("saveLicenseChangesBtn").disabled = true;
 
@@ -129,13 +129,12 @@ function openAddLicenseModal() {
   form.reset();
   document.getElementById("addSeatCountField").value = "1";
   document.getElementById("addPurchaseDateField").value = new Date()
-      .toISOString()
-      .split("T")[0];
+    .toISOString()
+    .split("T")[0];
   document.getElementById("addCostField").value = "0.00";
   document.getElementById("addCurrencyField").value = "EUR";
   updateCostCurrencySymbol("add", "EUR");
 
-  document.getElementById("addProductIdField").selectedIndex = 0;
   document.getElementById("addLicenseTypeIdField").selectedIndex = 0;
 
   showModal(addLicenseModalInstance);
@@ -148,9 +147,9 @@ async function handleLicenseFormSubmit(event, formType) {
   let url, method;
 
   const saveButton =
-      formType === "add"
-          ? document.getElementById("createLicenseSubmitBtn")
-          : document.getElementById("saveLicenseChangesBtn");
+    formType === "add"
+      ? document.getElementById("createLicenseSubmitBtn")
+      : document.getElementById("saveLicenseChangesBtn");
 
   if (saveButton) {
     saveButton.disabled = true;
@@ -180,7 +179,8 @@ async function handleLicenseFormSubmit(event, formType) {
       body: new URLSearchParams(formData),
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
-        "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]')?.content,
+        "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]')
+          ?.content,
       },
     });
 
@@ -208,7 +208,8 @@ async function handleDeleteLicenseFormSubmit(event) {
       body: new URLSearchParams(new FormData(form)),
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
-        "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]')?.content,
+        "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]')
+          ?.content,
       },
     });
 
@@ -223,7 +224,7 @@ export function initAdminLicenseManagement() {
   editLicenseModalInstance = initializeModal("editLicenseModal");
   addLicenseModalInstance = initializeModal("addLicenseModal");
   deleteLicenseConfirmModalInstance = initializeModal(
-      "deleteLicenseConfirmModal"
+    "deleteLicenseConfirmModal"
   );
 
   document.querySelectorAll(".license-configure-btn").forEach((button) => {
@@ -243,7 +244,7 @@ export function initAdminLicenseManagement() {
     editToggleButton.addEventListener("click", () => {
       const editLicenseForm = document.getElementById("editLicenseForm");
       const isCurrentlyEditable =
-          !editLicenseForm.elements["license[license_name]"].disabled;
+        !editLicenseForm.elements["license[license_name]"].disabled;
       setEditFormDisabledState(isCurrentlyEditable);
       if (!isCurrentlyEditable) {
         setText(editToggleButton, "Cancel");
@@ -260,19 +261,19 @@ export function initAdminLicenseManagement() {
   const addLicenseForm = document.getElementById("addLicenseForm");
   if (addLicenseForm) {
     addLicenseForm.addEventListener("submit", (event) =>
-        handleLicenseFormSubmit(event, "add")
+      handleLicenseFormSubmit(event, "add")
     );
   }
 
   const editLicenseForm = document.getElementById("editLicenseForm");
   if (editLicenseForm) {
     editLicenseForm.addEventListener("submit", (event) =>
-        handleLicenseFormSubmit(event, "edit")
+      handleLicenseFormSubmit(event, "edit")
     );
   }
 
   const deleteBtnInEditModal = document.getElementById(
-      "deleteLicenseBtnInModal"
+    "deleteLicenseBtnInModal"
   );
   if (deleteBtnInEditModal) {
     deleteBtnInEditModal.addEventListener("click", () => {
@@ -311,8 +312,8 @@ export function initAdminLicenseManagement() {
       setEditFormDisabledState(true);
       setText("editLicenseToggleBtn", "Edit");
       document
-          .getElementById("editLicenseToggleBtn")
-          .classList.remove("btn-warning");
+        .getElementById("editLicenseToggleBtn")
+        .classList.remove("btn-warning");
       updateCostCurrencySymbol("edit", "EUR");
       currentLicenseDataForEdit = {};
       currentLicenseId = null;
@@ -329,9 +330,9 @@ export function initAdminLicenseManagement() {
   document.querySelectorAll('input[name="license[cost]"]').forEach((field) => {
     field.addEventListener("keydown", (event) => {
       if (
-          ["e", "E", "+", "-"].includes(event.key) &&
-          event.target.value.includes(event.key) &&
-          event.key !== "-"
+        ["e", "E", "+", "-"].includes(event.key) &&
+        event.target.value.includes(event.key) &&
+        event.key !== "-"
       ) {
         event.preventDefault();
       } else if (["e", "E", "+"].includes(event.key)) {

@@ -5,6 +5,24 @@
 </div>
 <p class="page-description text-start">Manage your licenses and their details.</p>
 
+<div class="row mb-3">
+  <div class="col-md-6 col-lg-4">
+    <form method="GET" action="/admin/licenses" id="filterLicensesForm">
+      <div class="input-group">
+        <label class="input-group-text" for="productFilterSelect">Filter by Product:</label>
+        <select class="form-select" name="product_id" id="productFilterSelect" onchange="this.form.submit();">
+          <option value="">All Products</option>
+          <% @products.each do |product| %>
+            <option value="<%= product.product_id %>" <%= 'selected' if @selected_product_id && @selected_product_id == product.product_id %>>
+              <%= product.product_name %>
+            </option>
+          <% end %>
+        </select>
+      </div>
+    </form>
+  </div>
+</div>
+
 <div class="row row-cols-1 row-cols-lg-2 row-cols-xxl-3 g-4 mt-3">
   <% if @licenses && !@licenses.empty? %>
     <% @licenses.each do |license| %>
@@ -17,6 +35,7 @@
              data-product-id="<%= license.product_id %>"
              data-product-name="<%= license.product&.product_name %>"
              data-license-type-id="<%= license.license_type_id %>"
+             data-license-type-name="<%= license.license_type&.type_name %>"
              data-purchase-date="<%= license.purchase_date ? license.purchase_date.strftime('%Y-%m-%d') : '' %>"
              data-expire-date="<%= license.expire_date ? license.expire_date.strftime('%Y-%m-%d') : '' %>"
              data-cost="<%= license.cost.to_s %>"
@@ -26,6 +45,7 @@
           <div class="card-body d-flex flex-column">
             <h2 class="card-title h5"><%= license.license_name %></h2>
             <p class="card-text"><strong>Product:</strong> <%= license.product&.product_name || 'N/A' %></p>
+            <p class="card-text"><strong>Type:</strong> <%= license.license_type&.type_name || 'N/A' %></p>
             <p class="card-text flex-grow-1"><strong>Seats:</strong> <%= license.seat_count %></p>
             <% if license.cost && license.currency %>
                 <p class="card-text small"><strong>Cost:</strong>
@@ -42,7 +62,17 @@
       </div>
     <% end %>
   <% else %>
-    <div class="col-12"><p class="text-muted">No licenses found.</p></div>
+    <div class="col-12">
+        <p class="text-muted">
+            <% if @selected_product_id && @selected_product_id > 0 && @products.any? { |p| p.product_id == @selected_product_id } %>
+                No licenses found for product: <strong><%= @products.find { |p| p.product_id == @selected_product_id }&.product_name %></strong>.
+            <% elsif @selected_product_id && @selected_product_id > 0 %>
+                 No licenses found for the selected product filter (Product ID: <%= @selected_product_id %>).
+            <% else %>
+                No licenses found.
+            <% end %>
+        </p>
+    </div>
   <% end %>
 
   <div class="col">
@@ -65,9 +95,6 @@
       <div class="modal-body">
         <form id="editLicenseForm" method="post" action="">
           <input type="hidden" name="_method" value="PATCH" id="editFormMethodField">
-          <%# license_id wird in der action URL sein, nicht zwingend im Body nötig für PATCH %>
-          <%# <input type="hidden" name="license[license_id]" id="editLicenseIdField"> %>
-
           <div class="mb-3">
             <label for="editLicenseNameField" class="form-label">License Name <span class="text-danger">*</span></label>
             <input type="text" class="form-control" name="license[license_name]" id="editLicenseNameField" required maxlength="100">
@@ -176,9 +203,11 @@
             <div class="col-md-6 mb-3">
               <label for="addProductIdField" class="form-label">Product <span class="text-danger">*</span></label>
               <select class="form-select" name="license[product_id]" id="addProductIdField" required>
-                <option value="" disabled selected>-- Select Product --</option>
+                <option value="" disabled <%= (@selected_product_id.nil? || @selected_product_id == 0) ? 'selected' : '' %>>-- Select Product --</option>
                 <% @products.each do |product| %>
-                  <option value="<%= product.product_id %>"><%= product.product_name %></option>
+                  <option value="<%= product.product_id %>" <%= 'selected' if @selected_product_id && @selected_product_id == product.product_id %>>
+                    <%= product.product_name %>
+                  </option>
                 <% end %>
               </select>
             </div>

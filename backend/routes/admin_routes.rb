@@ -8,6 +8,7 @@ require_relative '../dao/product_dao'
 require_relative '../dao/role_dao'
 require_relative '../dao/user_dao'
 require_relative '../dao/license_dao'
+require_relative '../dao/license_type_dao'
 
 module AdminRoutes # rubocop:disable Metrics/ModuleLength
   def self.registered(app) # rubocop:disable Metrics/AbcSize, Metrics/MethodLength, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
@@ -55,8 +56,11 @@ module AdminRoutes # rubocop:disable Metrics/ModuleLength
     # --- License Management ---
     app.get '/admin/licenses' do
       @title = 'Manage Licenses'
+      @selected_product_id = params[:product_id]&.to_i
+
       order_criteria = [Sequel.asc(Sequel[:products][:product_name]), Sequel.asc(Sequel[:licenses][:license_name])]
-      @licenses = LicenseDAO.all_with_details(order: order_criteria)
+
+      @licenses = LicenseDAO.all_with_details(order: order_criteria, product_id: @selected_product_id)
 
       @products = ProductDAO.all(order: :product_name)
       @license_types = LicenseTypeDAO.all(order: :type_name)
