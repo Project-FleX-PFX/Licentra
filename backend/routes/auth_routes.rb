@@ -82,6 +82,7 @@ module AuthRoutes # rubocop:disable Metrics/ModuleLength
     app.post '/forgot_password' do
       email = params[:email]&.strip
 
+    Thread.new do
       begin
         AuthService.request_password_reset(email)
         # Die AuthService-Methode behandelt bereits das Logging.
@@ -95,6 +96,7 @@ module AuthRoutes # rubocop:disable Metrics/ModuleLength
       rescue StandardError => e
         puts "UNEXPECTED ERROR during password reset request for #{email}: #{e.class} - #{e.message}\n#{e.backtrace.join("\n")}"
       end
+    end
 
       flash[:notice] =
         'If an account with this email address exists and is active, a password reset link has been sent. Please check your inbox and spam folder. Note: A new link can only be requested after 24 hours if the current one expires or does not work.'
