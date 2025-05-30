@@ -2,7 +2,6 @@
 import { initPasswordMatcher } from '../../components/passwordMatcher.js';
 import { initPasswordStrengthChecker } from '../../components/passwordStrengthChecker.js';
 import { showElement, hideElement, setHidden, setText } from '../../utils/domUtils.js';
-import { updateProfileData } from '../../core/profileService.js';
 
 let passwordMatcherInstance;
 let passwordStrengthCheckerInstance;
@@ -32,7 +31,6 @@ function getFieldElements(field) {
  */
 function toggleEdit(field) {
   const elements = getFieldElements(field);
-  // Check if edit button is visible (not having 'd-none' class)
   const isInDisplayMode = elements.editButton && !elements.editButton.classList.contains('d-none');
 
   if (isInDisplayMode) {
@@ -40,8 +38,7 @@ function toggleEdit(field) {
     if (field === 'password') {
       setHidden(elements.displayElem, true);
       setHidden(elements.passwordFields, false);
-      // Don't show password strength indicator immediately, only on input or focus
-      if (passwordStrengthCheckerInstance) passwordStrengthCheckerInstance.hideIndicator(); 
+      if (passwordStrengthCheckerInstance) passwordStrengthCheckerInstance.hideIndicator();
     } else {
       elements.inputElem.setAttribute('data-original', elements.inputElem.value);
       setHidden(elements.displayElem, true);
@@ -71,7 +68,7 @@ function toggleEdit(field) {
  */
 function cancelEdit(field) {
   const elements = getFieldElements(field);
-  
+
   if (field === 'password') {
     if (elements.passwordInput) elements.passwordInput.value = '';
     if (elements.confirmInput) elements.confirmInput.value = '';
@@ -86,7 +83,7 @@ function cancelEdit(field) {
       setHidden(elements.displayElem, false);
     }
   }
-  
+
   showElement(elements.editButton);
   hideElement(elements.buttonsContainer);
 }
@@ -100,56 +97,107 @@ async function saveEdit(field) {
   let newValue;
 
   if (field === 'password') {
-    newValue = elements.passwordInput.value; // Don't trim passwords
-    
+    newValue = elements.passwordInput.value;
+
     if (passwordStrengthCheckerInstance && !passwordStrengthCheckerInstance.validate()) {
       if (elements.strengthIndicator) elements.strengthIndicator.hidden = false;
-      return; // Abort if requirements not met
+      return;
     }
-    
+
     if (passwordMatcherInstance && !passwordMatcherInstance.check()) {
       if (elements.matchMessage) elements.matchMessage.hidden = false;
-      return; // Abort if passwords don't match
+      return;
     }
   } else {
     newValue = elements.inputElem.value.trim();
-    
+
     if (newValue === '') {
-      alert('Field cannot be empty.');
+      // Zeige Flash-Nachricht statt alert
+      showClientSideFlash('error', 'Field cannot be empty.');
       elements.inputElem.value = elements.inputElem.getAttribute('data-original');
       return;
     }
-    
+
     if (field === 'email') {
-      const emailRegExp = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
+      const emailRegExp = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
       if (!emailRegExp.test(newValue)) {
-        alert('Please enter a valid email address.');
+        showClientSideFlash('error', 'Please enter a valid email address.');
         elements.inputElem.value = elements.inputElem.getAttribute('data-original');
         return;
       }
     }
   }
 
-  const result = await updateProfileData(field, newValue);
+  // Disable save button während Request
+  const saveButton = document.getElementById(`${field}-save`);
+  if (saveButton) {
+    saveButton.disabled = true;
+    setText(saveButton.querySelector('i').nextSibling, 'Saving...');
+  }
 
-  if (result.success) {
-    if (field === 'password') {
-      setText(elements.displayElem, '********');
-      elements.passwordInput.value = '';
-      elements.confirmInput.value = '';
-      if (passwordStrengthCheckerInstance) passwordStrengthCheckerInstance.hideIndicator();
-      if (elements.matchMessage) setHidden(elements.matchMessage, true);
-    } else {
-      setText(elements.displayElem, newValue);
-      elements.inputElem.setAttribute('data-original', newValue);
-    }
-    toggleEdit(field); // Switch UI back to display mode
-  } else {
-    alert(result.message || 'Error updating profile');
-    if (field !== 'password' && elements.inputElem) {
-      elements.inputElem.value = elements.inputElem.getAttribute('data-original');
+  try {
+    const response = await fetch('/update_profile', {
+      method: 'POST',
+      body: new URLSearchParams({
+        field: field,
+        value: newValue
+      }),
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content,
+      },
+    });
+
+    // Flash-Nachrichten werden über Rack Flash gesetzt und bei Page Reload angezeigt
+    window.location.reload();
+
+  } catch (error) {
+    console.error('Profile update error:', error);
+    // Fallback bei Network-Fehlern
+    showClientSideFlash('error', 'Network error occurred. Please try again.');
+
+    // Button zurücksetzen
+    if (saveButton) {
+      saveButton.disabled = false;
+      setText(saveButton.querySelector('i').nextSibling, 'Save');
     }
   }
+}
+
+/**
+ * Zeigt eine client-seitige Flash-Nachricht (für Validierungsfehler vor dem Request)
+ * @param {string} type - 'success', 'error', 'notice'
+ * @param {string} message - Nachricht
+ */
+function showClientSideFlash(type, message) {
+  // Entferne existierende Flash-Nachrichten
+  const existingFlash = document.querySelector('.alert');
+  if (existingFlash) {
+    existingFlash.remove();
+  }
+
+  // Erstelle neue Flash-Nachricht
+  const alertClass = type === 'error' ? 'alert-danger' :
+      type === 'success' ? 'alert-success' : 'alert-info';
+
+  const flashHtml = `
+    <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+      ${message}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  `;
+
+  // Füge Flash-Nachricht am Anfang des Containers ein
+  const container = document.querySelector('.container');
+  container.insertAdjacentHTML('afterbegin', flashHtml);
+
+  // Auto-hide nach 5 Sekunden
+  setTimeout(() => {
+    const flashElement = document.querySelector('.alert');
+    if (flashElement) {
+      flashElement.remove();
+    }
+  }, 5000);
 }
 
 /**
@@ -166,12 +214,12 @@ function initProfileForm() {
     if (elements.editButton) {
       elements.editButton.addEventListener('click', () => toggleEdit(field));
     }
-    
+
     const saveButton = document.getElementById(`${field}-save`);
     if (saveButton) {
       saveButton.addEventListener('click', () => saveEdit(field));
     }
-    
+
     const cancelButton = document.getElementById(`${field}-cancel`);
     if (cancelButton) {
       cancelButton.addEventListener('click', () => cancelEdit(field));
@@ -181,4 +229,3 @@ function initProfileForm() {
 
 // Initialize form when DOM is ready
 document.addEventListener('DOMContentLoaded', initProfileForm);
-
