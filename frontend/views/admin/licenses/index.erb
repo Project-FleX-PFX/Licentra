@@ -63,15 +63,20 @@
     <% end %>
   <% else %>
     <div class="col-12">
-        <p class="text-muted">
+      <div class="card h-100 shadow-sm">
+        <div class="card-body d-flex flex-column justify-content-center align-items-center text-center">
+          <i class="fas fa-times fa-3x text-muted mb-3"></i>
+          <p class="card-text text-muted">
             <% if @selected_product_id && @selected_product_id > 0 && @products.any? { |p| p.product_id == @selected_product_id } %>
-                No licenses found for product: <strong><%= @products.find { |p| p.product_id == @selected_product_id }&.product_name %></strong>.
+              No licenses found for product: <strong><%= @products.find { |p| p.product_id == @selected_product_id }&.product_name %></strong>.
             <% elsif @selected_product_id && @selected_product_id > 0 %>
-                 No licenses found for the selected product filter (Product ID: <%= @selected_product_id %>).
+              No licenses found for the selected product filter (Product ID: <%= @selected_product_id %>).
             <% else %>
-                No licenses found.
+              No licenses found.
             <% end %>
-        </p>
+          </p>
+        </div>
+      </div>
     </div>
   <% end %>
 
