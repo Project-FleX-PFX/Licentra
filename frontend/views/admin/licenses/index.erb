@@ -52,7 +52,10 @@
                     <%= license.currency == 'EUR' ? '€' : '$' %><%= '%.2f' % license.cost %>
                 </p>
             <% end %>
-            <div class="mt-auto d-flex justify-content-end">
+            <div class="mt-auto d-flex justify-content-between">
+              <a href="/admin/licenses/<%= license.license_id %>/assignments" class="btn btn-outline-success btn-sm me-2">
+                <i class="fas fa-user-plus me-1"></i> Assign Users
+              </a>
               <button type="button" class="btn btn-outline-primary btn-sm license-configure-btn">
                 <i class="fas fa-cog me-1"></i> Configure
               </button>
