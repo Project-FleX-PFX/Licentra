@@ -75,6 +75,30 @@ class UserDAO < BaseDAO
       nil
     end
 
+    def find_users_not_assigned_to_license(license_id, options = {})
+      context = "finding users not assigned to license ID #{license_id}"
+      with_error_handling(context) do
+        assigned_user_ids_for_license = LicenseAssignmentDAO.model_class
+                                                            .where(license_id: license_id)
+                                                            .select_map(:user_id)
+                                                            .uniq
+                                                            .compact
+
+        dataset = model_class.dataset.eager(:roles)
+
+        dataset = dataset.exclude(user_id: assigned_user_ids_for_license) if assigned_user_ids_for_license.any?
+
+        dataset = dataset.where(is_active: true)
+
+        order_criteria = options[:order] || :username
+        dataset = dataset.order(order_criteria)
+
+        users = dataset.all
+        log_info("Found #{users.size} users not assigned to license ID #{license_id}.")
+        users
+      end
+    end
+
     def username_exists_for_other_user?(username, current_user_id)
       return false if username.nil? || username.strip.empty?
 

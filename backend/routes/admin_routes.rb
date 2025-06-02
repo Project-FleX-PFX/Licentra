@@ -9,6 +9,7 @@ require_relative '../dao/role_dao'
 require_relative '../dao/user_dao'
 require_relative '../dao/license_dao'
 require_relative '../dao/license_type_dao'
+require_relative '../dao/license_assignment_dao'
 
 module AdminRoutes # rubocop:disable Metrics/ModuleLength
   def self.registered(app) # rubocop:disable Metrics/AbcSize, Metrics/MethodLength, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
@@ -329,22 +330,125 @@ module AdminRoutes # rubocop:disable Metrics/ModuleLength
         flash[:success] =
           "Test email successfully sent to #{recipient_email}. Please check the inbox (and spam folder)."
       rescue MailService::ConfigurationError => e
-        # Dieser Fehler kommt, wenn SMTP nicht konfiguriert ist oder die Konfig nicht geladen/entschlüsselt werden konnte
         error_message = "SMTP Configuration Error: #{e.message}. Please verify your SMTP settings."
         puts "ERROR in /admin/settings/test_smtp: #{error_message}"
         flash[:error] = error_message
       rescue MailService::SendError => e
-        # Dieser Fehler kommt bei SMTP-Problemen während des Versands
         error_message = "Failed to send test email: #{e.message}"
         puts "ERROR in /admin/settings/test_smtp: #{error_message}"
         flash[:error] = error_message
-      rescue StandardError => e # Alle anderen unerwarteten Fehler
+      rescue StandardError => e
         error_message = "An unexpected error occurred: #{e.message}"
         puts "ERROR in /admin/settings/test_smtp (Unexpected): #{e.class} - #{e.message}\n#{e.backtrace.join("\n")}"
         flash[:error] = error_message
       end
 
       redirect '/admin/settings'
+    end
+
+    # --- License-centric Assignment Management ---
+    app.get '/admin/licenses/:license_id/assignments' do
+      @license_id = params[:license_id].to_i
+      begin
+        @license = LicenseDAO.find_with_details!(@license_id)
+        @title = "Manage Assignments for License: #{@license.license_name}"
+
+        @current_assignments = LicenseAssignmentDAO.find_detailed_by_license(@license_id,
+                                                                             order: [Sequel.desc(:is_active),
+                                                                                     Sequel.asc(:assignment_date)])
+
+        @assignable_users = UserDAO.find_users_not_assigned_to_license(@license_id, order: :username)
+
+        erb :'admin/licenses/assignments', layout: :'layouts/application'
+      rescue DAO::RecordNotFound
+        flash[:error] = "License (ID: #{@license_id}) not found."
+        redirect '/admin/licenses'
+      end
+    end
+
+    app.post '/admin/licenses/:license_id/assignments' do
+      license_id = params[:license_id].to_i
+      user_ids_to_assign = params[:user_ids].is_a?(Array) ? params[:user_ids].map(&:to_i) : []
+
+      assigned_count = 0
+      error_messages = []
+
+      license = LicenseDAO.find!(license_id)
+
+      if user_ids_to_assign.empty?
+        flash[:info] = 'No users selected for assignment.'
+        redirect back
+        return
+      end
+
+      user_ids_to_assign.each do |user_id|
+        handle_license_assignment_service_errors(user_id: user_id, license_id: license_id) do
+          LicenseService.approve_assignment_for_user(license_id, user_id, current_user)
+          assigned_count += 1
+        rescue LicenseService::AlreadyAssignedError
+          user = UserDAO.find(user_id)
+          error_messages << "User '#{user&.username || "ID: #{user_id}"}' already has an assignment for this license. Skipped."
+        rescue LicenseService::ServiceError => e
+          user = UserDAO.find(user_id)
+          error_messages << "Could not assign to user '#{user&.username || "ID: #{user_id}"}': #{e.message}. Skipped."
+        end
+      end
+
+      if assigned_count.positive?
+        flash[:success] =
+          "#{assigned_count} user(s) successfully pre-assigned license '#{license.license_name}'. They may need to be activated."
+      end
+      flash[:error] = error_messages.join('<br>') unless error_messages.empty?
+
+      redirect back
+    end
+
+    app.put '/admin/licenses/:license_id/assignments/:assignment_id/activate' do
+      license_id_param = params[:license_id].to_i
+      assignment_id = params[:assignment_id].to_i
+
+      handle_license_assignment_service_errors(assignment_id: assignment_id) do
+        assignment = LicenseAssignmentDAO.find!(assignment_id)
+        if assignment.license_id != license_id_param
+          raise LicenseService::NotAuthorizedError, 'Assignment does not belong to the specified license.'
+        end
+
+        LicenseService.activate_license_for_user(assignment_id, current_user)
+        flash[:success] = 'License assignment activated successfully.'
+      end
+      status 200
+    end
+
+    app.put '/admin/licenses/:license_id/assignments/:assignment_id/deactivate' do
+      license_id_param = params[:license_id].to_i
+      assignment_id = params[:assignment_id].to_i
+
+      handle_license_assignment_service_errors(assignment_id: assignment_id) do
+        assignment = LicenseAssignmentDAO.find!(assignment_id)
+        if assignment.license_id != license_id_param
+          raise LicenseService::NotAuthorizedError, 'Assignment does not belong to the specified license.'
+        end
+
+        LicenseService.deactivate_license_for_user(assignment_id, current_user)
+        flash[:success] = 'License assignment deactivated successfully.'
+      end
+      status 200
+    end
+
+    app.delete '/admin/licenses/:license_id/assignments/:assignment_id' do
+      license_id_param = params[:license_id].to_i
+      assignment_id = params[:assignment_id].to_i
+
+      handle_license_assignment_service_errors(assignment_id: assignment_id) do
+        assignment = LicenseAssignmentDAO.find!(assignment_id)
+        if assignment.license_id != license_id_param
+          raise LicenseService::NotAuthorizedError, 'Assignment does not belong to the specified license.'
+        end
+
+        LicenseService.cancel_assignment_as_admin(assignment_id, current_user)
+        flash[:success] = 'License assignment canceled successfully.'
+      end
+      status 200
     end
   end
 end

@@ -75,7 +75,7 @@ module AdminRoutesErrorHelpers
     halt 500, { error: 'An unexpected server error occurred.' }.to_json
   end
 
-  def handle_license_assignment_service_errors(user_id: nil, assignment_id: nil)
+  def handle_license_assignment_service_errors(user_id: nil, assignment_id: nil, license_id: nil)
     yield
   rescue LicenseService::NotFoundError => e
     flash[:error] = e.message
@@ -105,6 +105,7 @@ module AdminRoutesErrorHelpers
     log_message = 'Unexpected error'
     log_message += " with user (ID: #{user_id})" if user_id
     log_message += " assignment (ID: #{assignment_id})" if assignment_id
+    log_message += " for license (ID: #{license_id})" if license_id
     log_message += ": #{e.message}\n#{e.backtrace.join("\n")}"
     logger.error log_message
     flash[:error] = 'An unexpected server error occurred.'
