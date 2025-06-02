@@ -73,4 +73,8 @@ module LicenseAssignmentLogging
   def log_detailed_assignments_for_user_fetched(user_id, count)
     log_info("Fetched #{count} detailed assignments for user ID #{user_id}.")
   end
+
+  def log_detailed_assignments_for_license_fetched(license_id, count)
+    log_info("Fetched #{count} detailed assignments for license ID #{license_id}.")
+  end
 end

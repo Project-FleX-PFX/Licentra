@@ -67,6 +67,28 @@ class LicenseAssignmentDAO < BaseDAO
       raise
     end
 
+    def find_detailed_by_license(license_id, options = {})
+      context = "finding detailed assignments for license ID #{license_id}"
+      with_error_handling(context) do
+        dataset = model_class.where(license_id: license_id)
+                             .where(Sequel.lit('user_id IS NOT NULL'))
+
+        dataset = dataset.eager(user: :roles)
+
+        order_criteria = options.fetch(:order, [Sequel.desc(:is_active), Sequel.asc(Sequel[:users][:username])])
+
+        dataset = dataset.order(*Array(order_criteria))
+
+        assignments = dataset.all
+
+        log_detailed_assignments_for_license_fetched(license_id, assignments.size)
+        assignments
+      end
+    rescue StandardError => e
+      log_error("Error in find_detailed_by_license for license_id #{license_id}: #{e.message}")
+      raise
+    end
+
     def count_by_license(license_id)
       context = "finding assignments for license ID #{license_id}"
       with_error_handling(context) do
