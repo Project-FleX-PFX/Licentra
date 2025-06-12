@@ -2,22 +2,22 @@
 
 /**
  * Converts all UTC timestamps with the class 'local-timestamp' to the user's local time.
- * It reads the UTC timestamp from the 'datetime' attribute of <time> elements,
- * formats it, and updates the element's text content and title.
+ * The column header indicates that the times are local.
+ * The original UTC time is added to the element's title attribute for viewing on hover.
  */
 function convertTimestampsToLocal() {
-  document
-    .querySelectorAll("time.local-timestamp")
-    .forEach(function (timeElement) {
-      const utcTimestamp = timeElement.getAttribute("datetime"); // Get UTC timestamp from datetime attribute
-      if (utcTimestamp) {
-        const localDate = new Date(utcTimestamp); // Convert UTC string to local Date object
+  document.querySelectorAll("time.local-timestamp").forEach(function (timeElement) {
+    const utcTimestamp = timeElement.getAttribute("datetime");
+    const originalUtcText = timeElement.textContent.trim();
 
-        // Format the local date to YYYY-MM-DD HH:MM:SS Local
-        const formattedLocalDate =
+    if (utcTimestamp) {
+      const localDate = new Date(utcTimestamp);
+
+      // Format the local date to "YYYY-MM-DD HH:MM:SS" without timezone indicator
+      const formattedLocalDate =
           localDate.getFullYear() +
           "-" +
-          ("0" + (localDate.getMonth() + 1)).slice(-2) + // Month is 0-indexed, add 1
+          ("0" + (localDate.getMonth() + 1)).slice(-2) +
           "-" +
           ("0" + localDate.getDate()).slice(-2) +
           " " +
@@ -25,17 +25,61 @@ function convertTimestampsToLocal() {
           ":" +
           ("0" + localDate.getMinutes()).slice(-2) +
           ":" +
-          ("0" + localDate.getSeconds()).slice(-2) +
-          " Local";
+          ("0" + localDate.getSeconds()).slice(-2);
 
-        timeElement.textContent = formattedLocalDate; // Update the displayed text
-        // Update the title attribute to show the original UTC time on hover
-        timeElement.setAttribute(
-          "title",
-          `Original: ${timeElement.textContent.replace(" Local", " UTC")}`
-        );
-      }
-    });
+      timeElement.textContent = formattedLocalDate;
+      timeElement.setAttribute("title", `Original UTC Time: ${originalUtcText}`);
+    }
+  });
+}
+
+/**
+ * Displays a dismissible Bootstrap alert in a specified container.
+ * @param {string} containerId - The ID of the element to display the alert in.
+ * @param {string} message - The message to display in the alert.
+ * @param {string} type - The Bootstrap alert type (e.g., 'danger', 'success').
+ */
+function displayAlert(containerId, message, type = 'danger') {
+  const alertContainer = document.getElementById(containerId);
+  if (alertContainer) {
+    const alertHTML = `
+      <div class="alert alert-${type} alert-dismissible fade show mb-3" role="alert">
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>`;
+    alertContainer.innerHTML = alertHTML;
+  }
+}
+
+/**
+ * Sets up form submission validation for a date range using Bootstrap alerts.
+ * @param {string} formId The ID of the form to validate.
+ * @param {string} fromId The ID of the 'date from' input field.
+ * @param {string} toId The ID of the 'date to' input field.
+ * @param {string} alertContainerId The ID of the container for alerts.
+ */
+function setupDateRangeValidation(formId, fromId, toId, alertContainerId) {
+  const form = document.getElementById(formId);
+  if (!form) return;
+
+  form.addEventListener('submit', function(event) {
+    const dateFromInput = document.getElementById(fromId);
+    const dateToInput = document.getElementById(toId);
+    const alertContainer = document.getElementById(alertContainerId);
+
+    // Clear any previous alerts
+    if (alertContainer) {
+      alertContainer.innerHTML = '';
+    }
+
+    const dateFrom = dateFromInput.value;
+    const dateTo = dateToInput.value;
+
+    if (dateFrom && dateTo && dateFrom > dateTo) {
+      event.preventDefault(); // Stop form submission
+      displayAlert(alertContainerId, "'Date From' cannot be after 'Date To'. Please select a valid date range.", 'danger');
+    }
+  });
 }
 
 /**
@@ -50,137 +94,81 @@ function setupExportButton(buttonId, formId, exportUrlPath) {
   const exportButton = document.getElementById(buttonId);
   const filterForm = document.getElementById(formId);
 
-  // Ensure both the button and form elements exist before attaching the event listener
   if (exportButton && filterForm) {
     exportButton.addEventListener("click", function (event) {
-      event.preventDefault(); // Prevent the default link behavior
+      event.preventDefault();
 
-      const formData = new FormData(filterForm); // Get data from the filter form
-      const params = new URLSearchParams(); // Used to build the query string
+      const formData = new FormData(filterForm);
+      const params = new URLSearchParams();
 
       // Collect parameters for Assignment Log export
       if (formId === "assignmentFilterForm") {
-        // Check and append each filter parameter if it exists in the form data
         if (formData.get("assignment_user_id_filter"))
-          params.append(
-            "assignment_user_id_filter",
-            formData.get("assignment_user_id_filter")
-          );
+          params.append("assignment_user_id_filter", formData.get("assignment_user_id_filter"));
         if (formData.get("assignment_license_id_filter"))
-          params.append(
-            "assignment_license_id_filter",
-            formData.get("assignment_license_id_filter")
-          );
+          params.append("assignment_license_id_filter", formData.get("assignment_license_id_filter"));
         if (formData.get("assignment_action_filter"))
-          params.append(
-            "assignment_action_filter",
-            formData.get("assignment_action_filter")
-          );
+          params.append("assignment_action_filter", formData.get("assignment_action_filter"));
         if (formData.get("assignment_details_filter"))
-          params.append(
-            "assignment_details_filter",
-            formData.get("assignment_details_filter")
-          );
+          params.append("assignment_details_filter", formData.get("assignment_details_filter"));
         if (formData.get("assignment_date_from_filter"))
-          params.append(
-            "assignment_date_from_filter",
-            formData.get("assignment_date_from_filter")
-          );
+          params.append("assignment_date_from_filter", formData.get("assignment_date_from_filter"));
         if (formData.get("assignment_date_to_filter"))
-          params.append(
-            "assignment_date_to_filter",
-            formData.get("assignment_date_to_filter")
-          );
+          params.append("assignment_date_to_filter", formData.get("assignment_date_to_filter"));
       }
       // Collect parameters for Security Log export
       else if (formId === "securityFilterForm") {
         if (formData.get("security_user_id_filter"))
-          params.append(
-            "security_user_id_filter",
-            formData.get("security_user_id_filter")
-          );
+          params.append("security_user_id_filter", formData.get("security_user_id_filter"));
         if (formData.get("security_action_filter"))
-          params.append(
-            "security_action_filter",
-            formData.get("security_action_filter")
-          );
+          params.append("security_action_filter", formData.get("security_action_filter"));
         if (formData.get("security_object_filter"))
-          params.append(
-            "security_object_filter",
-            formData.get("security_object_filter")
-          );
+          params.append("security_object_filter", formData.get("security_object_filter"));
         if (formData.get("security_details_filter"))
-          params.append(
-            "security_details_filter",
-            formData.get("security_details_filter")
-          );
+          params.append("security_details_filter", formData.get("security_details_filter"));
         if (formData.get("security_date_from_filter"))
-          params.append(
-            "security_date_from_filter",
-            formData.get("security_date_from_filter")
-          );
+          params.append("security_date_from_filter", formData.get("security_date_from_filter"));
         if (formData.get("security_date_to_filter"))
-          params.append(
-            "security_date_to_filter",
-            formData.get("security_date_to_filter")
-          );
+          params.append("security_date_to_filter", formData.get("security_date_to_filter"));
       }
 
-      // Construct the full export URL with query parameters
       const exportUrl = `${exportUrlPath}?${params.toString()}`;
-      window.open(exportUrl, "_blank"); // Open the PDF export URL in a new tab
+      window.open(exportUrl, "_blank");
     });
   } else {
-    // Log an error if the button or form elements are not found, aiding in debugging
-    if (!exportButton)
-      console.error(`Export button with ID '${buttonId}' not found.`);
-    if (!filterForm)
-      console.error(`Filter form with ID '${formId}' not found.`);
+    if (!exportButton) console.error(`Export button with ID '${buttonId}' not found.`);
+    if (!filterForm) console.error(`Filter form with ID '${formId}' not found.`);
   }
 }
 
 /**
  * Initializes all functionalities for the history page.
- * This includes converting timestamps, setting up tab change listeners,
- * and configuring export buttons.
  */
 function initHistoryPage() {
-  convertTimestampsToLocal(); // Convert timestamps on initial page load
+  convertTimestampsToLocal();
 
-  // Set up an event listener for Bootstrap 5 tabs
-  // to re-convert timestamps when a new tab is shown
   const historyTabs = document.getElementById("historyTabs");
   if (historyTabs) {
     const tabButtons = historyTabs.querySelectorAll(".nav-link");
     tabButtons.forEach((button) => {
-      // 'shown.bs.tab' is a Bootstrap event that fires after a tab has been shown
       button.addEventListener("shown.bs.tab", function (event) {
-        convertTimestampsToLocal(); // Re-convert timestamps for the content of the newly shown tab
+        convertTimestampsToLocal();
       });
     });
   }
 
+  // Set up date range validation with Bootstrap alerts for both forms
+  setupDateRangeValidation('assignmentFilterForm', 'assignment_date_from_filter', 'assignment_date_to_filter', 'assignment-alert-container');
+  setupDateRangeValidation('securityFilterForm', 'security_date_from_filter', 'security_date_to_filter', 'security-alert-container');
+
   // Set up the PDF export buttons for both log types
-  setupExportButton(
-    "exportAssignmentsPdf", // Button ID
-    "assignmentFilterForm", // Form ID for assignment filters
-    "/history/assignments/export.pdf" // Export URL path
-  );
-  setupExportButton(
-    "exportSecurityPdf", // Button ID
-    "securityFilterForm", // Form ID for security filters
-    "/history/security/export.pdf" // Export URL path
-  );
+  setupExportButton("exportAssignmentsPdf", "assignmentFilterForm", "/history/assignments/export.pdf");
+  setupExportButton("exportSecurityPdf", "securityFilterForm", "/history/security/export.pdf");
 }
 
-// Ensures the initHistoryPage function is called only after the DOM is fully loaded.
-// This is standard practice to prevent errors from trying to manipulate DOM elements
-// that haven't been created yet.
-// `type="module"` scripts are deferred by default, so this also works well in that context.
+// Ensures the initHistoryPage function is called only after the DOM is fully loaded
 if (document.readyState === "loading") {
-  // The document is still loading, so wait for DOMContentLoaded.
   document.addEventListener("DOMContentLoaded", initHistoryPage);
 } else {
-  // The DOM has already been loaded, so we can initialize immediately.
   initHistoryPage();
 }
